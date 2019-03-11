@@ -10,19 +10,19 @@ fi
 cd /home/bbs/brd
 for file in */; do
     cd /home/bbs/brd/$file
-    if (!(test -e .DIR) || !(test -e .DIR.o)); then
+    if (! (test -e .DIR) || ! (test -e .DIR.o)); then
         echo "-- $file" >> /home/bbs/run/NOBRDDIR.log
-        if !(test -e .DIR); then
+        if ! (test -e .DIR); then
             echo "NO .DIR" >> /home/bbs/run/NOBRDDIR.log
             let a++
         fi
-        if !(test -e .DIR.o); then
+        if ! (test -e .DIR.o); then
             echo "NO .DIR.o" >> /home/bbs/run/NOBRDDIR.log
             let b++
         fi
     fi
 #   for folder in 0 1 2 3 4 5 6 7 8 9 A B C D E F G H I J K L M N O P Q R S T U V; do
-#       if !(test -d $folder); then
+#       if ! (test -d $folder); then
 #           echo "=== $file lose some folder" >> /home/bbs/NODIR.log
 #           let d++;
 #           break

@@ -11,16 +11,16 @@ for i in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
     cd /home/bbs/usr/$i
     for usr in */; do
         cd /home/bbs/usr/$i/$usr
-            if(!(test -d @)); then
+            if(! (test -d @)); then
                 mkdir @
             fi
-        if (!(test -e .DIR) || !(test -e .DIR.o)); then
+        if (! (test -e .DIR) || ! (test -e .DIR.o)); then
             echo "$usr" >> /home/bbs/run/NOUSRDIR.log
-            if !(test -e .DIR); then
+            if ! (test -e .DIR); then
                 echo "NO .DIR" >> /home/bbs/run/NOUSRDIR.log
                 let a++
             fi
-            if !(test -e .DIR.o); then
+            if ! (test -e .DIR.o); then
                 echo "NO .DIR.o" >> /home/bbs/run/NOUSRDIR.log
                 let b++
             fi
@@ -32,13 +32,13 @@ done
 #cd /home/bbs/usr/$1
 #for file in */; do
 #    cd /home/bbs/usr/$1/$file
-#    if (!(test -e .DIR) || !(test -e .DIR.o)); then
+#    if (! (test -e .DIR) || ! (test -e .DIR.o)); then
 #        echo $file >> /home/bbs/run/USRNODIR.log
-#        if !(test -e .DIR); then
+#        if ! (test -e .DIR); then
 #            echo "NO .DIR" >> /home/bbs/run/USRNODIR.log
 #            let a++
 #        fi
-#        if !(test -e .DIR.o); then
+#        if ! (test -e .DIR.o); then
 #            echo "NO .DIR.o" >> /home/bbs/run/USRNODIR.log
 #            let b++
 #        fi
