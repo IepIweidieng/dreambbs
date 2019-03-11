@@ -8,8 +8,7 @@ if (test -e NOBRDDIR.log); then
     rm NOBRDDIR.log
 fi
 cd /home/bbs/brd
-for file in $(ls)
-do
+for file in $(ls); do
     cd /home/bbs/brd/$file
     if (!(test -e .DIR) || !(test -e .DIR.o)); then
         echo "-- $file" >> /home/bbs/run/NOBRDDIR.log
@@ -22,8 +21,7 @@ do
             let b++
         fi
     fi
-#   for folder in 0 1 2 3 4 5 6 7 8 9 A B C D E F G H I J K L M N O P Q R S T U V
-#   do
+#   for folder in 0 1 2 3 4 5 6 7 8 9 A B C D E F G H I J K L M N O P Q R S T U V; do
 #       if !(test -d $folder); then
 #           echo "=== $file lose some folder" >> /home/bbs/NODIR.log
 #           let d++;
