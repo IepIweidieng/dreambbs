@@ -46,7 +46,9 @@ done
 #    let c++
 #done
 
-echo "$a user mail(s) have no .DIR" >> /home/bbs/run/NOUSRDIR.log
-echo "$b user mail(s) have no .DIR.o" >> /home/bbs/run/NOUSRDIR.log
-echo "$c user(s) are checked" >> /home/bbs/run/NOUSRDIR.log
+{
+    echo "$a user mail(s) have no .DIR"
+    echo "$b user mail(s) have no .DIR.o"
+    echo "$c user(s) are checked"
+} >> /home/bbs/run/NOUSRDIR.log
 #mail -s 'DIR.log' *********@gmail.com < /home/bbs/USRNODIR.log

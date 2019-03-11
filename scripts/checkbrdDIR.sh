@@ -30,9 +30,11 @@ for file in */; do
 #   done
     let c++
 done
-echo "$a board(s) have no .DIR" >> /home/bbs/run/NOBRDDIR.log
-echo "$b board(s) have no .DIR.o" >> /home/bbs/run/NOBRDDIR.log
+{
+    echo "$a board(s) have no .DIR"
+    echo "$b board(s) have no .DIR.o"
+    echo "$c board(s) are checked"
+} >> /home/bbs/run/NOBRDDIR.log
 #echo "$d board(s) lose folder" >> /home/bbs/NODIR.log
-echo "$c board(s) are checked" >> /home/bbs/run/NOBRDDIR.log
 #mail -s 'DIR.log' *********@gmail.com < /home/bbs/NODIR.log
 #mail -s 'DIR.log' *********@gmail.com < /home/bbs/NODIR.log
