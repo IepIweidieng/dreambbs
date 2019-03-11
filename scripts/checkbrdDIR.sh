@@ -3,13 +3,13 @@ declare -i a
 declare -i b
 declare -i c
 #declare -i d
-cd /home/bbs/run
+cd /home/bbs/run || exit 1
 if (test -e NOBRDDIR.log); then
     rm NOBRDDIR.log
 fi
-cd /home/bbs/brd
+cd /home/bbs/brd || exit 1
 for file in */; do
-    cd /home/bbs/brd/$file
+    cd /home/bbs/brd/$file || continue
     if (! (test -e .DIR) || ! (test -e .DIR.o)); then
         echo "-- $file" >> /home/bbs/run/NOBRDDIR.log
         if ! (test -e .DIR); then
