@@ -8,9 +8,9 @@ if (test -e NOUSRDIR.log); then
 fi
 cd /home/bbs/usr || exit 1
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
-    cd /home/bbs/usr/$i || continue
+    cd "/home/bbs/usr/$i" || continue
     for usr in */; do
-        cd /home/bbs/usr/$i/$usr || continue
+        cd "/home/bbs/usr/$i/$usr" || continue
             if(! (test -d @)); then
                 mkdir @
             fi
@@ -29,9 +29,9 @@ for i in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
     done
 done
 
-#cd /home/bbs/usr/$1 || exit 1
+#cd "/home/bbs/usr/$1" || exit 1
 #for file in */; do
-#    cd /home/bbs/usr/$1/$file || continue
+#    cd "/home/bbs/usr/$1/$file" || continue
 #    if (! (test -e .DIR) || ! (test -e .DIR.o)); then
 #        echo $file >> /home/bbs/run/USRNODIR.log
 #        if ! (test -e .DIR); then

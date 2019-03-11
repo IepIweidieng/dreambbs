@@ -4,7 +4,7 @@ declare -i a
 #declare -i c
 cd /home/bbs/brd || exit 1
 for file in */; do
-    cd /home/bbs/brd/$file || continue
+    cd "/home/bbs/brd/$file" || continue
     if (test -e usies); then
         rm -f usies
         let a++

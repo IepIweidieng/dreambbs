@@ -9,7 +9,7 @@ if (test -e NOBRDDIR.log); then
 fi
 cd /home/bbs/brd || exit 1
 for file in */; do
-    cd /home/bbs/brd/$file || continue
+    cd "/home/bbs/brd/$file" || continue
     if (! (test -e .DIR) || ! (test -e .DIR.o)); then
         echo "-- $file" >> /home/bbs/run/NOBRDDIR.log
         if ! (test -e .DIR); then

@@ -7,11 +7,11 @@ if (test -e NOACCT.log); then
 fi
 cd /home/bbs/usr || exit 1
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
-    cd /home/bbs/usr/$i || continue
+    cd "/home/bbs/usr/$i" || continue
     for usr in */; do
-        cd /home/bbs/usr/$i/$usr || continue
+        cd "/home/bbs/usr/$i/$usr" || continue
         if ! (test -e .ACCT); then
-            echo $usr >> /home/bbs/run/NOACCT.log
+            echo "$usr" >> /home/bbs/run/NOACCT.log
             let a++
         fi
         let b++
