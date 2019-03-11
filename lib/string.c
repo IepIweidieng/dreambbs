@@ -241,7 +241,7 @@ void mm_getcharset(const char *str, char *charset, int size    /* charset size *
 
     *dst = '\0';
 
-    if (!str_cmp(charset, "iso-8859-1"))    /* 歷史包伏不可丟 */
+    if (!str_cmp(charset, "iso-8859-1"))    /* 歷史包袱不可丟 */
         *charset = '\0';
 }
 
