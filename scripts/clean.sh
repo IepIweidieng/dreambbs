@@ -1,7 +1,7 @@
 #!/bin/bash
 declare -i a
-declare -i b
-declare -i c
+#declare -i b
+#declare -i c
 cd /home/bbs/brd || exit 1
 for file in */; do
     cd /home/bbs/brd/$file || continue
