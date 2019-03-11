@@ -6,15 +6,15 @@ cd /home/bbs/brd
 for file in $(ls)
 do
     cd /home/bbs/brd/$file
-    if (test -e usies);then
+    if (test -e usies); then
         rm -f usies
         let a++
     fi
-#    if (test -e brdstat);then
+#    if (test -e brdstat); then
 #        rm -f brdstat
 #        let b++
 #    fi
-#    if (test -e bstatcount);then
+#    if (test -e bstatcount); then
 #        rm -f bstatcount
 #        let c++
 #    fi
