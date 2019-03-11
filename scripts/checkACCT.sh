@@ -23,4 +23,3 @@ echo "$a user(s) have no ACCT" >> /home/bbs/run/NOACCT.log
 echo "$b user(s) is checked" >> /home/bbs/run/NOACCT.log
 #mail -s 'NOACCT.log' *********@gmail.com < /home/bbs/NOACCT.log
 #rm /home/bbs/NOACCT.log
-

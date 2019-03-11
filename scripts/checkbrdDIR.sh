@@ -38,4 +38,3 @@ echo "$b board(s) have no .DIR.o" >> /home/bbs/run/NOBRDDIR.log
 echo "$c board(s) are checked" >> /home/bbs/run/NOBRDDIR.log
 #mail -s 'DIR.log' *********@gmail.com < /home/bbs/NODIR.log
 #mail -s 'DIR.log' *********@gmail.com < /home/bbs/NODIR.log
-

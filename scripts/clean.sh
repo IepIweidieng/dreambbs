@@ -22,4 +22,3 @@ done
 echo "clean $a board usies"
 #echo "clean $b board brdstat"
 #echo "clean $c board bstatcount"
-
