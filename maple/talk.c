@@ -1653,7 +1653,7 @@ bmw_send(
     *mhead = *bmw;
     ushm->mbase = mslot[i] = mhead;
     /* Thor.981206: 需注意, 若ushm mapping不同,
-                    則不同隻 bbsd 互call會core dump,
+                    則不同支 bbsd 互call會core dump,
                     除非這也用offset, 不過除了 -i, 應該是非必要 */
 
 
