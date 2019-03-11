@@ -9,7 +9,7 @@ fi
 cd /home/bbs/usr
 for i in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
     cd /home/bbs/usr/$i
-    for usr in $(ls); do
+    for usr in */; do
         cd /home/bbs/usr/$i/$usr
             if(!(test -d @)); then
                 mkdir @
@@ -30,7 +30,7 @@ for i in a b c d e f g h i j k l m n o p q r s t u v w x y z; do
 done
 
 #cd /home/bbs/usr/$1
-#for file in $(ls); do
+#for file in */; do
 #    cd /home/bbs/usr/$1/$file
 #    if (!(test -e .DIR) || !(test -e .DIR.o)); then
 #        echo $file >> /home/bbs/run/USRNODIR.log

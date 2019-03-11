@@ -8,7 +8,7 @@ if (test -e NOBRDDIR.log); then
     rm NOBRDDIR.log
 fi
 cd /home/bbs/brd
-for file in $(ls); do
+for file in */; do
     cd /home/bbs/brd/$file
     if (!(test -e .DIR) || !(test -e .DIR.o)); then
         echo "-- $file" >> /home/bbs/run/NOBRDDIR.log

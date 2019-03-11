@@ -3,7 +3,7 @@ declare -i a
 declare -i b
 declare -i c
 cd /home/bbs/brd
-for file in $(ls); do
+for file in */; do
     cd /home/bbs/brd/$file
     if (test -e usies); then
         rm -f usies
