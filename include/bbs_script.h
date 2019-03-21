@@ -31,7 +31,7 @@
 
 /* Macros for acquiring version strings from number literals */
 
-#define DL_PATCH_STR  "DLpatch"
+#define DL_PATCH_STR  "DlPatch"
 #define DL_PATCH_SEP  "-" DL_PATCH_STR "-"
 
 // major . minor
@@ -41,11 +41,11 @@
 #define VER_PATCH_STR(major, minor, patch) \
     VER_STR(major, minor) "." CPP_STR(CPP_UNPAREN_OPT(patch))
 
-// major . minor -DLpatch- dl_patch
+// major . minor -DlPatch- dl_patch
 #define VER_DL_STR(major, minor, dl_patch) \
     VER_STR(major, minor) DL_PATCH_SEP CPP_STR(CPP_UNPAREN_OPT(dl_patch))
 
-// major . minor . patch -DLpatch- dl_patch
+// major . minor . patch -DlPatch- dl_patch
 #define VER_PATCH_DL_STR(major, minor, patch, dl_patch) \
     VER_PATCH_STR(major, minor, patch) DL_PATCH_SEP CPP_STR(CPP_UNPAREN_OPT(dl_patch))
 
