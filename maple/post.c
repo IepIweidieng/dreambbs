@@ -4516,9 +4516,8 @@ xpost_head(
     if (*xypostKeyword)
         outs(xypostKeyword);
 
-    outs("\n"); //r2.20181219: this part may need to be refined
-    outs(
-            "\x1b[30;47m  編號   日 期  作  者       文  章  標  題                                   \x1b[m");
+    //r2.20181219: this part may need to be refined
+    prints(NECK_XPOST);
 
     /* return xpost_body(xo); */
     return post_body(xo); /* Thor.980911: 共用即可 */
