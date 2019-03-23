@@ -972,7 +972,7 @@ post_head(
     XO *xo)
 {
     vs_head(currBM, xo->xyz);
-    outs(NECKPOST);
+    prints(NECKPOST, d_cols, "");
     return post_body(xo);
 }
 
@@ -4517,7 +4517,7 @@ xpost_head(
         outs(xypostKeyword);
 
     //r2.20181219: this part may need to be refined
-    prints(NECK_XPOST);
+    prints(NECK_XPOST, d_cols, "");
 
     /* return xpost_body(xo); */
     return post_body(xo); /* Thor.980911: 共用即可 */

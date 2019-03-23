@@ -61,7 +61,7 @@ contact_head(
 XO *xo)
 {
     vs_head("Ápµ¸¦W³æ", str_site);
-    outs(NECK_CONTACT);
+    prints(NECK_CONTACT, d_cols, "");
     return contact_body(xo);
 }
 

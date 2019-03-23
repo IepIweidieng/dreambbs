@@ -67,7 +67,7 @@ observe_head(
 XO *xo)
 {
     vs_head("觀察名單列表", str_site);
-    outs(NECK_OBSERVE);
+    prints(NECK_OBSERVE, d_cols, "");
     return observe_body(xo);
 }
 

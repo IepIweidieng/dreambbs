@@ -64,7 +64,7 @@ show_head(
 XO *xo)
 {
     vs_head("已投票名單", str_site);
-    outs(NECK_SHOW);
+    prints(NECK_SHOW, d_cols, "");
     return show_body(xo);
 }
 

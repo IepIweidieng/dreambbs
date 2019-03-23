@@ -182,7 +182,7 @@ XO *xo)
 {
     clear();
     vs_head("³s¸p¨t²Î", NULL);
-    outs(NECK_NBRD);
+    prints(NECK_NBRD, d_cols, "");
     return nbrd_body(xo);
 }
 

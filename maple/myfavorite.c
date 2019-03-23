@@ -251,7 +251,7 @@ myfavorite_head(
 {
     vs_head("我的最愛", str_site);
     prints(NECK_MYFAVORITE,
-        cuser.ufo2 & UFO2_BRDNEW ? "總數" : "編號", "中   文   敘   述");
+        cuser.ufo2 & UFO2_BRDNEW ? "總數" : "編號", d_cols + 33, "中   文   敘   述");
     return myfavorite_body(xo);
 }
 

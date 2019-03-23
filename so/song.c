@@ -194,7 +194,7 @@ XO *xo)
 {
 
     vs_head("ºëµØ¤å³¹", xo->xyz);
-    outs(NECK_SONG);
+    prints(NECK_SONG, d_cols, "");
     return song_body(xo);
 }
 

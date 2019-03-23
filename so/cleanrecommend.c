@@ -123,7 +123,7 @@ cleanrecommend_head(
     XO *xo)
 {
     vs_head("推薦留言清單", str_site);
-    outs(NECK_CLEANRECOMMEND);
+    prints(NECK_CLEANRECOMMEND, d_cols, "");
     return cleanrecommend_body(xo);
 }
 

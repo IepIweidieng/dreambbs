@@ -90,10 +90,10 @@ XO *xo)
     vs_head(buf, mid);
 #ifdef HAVE_MULTI_CROSSPOST
     if (mode)
-        outs(NECK_LISTBRD);
+        prints(NECK_LISTBRD, d_cols, "");
     else
 #endif
-        outs(NECK_LISTUSR);
+        prints(NECK_LISTUSR, d_cols, "");
     return list_body(xo);
 }
 

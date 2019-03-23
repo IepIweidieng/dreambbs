@@ -269,9 +269,9 @@ personal_head(
     vs_head("個人板清單", str_site);
     outs(NECK_PERSONAL1);
     if (!mode)
-        outs(NECK_PERSONALEMAIL2);
+        prints(NECK_PERSONALEMAIL2, d_cols, "");
     else
-        outs(NECK_PERSONALTITLE2);
+        prints(NECK_PERSONALTITLE2, d_cols, "");
     return personal_body(xo);
 }
 

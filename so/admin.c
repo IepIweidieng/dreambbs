@@ -61,7 +61,7 @@ admin_head(
 XO *xo)
 {
     vs_head("¶W¯Å¯¸°È", str_site);
-    outs(NECK_ADMIN);
+    prints(NECK_ADMIN, d_cols, "");
     return admin_body(xo);
 }
 

@@ -113,7 +113,7 @@ XO *xo)
 
     outs(NECK_MAILGEM1);
     outs(buf);
-    outs(NECK_MAILGEM2);
+    prints(NECK_MAILGEM2, d_cols, "");
     return mailgem_body(xo);
 }
 

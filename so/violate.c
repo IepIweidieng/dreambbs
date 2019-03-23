@@ -69,7 +69,7 @@ viol_head(
 XO *xo)
 {
     vs_head("¼È®É¸T¤î¦W³æ", str_site);
-    outs(NECK_VIOL);
+    prints(NECK_VIOL, d_cols, "");
     return viol_body(xo);
 }
 

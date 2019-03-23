@@ -124,7 +124,7 @@ memorandum_head(
 XO *xo)
 {
     vs_head("Ápµ¸¦W³æ", str_site);
-    outs(NECK_MEMORANDUM);
+    prints(NECK_MEMORANDUM, d_cols, "");
     return memorandum_body(xo);
 }
 
