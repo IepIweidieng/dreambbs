@@ -1218,7 +1218,7 @@ vs_restore(
 
 #endif  // M3_USE_PFTERM
 
-#define VMSG_NULL "\x1b[1;37;45m                              ● 請按任意鍵繼續 ●                           \x1b[m"
+#define VMSG_NULL "\x1b[1;37;45m%*s● 請按任意鍵繼續 ●%*s\x1b[m"
 
 int
 vmsg(
@@ -1228,16 +1228,16 @@ vmsg(
     clrtoeol();
     if (msg)
     {
-        prints(COLOR1 " ★ %-55s " COLOR2 " [請按任意鍵繼續] \x1b[m", msg);
+        prints(COLOR1 " ★ %-*s " COLOR2 " [請按任意鍵繼續] \x1b[m", d_cols + 55, msg);
     }
     else
     {
 #ifdef HAVE_COLOR_VMSG
         int color;
         color =time(0)%6+31;
-        prints("\x1b[1;%dm                                             ▏▎▍▌▋▊▉ \x1b[1;37m請按任意鍵繼續 \x1b[1;%dm▉\x1b[m ", color, color);
+        prints("\x1b[1;%dm%*s▏▎▍▌▋▊▉ \x1b[1;37m請按任意鍵繼續 \x1b[1;%dm▉\x1b[m ", color, d_cols + 45, "", color);
 #else
-        outs(VMSG_NULL);
+        outs(VMSG_NULL, (d_cols >> 1) + 30, "", (d_cols+1 >> 1) + 27, "");
 #endif
 #ifdef M3_USE_PFTERM
         move(b_lines, 0);
