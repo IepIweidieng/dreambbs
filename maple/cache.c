@@ -764,7 +764,7 @@ out_rle(
     int cc, rl;
 
     if (film)
-        move(1, 0/*item_length[count++]*/);
+        move(1, d_cols >> 1/*item_length[count++]*/);
         //move(3, 36+item_length[count++]);
     while ((cc = (unsigned char) *str))
     {
@@ -782,7 +782,7 @@ out_rle(
                     getyx(&y, &x);
                     outs("\x1b[m\0");
                     clrtoeol();
-                    move(y + 1, 0/*item_length[count++]*/);
+                    move(y + 1, d_cols >> 1/*item_length[count++]*/);
                 }
                 else
                     outc(cc);
@@ -810,7 +810,7 @@ out_rle(
             getyx(&y, &x);
             outs("\x1b[m\0");
             clrtoeol();
-            move(y + 1, 0/*item_length[count++]*/);
+            move(y + 1, d_cols >> 1/*item_length[count++]*/);
 
         }
         else
