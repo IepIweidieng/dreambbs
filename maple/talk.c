@@ -1034,17 +1034,17 @@ bmw_item(
             if (!(*bmw->userid))
                 strcpy(bmw->userid, "眾家好友");
 
-            prints("%5d %02d:%02d %-13s☆%-50.50s\n", num, ptime->tm_hour, ptime->tm_min,
-                bmw->userid, bmw->msg);
+            prints("%5d %02d:%02d %-13s☆%-*.*s\n", num, ptime->tm_hour, ptime->tm_min,
+                bmw->userid, d_cols + 50, d_cols + 50, bmw->msg);
         }
         else
         {
             if (strstr(bmw->msg, "★廣播"))
-                prints("%5d \x1b[36;1m%02d:%02d %-13s★%-50.50s\x1b[m\n", num, ptime->tm_hour, ptime->tm_min,
-                    bmw->userid, (bmw->msg)+8);
+                prints("%5d \x1b[36;1m%02d:%02d %-13s★%-*.*s\x1b[m\n", num, ptime->tm_hour, ptime->tm_min,
+                    bmw->userid, d_cols + 50, d_cols + 50, (bmw->msg)+8);
             else
-                prints("%5d \x1b[32m%02d:%02d %-13s★%-50.50s\x1b[m\n", num, ptime->tm_hour, ptime->tm_min,
-                    bmw->userid, bmw->msg);
+                prints("%5d \x1b[32m%02d:%02d %-13s★%-*.*s\x1b[m\n", num, ptime->tm_hour, ptime->tm_min,
+                    bmw->userid, d_cols + 50, d_cols + 50, bmw->msg);
         }
     }
     else
@@ -1054,16 +1054,16 @@ bmw_item(
             if (!(*bmw->userid))
                 strcpy(bmw->userid, "眾家好友");
 
-            prints("%5d %-13s☆%-57.57s\n", num, bmw->userid, bmw->msg);
+            prints("%5d %-13s☆%-*.*s\n", num, bmw->userid, d_cols + 57, d_cols + 57, bmw->msg);
         }
         else
         {
             if (strstr(bmw->msg, "★廣播"))
-                prints("%5d \x1b[36;1m%-13s★%-57.57s\x1b[m\n", num,
-                    bmw->userid, (bmw->msg)+8);
+                prints("%5d \x1b[36;1m%-13s★%-*.*s\x1b[m\n", num,
+                    bmw->userid, d_cols + 57, d_cols + 57, (bmw->msg)+8);
             else
-                prints("%5d \x1b[32m%-13s★%-57.57s\x1b[m\n", num,
-                    bmw->userid, bmw->msg);
+                prints("%5d \x1b[32m%-13s★%-*.*s\x1b[m\n", num,
+                    bmw->userid, d_cols + 57, d_cols + 57, bmw->msg);
         }
     }
 }
