@@ -763,9 +763,12 @@ out_rle(
     int x, y/*, count=0*/;
     int cc, rl;
 
+    getyx(&y, &x);
     if (film)
         move(1, d_cols >> 1/*item_length[count++]*/);
         //move(3, 36+item_length[count++]);
+    else
+        move(y, d_cols >> 1/*item_length[count++]*/);
     while ((cc = (unsigned char) *str))
     {
         str++;
@@ -777,11 +780,14 @@ out_rle(
 
             while (--rl >= 0)
             {
-                if (cc=='\n' && film)
+                if (cc=='\n')
                 {
                     getyx(&y, &x);
-                    outs("\x1b[m\0");
-                    clrtoeol();
+                    if (film)
+                    {
+                        outs("\x1b[m\0");
+                        clrtoeol();
+                    }
                     move(y + 1, d_cols >> 1/*item_length[count++]*/);
                 }
                 else
@@ -805,11 +811,14 @@ out_rle(
                 cc = (cuser.ufo2 & UFO2_SHOWUSER) ? ' ' : '%';
 #endif
         }
-        if (cc=='\n' && film)
+        if (cc=='\n')
         {
             getyx(&y, &x);
-            outs("\x1b[m\0");
-            clrtoeol();
+            if (film)
+            {
+                outs("\x1b[m\0");
+                clrtoeol();
+            }
             move(y + 1, d_cols >> 1/*item_length[count++]*/);
 
         }
