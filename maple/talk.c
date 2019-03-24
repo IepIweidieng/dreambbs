@@ -3216,10 +3216,10 @@ ulist_body(
 
                 strcpy(color, wcolor[fcolor]);
 
-                prints("%5d%c%s%-13s%-22.21s%s%-16.15s%c%c %-14.14s%s",
+                prints("%5d%c%s%-13s%-*.*s%s%-16.15s%c%c %-14.14s%s",
                     cnt, (up->ufo & UFO_WEB)?'*':' ',
                     color, up->userid,
-                    (HAS_PERM(PERM_SYSOP) && (cuser.ufo2 & UFO2_REALNAME))? up->realname : up->username,
+                    d_cols + 22, d_cols + 21,(HAS_PERM(PERM_SYSOP) && (cuser.ufo2 & UFO2_REALNAME))? up->realname : up->username,
                     colortmp > 0 ? "\x1b[m" : "",
                     (cuser.ufo2 & UFO2_SHIP) ? ship : ((up->ufo & UFO_HIDDEN)&&!HAS_PERM(PERM_SYSOP)) ?
                     HIDDEN_SRC : up->from, diff, diffmsg,
