@@ -1839,7 +1839,7 @@ void bmw_reply(int replymode)/* 0:一次ctrl+r 1:兩次ctrl+r */
     {
         move(b_lines - 1, 0);
         clrtoeol();
-        outs(FOOTER_BMW_REPLY);
+        prints(FOOTER_BMW_REPLY, d_cols, "");
     }
 
     cc = KEY_NONE;
@@ -2593,7 +2593,7 @@ talk_speak(
 
     utmp_mode(M_TALK);
 
-    ch = 58 - strlen(page_requestor);
+    ch = 58 + d_cols - strlen(page_requestor);
 
     sprintf(buf, "%s【%s", cuser.userid, cuser.username);
 
@@ -2623,7 +2623,7 @@ talk_speak(
     prints("\x1b[1;46;37m  談天說地  \x1b[45m%s%s】 ◆  %s%s\x1b[m",
         data, buf, page_requestor, data);
 #if 1
-    outz(FOOTER_TALK);
+    outf(FOOTER_TALK);
 #endif
     move(0, 0);
 
