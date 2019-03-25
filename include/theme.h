@@ -83,7 +83,7 @@
 
 #define NECKVOTE \
                    "  [←]離開 [v]投票 [R]結果 [E]修改 [^P]舉行 [^Q]查詢/中止/改期 [h]說明\n" \
-            COLOR0 "  編號  開票日  主辦人       投  票  宗  旨%*s                                  \x1b[m"
+            COLOR0 "  編號  開票日  主辦人       投  票  宗  旨%*s                                   \x1b[m"
 
 #define NECKINNBBS "  [←]離開 [^P]新增 [d]刪除 [E]編輯 [/]搜尋 [Enter]詳細\n" \
             COLOR3 "  編號            內         容%*s                                               \x1b[m"
@@ -124,7 +124,7 @@
 
 #define NECK_CLEANRECOMMEND \
                    "  [←]離開 c)修改[站長專用] d)刪除 D)清除全部 s)重整 [h]elp\n" \
-            COLOR0 "  編號 推      使用者 留言%*s                                                日 期\x1b[m"
+            COLOR0 "  編號 推      使用者 留言%*s                                               日 期\x1b[m"
 
 #define NECK_CONTACT \
                    "  [←]離開 ^P)新增 c)修改 d)刪除 s)重整 m)寄信 [h]elp\n" \
@@ -145,7 +145,7 @@
                    /*r2.20170802: disable "Z" option in case of confusion*/
 
 #define NECK_MAILGEM2 \
-            COLOR0 "  編號     主              題%*s                           [編      選] [日  期]\x1b[m"
+            COLOR0 "  編號     主              題%*s                            [編      選] [日  期]\x1b[m"
 
 #define NECK_MEMORANDUM \
                    "  [←]離開 ^P)新增 c)修改 d)刪除 s)重整 [h]elp\n" \
@@ -172,10 +172,10 @@
             COLOR3 "  編號     已投票的 Email%*s                                                     \x1b[m"
 
 #define NECK_VIOL  "  [←]離開 ^P)新增 c)修改 d)刪除 f)搜尋 [h]elp\n" \
-            COLOR3 "  編號 次數 時間 禁止註冊 Email%*s                                              \x1b[m"
+            COLOR3 "  編號 次數 時間 禁止註冊 Email%*s                                               \x1b[m"
 
 #define NECK_SONG  "  [←]離開 [→]瀏覽 [o]點歌到動態看板 [m]點歌到信箱 [q]查詢剩餘次數 [h]說明 \n" \
-            COLOR0 "  編號     主              題%*s                           [編      選] [日  期]\x1b[m"
+            COLOR0 "  編號     主              題%*s                            [編      選] [日  期]\x1b[m"
 
 // cache.101119
 
