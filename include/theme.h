@@ -199,20 +199,20 @@
 
 
 #define FOOTER_TALK \
-    "\x1b[34;46m 交談模式 \x1b[31;47m (^A)\x1b[30m對奕模式 \x1b[31m(^B)\x1b[30m象棋模式 \x1b[31m(^C, ^D)\x1b[30m結束交談 \x1b[31m(^Z)\x1b[30m快捷列表 \x1b[31m(^G)\x1b[30m嗶嗶 \x1b[m"
+    COLOR1 " 交談模式 " COLOR2 " (^A)\x1b[30m對奕模式 \x1b[31m(^B)\x1b[30m象棋模式 \x1b[31m(^C, ^D)\x1b[30m結束交談 \x1b[31m(^Z)\x1b[30m快捷列表 \x1b[31m(^G)\x1b[30m嗶嗶 \x1b[m"
 
 
 #define FOOTER_VEDIT_BIFF \
-           "%s\x1b[0;31;47m  (Ctrl-Z)\x1b[30m 操作說明  \x1b[31m(^w, ^x)\x1b[30m 檔案處理 ║%s│%s║%5d:%3d  \x1b[m"
+               "%s\x1b[m" COLOR2 "  (Ctrl-Z)\x1b[30m 操作說明  \x1b[31m(^w, ^x)\x1b[30m 檔案處理 ║%s│%s║%5d:%3d  \x1b[m"
 
 #define FOOTER_VEDIT \
-           "\x1b[34;46m  編輯文章  \x1b[31;47m  (Ctrl-Z)\x1b[30m 操作說明  \x1b[31m(^w, ^x)\x1b[30m 檔案處理 ║%s│%s║%5d:%3d  \x1b[m"
+    COLOR1 "  編輯文章  " COLOR2 "  (Ctrl-Z)\x1b[30m 操作說明  \x1b[31m(^w, ^x)\x1b[30m 檔案處理 ║%s│%s║%5d:%3d  \x1b[m"
 
 
 //#define FOOTER_BMW_REPLY \
-//           "\x1b[34;46m 熱訊回應 \x1b[31;47m (←)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(Enter)\x1b[30m選擇線上使用者扣應 \x1b[31m(其他)\x1b[30m回應 \x1b[m"
+//    COLOR1 " 熱訊回應 " COLOR2 " (←)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(Enter)\x1b[30m選擇線上使用者扣應 \x1b[31m(其他)\x1b[30m回應 \x1b[m"
 #define FOOTER_BMW_REPLY \
-           "\x1b[34;46m 熱訊回應 \x1b[31;47m (← Enter)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(其他)\x1b[30m回應 \x1b[m"
+    COLOR1 " 熱訊回應 " COLOR2 " (← Enter)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(其他)\x1b[30m回應 \x1b[m"
 
 
 #define MSG_POST \
