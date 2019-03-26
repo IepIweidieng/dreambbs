@@ -38,9 +38,9 @@ typedef struct
 } LOG;
 
 static int
-TchoiceCompare(struct Tchoice * i, struct Tchoice * j)
+TchoiceCompare(const void * i, const void * j)
 {
-    return j->count - i->count;
+    return ((struct Tchoice *)j)->count - ((struct Tchoice *)i)->count;
 }
 
 
