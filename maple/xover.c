@@ -1974,7 +1974,7 @@ every_Z_Orig(void)
 #ifdef M3_USE_PFTERM
     screen_backup_t old_screen = {0};
 #else
-    screenline sl[b_lines + 1];
+    screenline sl[2];
 #endif
 
 #ifdef M3_USE_PFTERM
