@@ -217,15 +217,11 @@ void x_file(int mode,            /* M_XFILES / M_UFILES */
     char buf[80];
 
     n = 0;
-    if (mode == M_XFILES)
-    {
-#ifdef M3_USE_PFTERM
-        clrregion(3, 20);
-#else
-        clearange(3, 20);
-#endif
-
-    }
+    if (mode == M_UFILES)
+        move(12, 0);
+    else
+        move(1, 0);
+    clrtobot();
 
     while ((desc = xlist[n]))
     {
@@ -262,14 +258,6 @@ void x_file(int mode,            /* M_XFILES / M_UFILES */
             }
 
         }
-    }
-    for (; n < 20; n++)
-    {
-        move(n + 3, 2);
-        if (mode == M_XFILES)
-            clrtoeol();
-        else
-            clrtohol();
     }
 
     vget(b_lines, 0, "請選擇檔案編號，或按 [0] 取消：", buf, 3, DOECHO);
