@@ -1947,9 +1947,8 @@ int u_lock(void)
              DOECHO);
 
     clear();
-    prints("\x1b[1;44;33m%*s                        " BOARDNAME
-           "    ¶¢¸m/Âê©wª¬ºA%*s                      \x1b[m",
-           d_cols >> 1, "", (d_cols+1) >> 1, "");
+    prints("\x1b[1;44;33m%*s" BOARDNAME "    ¶¢¸m/Âê©wª¬ºA%*s\x1b[m",
+           (d_cols >> 1) + 36 - sizeof(BOARDNAME), "", ((d_cols+1) >> 1) + 26, "");
     move(4, 6);
     prints("¶¢¸m¤¤¡G%s", cutmp->mateid);
     if (buf[0] == 'y' || buf[0] == 'Y')
