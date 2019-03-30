@@ -58,7 +58,7 @@ ll_add(
     int len;
 
     len = strlen(name) + 1;
-    node = (LinkList *) malloc(sizeof(LinkList) + len);
+    node = (LinkList *) malloc(SIZEOF_FLEX(LinkList, len));
     node->next = NULL;
     strcpy(node->data, name);
 

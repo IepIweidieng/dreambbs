@@ -611,6 +611,7 @@ typedef struct
     char title[CH_TTLEN];
     short chno[FLEX_SIZE];
 } ClassHeader;
+#define ClassHeader_FLEX_MEMBER    chno
 
 
 /* ----------------------------------------------------- */
@@ -747,6 +748,7 @@ typedef struct LinkList
     struct LinkList *next;
     char data[FLEX_SIZE];
 } LinkList;
+#define LinkList_FLEX_MEMBER    data
 
 
 /* ----------------------------------------------------- */
@@ -764,6 +766,8 @@ typedef struct OverView
     struct OverView *nxt;       /* next */
     char dir[FLEX_SIZE];        /* data path */
 } XO;
+#define OverView_FLEX_MEMBER    dir
+#define XO_FLEX_MEMBER          dir
 
 
 typedef struct

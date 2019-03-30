@@ -298,6 +298,7 @@ poststat(
         int count;
         char title[FLEX_SIZE];
     } PostText;
+    #define PostText_FLEX_MEMBER     title
 
 
     typedef struct PostAuthor
@@ -308,6 +309,7 @@ poststat(
         int hash;
         char author[FLEX_SIZE];
     } PostAuthor;
+    #define PostAuthor_FLEX_MEMBER   author
 
 
 static int
@@ -379,7 +381,7 @@ post_author(void)
             if (pahe == NULL)
             {
                 len = strlen(str) + 1;
-                pahe = (PostAuthor *) malloc(sizeof(PostAuthor) + len);
+                pahe = (PostAuthor *) malloc(SIZEOF_FLEX(PostAuthor, len));
                 pahe->panext = paht[i];
                 pahe->text = NULL;
                 pahe->count = 1;
@@ -405,7 +407,7 @@ post_author(void)
             if (text == NULL)
             {
                 len = strlen(str) + 1;
-                text = (PostText *) malloc(sizeof(PostText) + len + 13);
+                text = (PostText *) malloc(SIZEOF_FLEX(PostText, len + 13));
                 text->ptnext = pahe->text;
                 text->count = 1;
                 sprintf(text->title, "%-13s%s", post.board, str);
