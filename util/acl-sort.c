@@ -15,12 +15,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include "splay.h"
+#include "cppdef.h"
 
 
 typedef struct
 {
     int domain;
-    char text[0];
+    char text[FLEX_SIZE];
 } AclText;
 
 

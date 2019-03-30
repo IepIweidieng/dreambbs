@@ -136,7 +136,7 @@ struct UserList
 {
     UserList *next;
     int userno;
-    char userid[0];
+    char userid[FLEX_SIZE];
 };
 
 

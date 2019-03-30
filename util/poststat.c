@@ -16,6 +16,7 @@
 #include <string.h>
 #include <sys/stat.h>   /* lkchu.981201 */
 #include "config.h"
+#include "cppdef.h"
 
 
 static char *myfile[] = {"day", "week", "month", "year"};
@@ -295,7 +296,7 @@ poststat(
     {
         struct PostText *ptnext;
         int count;
-        char title[0];
+        char title[FLEX_SIZE];
     } PostText;
 
 
@@ -305,7 +306,7 @@ poststat(
         PostText *text;
         int count;
         int hash;
-        char author[0];
+        char author[FLEX_SIZE];
     } PostAuthor;
 
 
