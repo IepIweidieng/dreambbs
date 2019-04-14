@@ -2598,30 +2598,24 @@ talk_speak(
     sprintf(buf, "%s【%s", cuser.userid, cuser.username);
 
     i = ch - strlen(buf);
-    if (i >= 0)
-    {
-        i = (i >> 1) + 1;
-    }
-    else
+    if (i < 0)
     {
         buf[ch] = '\0';
-        i = 1;
+        i = 0;
     }
-    memset(data, ' ', i);
-    data[i] = '\0';
 
     memset(&mywin, 0, sizeof(mywin));
     memset(&itswin, 0, sizeof(itswin));
 
-    i = b_lines >> 1;
-    mywin.eline = i - 1;
-    itswin.curln = itswin.sline = i + 1;
+    ch = b_lines >> 1;
+    mywin.eline = ch - 1;
+    itswin.curln = itswin.sline = ch + 1;
     itswin.eline = b_lines - 1;
 
     clear();
-    move(i, 0);
-    prints("\x1b[1;46;37m  談天說地  \x1b[45m%s%s】 ◆  %s%s\x1b[m",
-        data, buf, page_requestor, data);
+    move(ch, 0);
+    prints("\x1b[1;46;37m  談天說地  \x1b[45m%*s%s】 ◆  %s%*s\x1b[m",
+        i>>1, "", buf, page_requestor, i>>1, "");
 #if 1
     outf(FOOTER_TALK);
 #endif
