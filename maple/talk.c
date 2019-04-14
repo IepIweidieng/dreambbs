@@ -2623,7 +2623,7 @@ talk_speak(
     prints("\x1b[1;46;37m  談天說地  \x1b[45m%s%s】 ◆  %s%s\x1b[m",
         data, buf, page_requestor, data);
 #if 1
-    outz("\x1b[34;46m 交談模式 \x1b[31;47m (^A)\x1b[30m對奕模式 \x1b[31m(^B)\x1b[30m象棋模式 \x1b[31m(^C, ^D)\x1b[30m結束交談 \x1b[31m(^Z)\x1b[30m快捷列表 \x1b[31m(^G)\x1b[30m嗶嗶 \x1b[m");
+    outz(FOOTER_TALK);
 #endif
     move(0, 0);
 
