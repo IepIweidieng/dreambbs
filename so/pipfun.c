@@ -39,11 +39,13 @@ show_file(char *filename, int y, int lines, int mode)
     FILE *fp;
     char buf[256];
     clrchyiuan(y, y + lines);
-    move(y, 0);
+    move(y, d_cols>>1);
     if ((fp = fopen(filename, "r")))
     {
-        while (fgets(buf, 256, fp) && lines--)
+        while (fgets(buf, 256, fp) && lines--) {
+            move(++y, d_cols>>1);
             outs(buf);
+        }
         fclose(fp);
     }
     else
