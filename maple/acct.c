@@ -1894,7 +1894,7 @@ int ue_setup(void)
 int u_lock(void)
 {
     char buf[PASSLEN];
-    char swapmateid[IDLEN + 1] = "\0";
+    char swapmateid[IDLEN + 1] = "";
     char IdleState[][IDLEN] = {
         "自強觀星",
         "勝後放閃",
@@ -3022,7 +3022,7 @@ int u_verify(void)
     }
     while (fgets(buf, 80, fp))
     {
-        key = strtok(buf, "\0");
+        key = strtok(buf, "");
     }
     fclose(fp);
 
