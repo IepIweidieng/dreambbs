@@ -198,6 +198,19 @@
     COLOR1 " 瀏覽 P.%d (%d%%) " COLOR2 " (h)說明 [PgUp][PgDn][0][$]移動 (/n)搜尋 (C)暫存 (←q)結束 "
 
 
+#define FOOTER_VEDIT_BIFF \
+           "%s\x1b[0;31;47m  (Ctrl-Z)\x1b[30m 操作說明  \x1b[31m(^w, ^x)\x1b[30m 檔案處理 ║%s│%s║%5d:%3d  \x1b[m"
+
+#define FOOTER_VEDIT \
+           "\x1b[34;46m  編輯文章  \x1b[31;47m  (Ctrl-Z)\x1b[30m 操作說明  \x1b[31m(^w, ^x)\x1b[30m 檔案處理 ║%s│%s║%5d:%3d  \x1b[m"
+
+
+//#define FOOTER_BMW_REPLY \
+//           "\x1b[34;46m 熱訊回應 \x1b[31;47m (←)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(Enter)\x1b[30m選擇線上使用者扣應 \x1b[31m(其他)\x1b[30m回應 \x1b[m"
+#define FOOTER_BMW_REPLY \
+           "\x1b[34;46m 熱訊回應 \x1b[31;47m (← Enter)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(其他)\x1b[30m回應 \x1b[m"
+
+
 #define MSG_POST \
     COLOR1 " 文章選讀 " COLOR2 " (y)\x1b[30m回應 \x1b[31m(=\\[]<>-+;'`jk)\x1b[30m相關主題 \x1b[31m(/?)\x1b[30m搜尋標題 \x1b[31m(aA)\x1b[30m搜尋作者 "
 

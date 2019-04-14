@@ -1839,8 +1839,7 @@ void bmw_reply(int replymode)/* 0:一次ctrl+r 1:兩次ctrl+r */
     {
         move(b_lines - 1, 0);
         clrtoeol();
-//      outs("\x1b[34;46m 熱訊回應 \x1b[31;47m (←)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(Enter)\x1b[30m選擇線上使用者扣應 \x1b[31m(其他)\x1b[30m回應 \x1b[m");
-        outs("\x1b[34;46m 熱訊回應 \x1b[31;47m (← Enter)\x1b[30m離開 \x1b[31m(↑↓→)\x1b[30m瀏覽 \x1b[31m(其他)\x1b[30m回應 \x1b[m");
+        outs(FOOTER_BMW_REPLY);
     }
 
     cc = KEY_NONE;
