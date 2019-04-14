@@ -2593,7 +2593,7 @@ talk_speak(
 
     utmp_mode(M_TALK);
 
-    ch = 58 + d_cols - strlen(page_requestor);
+    ch = 59 + d_cols - strlen(page_requestor);
 
     sprintf(buf, "%s¡i%s", cuser.userid, cuser.username);
 
@@ -2615,7 +2615,7 @@ talk_speak(
     clear();
     move(ch, 0);
     prints("\x1b[1;46;37m  ½Í¤Ñ»¡¦a  \x1b[45m%*s%s¡j ¡»  %s%*s\x1b[m",
-        i>>1, "", buf, page_requestor, i>>1, "");
+        i>>1, "", buf, page_requestor, (i+1)>>1, "");
 #if 1
     outf(FOOTER_TALK);
 #endif
