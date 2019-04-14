@@ -657,7 +657,7 @@ struct pipcommands cmdtable[])
         class10 = (d.art * 2 + d.charm) / 400 + 1;              /*舞蹈*/
         if (class10 > 5) class10 = 5;
 
-        clrchyiuan(22, 24);
+        clrchyiuan(b_lines - 1, b_lines);
         move(b_lines - 1, 0);
         prints(menuname[menunum][0], class1, class2, class3, class4, class5);
         move(b_lines, 0);
@@ -1084,11 +1084,11 @@ int mode)
     }
 
 
-    move(18, 0);
+    move(b_lines - 5, 0);
     prints("\x1b[1;%dm└─────────────────────────────────────┘\x1b[m", color);
-    move(19, 0);
+    move(b_lines - 4, 0);
     prints(" \x1b[1;34m─\x1b[37;44m  狀 態  \x1b[0;1;34m─\x1b[0m");
-    move(20, 0);
+    move(b_lines - 3, 0);
     prints(" ");
     if (d.shit == 0)
         prints("乾淨小雞  ");
@@ -1845,7 +1845,8 @@ void
 show_basic_pic(int i)
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/basic/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 }
@@ -1854,7 +1855,8 @@ void
 show_feed_pic(int i)  /*吃東西*/
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/feed/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 }
@@ -1863,7 +1865,8 @@ void
 show_buy_pic(int i)  /*購買東西*/
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/buy/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 }
@@ -1872,7 +1875,8 @@ void
 show_usual_pic(int i)  /* 平常狀態 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/usual/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 
@@ -1882,7 +1886,8 @@ void
 show_special_pic(int i)  /* 特殊選單 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/special/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 
@@ -1892,7 +1897,8 @@ void
 show_practice_pic(int i)  /*修行用的圖 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/practice/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 }
@@ -1901,7 +1907,8 @@ void
 show_job_pic(int i)    /* 打工的show圖 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/job/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 
@@ -1912,10 +1919,11 @@ void
 show_play_pic(int i)  /*休閒的圖*/
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/play/pic%d", i);
     if (i == 0)
-        show_file(buf, 2, 16, ONLY_COLOR);
+        show_file(buf, 2, b_lines - 7, ONLY_COLOR);
     else
         show_file(buf, 6, 12, ONLY_COLOR);
 }
@@ -1924,7 +1932,8 @@ void
 show_guess_pic(int i)  /* 猜拳用 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/guess/pic%d", i);
     show_file(buf, 6, 12, ONLY_COLOR);
 }
@@ -1934,6 +1943,7 @@ show_weapon_pic(int i)  /* 武器用 */
 {
     char buf[256];
     clrchyiuan(1, 10);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/weapon/pic%d", i);
     show_file(buf, 1, 10, ONLY_COLOR);
 }
@@ -1943,6 +1953,7 @@ show_palace_pic(int i)  /* 參見王臣用 */
 {
     char buf[256];
     clrchyiuan(0, 13);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/palace/pic%d", i);
     show_file(buf, 0, 11, ONLY_COLOR);
 
@@ -1952,7 +1963,8 @@ void
 show_badman_pic(int i)  /* 壞人 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/badman/pic%d", i);
     show_file(buf, 6, 14, ONLY_COLOR);
 }
@@ -1961,7 +1973,8 @@ void
 show_fight_pic(int i)  /* 打架 */
 {
     char buf[256];
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
+    clrchyiuan(b_lines - 1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/fight/pic%d", i);
     show_file(buf, 6, 14, ONLY_COLOR);
 }
@@ -1970,16 +1983,16 @@ void
 show_die_pic(int i)  /*死亡*/
 {
     char buf[256];
-    clrchyiuan(0, 23);
+    clrchyiuan(0, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/die/pic%d", i);
-    show_file(buf, 0, 23, ONLY_COLOR);
+    show_file(buf, 0, b_lines, ONLY_COLOR);
 }
 
 void
 show_system_pic(int i)  /*系統*/
 {
     char buf[256];
-    clrchyiuan(1, 23);
+    clrchyiuan(1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/system/pic%d", i);
     show_file(buf, 4, 16, ONLY_COLOR);
 }
@@ -1988,7 +2001,7 @@ void
 show_ending_pic(int i)  /*結束*/
 {
     char buf[256];
-    clrchyiuan(1, 23);
+    clrchyiuan(1, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/ending/pic%d", i);
     show_file(buf, 4, 16, ONLY_COLOR);
 }
@@ -1997,9 +2010,9 @@ void
 show_resultshow_pic(int i)      /*收穫季*/
 {
     char buf[256];
-    clrchyiuan(0, 24);
+    clrchyiuan(0, b_lines);
     sprintf(buf, BBSHOME"/game/pipgame/resultshow/pic%d", i);
-    show_file(buf, 0, 24, ONLY_COLOR);
+    show_file(buf, 0, b_lines, ONLY_COLOR);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2094,7 +2107,7 @@ int oldnum[])
     oldmoney = d.money;
     do
     {
-        clrchyiuan(6, 18);
+        clrchyiuan(6, b_lines - 6);
         move(6, 0);
         sprintf(inbuf, "\x1b[1;31m  ─\x1b[41;37m 編號 \x1b[0;1;31m─\x1b[41;37m 商      品 \x1b[0;1;31m──\x1b[41;37m 效            能 \x1b[0;1;31m──\x1b[41;37m 價     格 \x1b[0;1;31m─\x1b[37;41m 擁有數量 \x1b[0;1;31m─\x1b[0m  ");
         prints(inbuf);
@@ -2105,7 +2118,7 @@ int oldnum[])
                     p[i].num, p[i].name, p[i].msgbuy, p[i].money, oldnum[i]);
             prints(inbuf);
         }
-        clrchyiuan(19, 24);
+        clrchyiuan(b_lines - 4, b_lines);
         move(b_lines, 0);
         sprintf(inbuf, "\x1b[1;44;37m  %8s選單  \x1b[46m  [B]買入物品  [S]賣出物品  [Q]跳出：                         \x1b[m", shopname[mode]);
         prints(inbuf);
@@ -2120,7 +2133,7 @@ int oldnum[])
             choice = atoi(genbuf);
             if (choice >= 1 && choice <= oldnum[0])
             {
-                clrchyiuan(6, 18);
+                clrchyiuan(6, b_lines - 6);
                 if (rand() % 2 > 0)
                     show_buy_pic(p[choice].pic1);
                 else
@@ -2195,7 +2208,7 @@ int oldnum[])
             choice = atoi(genbuf);
             if (choice >= 1 && choice <= oldnum[0])
             {
-                clrchyiuan(6, 18);
+                clrchyiuan(6, b_lines - 6);
                 if (rand() % 2 > 0)
                     show_buy_pic(p[choice].pic1);
                 else
@@ -3557,13 +3570,13 @@ int pip_play_outing(void)       /*郊遊*/
             clear();
             sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ %-10s                                                  \x1b[0m", d.name);
             show_play_pic(0);
-            move(17, 10);
+            move(b_lines - 6, 10);
             prints("\x1b[1;36m親愛的 \x1b[1;33m%s ～\x1b[0m", d.name);
-            move(18, 10);
+            move(b_lines - 5, 10);
             prints("\x1b[1;37m看到你這樣努力的培養自己的能力  讓我心中十分的高興喔..\x1b[m");
-            move(19, 10);
+            move(b_lines - 4, 10);
             prints("\x1b[1;36m小天使我決定給你獎賞鼓勵鼓勵  偷偷地幫助你一下....^_^\x1b[0m");
-            move(20, 10);
+            move(b_lines - 3, 10);
             lucky = rand() % 7;
             if (lucky == 6)
             {
@@ -3693,7 +3706,7 @@ int pip_play_guess(void)   /* 猜拳程式 */
     while ((pipkey != '1') && (pipkey != '2') && (pipkey != '3') && (pipkey != 'q') && (pipkey != 'Q'));
 
     com = rand() % 3;
-    move(18, 0);
+    move(b_lines - 5, 0);
     clrtobot();
     switch (com)
     {
@@ -3708,7 +3721,7 @@ int pip_play_guess(void)   /* 猜拳程式 */
         break;
     }
 
-    move(17, 0);
+    move(b_lines - 6, 0);
 
     switch (pipkey)
     {
@@ -3782,10 +3795,10 @@ void lose(void)
 
 void situ(void)
 {
-    clrchyiuan(19, 21);
-    move(19, 0);
+    clrchyiuan(b_lines - 4, b_lines - 2);
+    move(b_lines - 4, 0);
     prints("你:\x1b[44m %d勝 %d負\x1b[m                     \n", d.winn, d.losee);
-    move(20, 0);
+    move(b_lines - 3, 0);
     prints("雞:\x1b[44m %d勝 %d負\x1b[m                     \n", d.losee, d.winn);
 
     if (d.winn >= d.losee)
@@ -4280,6 +4293,7 @@ int pip_see_doctor(void)        /*看醫生*/
 {
     char buf[256];
     long savemoney;
+    clrchyiuan(b_lines - 2, b_lines);
     savemoney = d.sick * 25;
     if (d.sick <= 0)
     {
@@ -4869,7 +4883,7 @@ int first)
         else if (ch == Ctrl('T'))
         {
             add_io(fd, 30);
-            clrchyiuan(7, 19);
+            clrchyiuan(7, b_lines - 4);
             move(7, 0);
             prints("\x1b[1;31m═╣\x1b[41;37m 回顧談話 \x1b[0;1;31m╠═══════════════════════════════\x1b[m\n");
             for (i = 0; i < 10; i++)
@@ -4970,7 +4984,7 @@ int first)
                 break;
 
             case '3':
-                clrchyiuan(8, 19);
+                clrchyiuan(8, b_lines - 4);
                 oldtired = d.tired;
                 oldhp = d.hp;
                 d.magicmode = 0;
@@ -5193,33 +5207,33 @@ pip_ending_screen(void)
     prints("\x1b[1;37m║      ║║  ║  ║║      ║║      ║║  ║  ║║      ║\x1b[0m");
     move(6, 9);
     prints("\x1b[1;35m╚═══╝╚═╰═╝╚═══╯╚═══╝╚═╰═╝╰═══╯\x1b[0m");
-    move(7, 8);
+    move(b_lines - 16, 8);
     prints("\x1b[1;31m──────────\x1b[41;37m " NICKNAME PIPNAME "結局報告 \x1b[0;1;31m──────────\x1b[0m");
-    move(9, 10);
+    move(b_lines - 14, 10);
     prints("\x1b[1;36m這個時間不知不覺地還是到臨了...\x1b[0m");
-    move(11, 10);
+    move(b_lines - 12, 10);
     prints("\x1b[1;37m\x1b[33m%s\x1b[37m 得離開你的溫暖懷抱，自己一隻雞在外面求生存了.....\x1b[0m", d.name);
-    move(13, 10);
+    move(b_lines - 10, 10);
     prints("\x1b[1;36m在你照顧教導他的這段時光，讓他接觸了很多領域，培養了很多的能力....\x1b[0m");
-    move(15, 10);
+    move(b_lines - 8, 10);
     prints("\x1b[1;37m因為這些，讓小雞 \x1b[33m%s\x1b[37m 之後的生活，變得更多采多姿了........\x1b[0m", d.name);
-    move(17, 10);
+    move(b_lines - 6, 10);
     prints("\x1b[1;36m對於你的關心，你的付出，你所有的愛......\x1b[0m");
-    move(19, 10);
+    move(b_lines - 4, 10);
     prints("\x1b[1;37m\x1b[33m%s\x1b[37m 會永遠都銘記在心的....\x1b[0m", d.name);
     vmsg("接下來看未來發展");
-    clrchyiuan(7, 19);
-    move(7, 8);
+    clrchyiuan(b_lines - 16, b_lines - 4);
+    move(b_lines - 16, 8);
     prints("\x1b[1;34m──────────\x1b[44;37m " NICKNAME PIPNAME "未來發展 \x1b[0;1;34m──────────\x1b[0m");
-    move(9, 10);
+    move(b_lines - 14, 10);
     prints("\x1b[1;36m透過水晶球，讓我們一起來看 \x1b[33m%s\x1b[36m 的未來發展吧.....\x1b[0m", d.name);
-    move(11, 10);
+    move(b_lines - 12, 10);
     prints("\x1b[1;37m小雞 \x1b[33m%s\x1b[37m 後來%s....\x1b[0m", d.name, endbuf1);
-    move(13, 10);
+    move(b_lines - 10, 10);
     prints("\x1b[1;36m因為他的之前的努力，使得他在這一方面%s....\x1b[0m", endbuf2);
-    move(15, 10);
+    move(b_lines - 8, 10);
     prints("\x1b[1;37m至於小雞的婚姻狀況，他後來%s，婚姻算是很美滿.....\x1b[0m", endbuf3);
-    move(17, 10);
+    move(b_lines - 6, 10);
     prints("\x1b[1;36m嗯..這是一個不錯的結局唷..........\x1b[0m");
     vmsg("我想  你一定很感動吧.....");
     show_ending_pic(0);
@@ -6345,7 +6359,7 @@ int endgrade)
     long gradeall;
 
     gradebasic = (d.maxhp + d.wrist + d.wisdom + d.character + d.charm + d.ethics + d.belief + d.affect) / 10 - d.offense;
-    clrchyiuan(1, 23);
+    clrchyiuan(1, b_lines);
     gradeall = gradebasic + endgrade;
     move(8, 17);
     prints("\x1b[1;36m感謝您玩完整個" NICKNAME "小雞的遊戲.....\x1b[0m");
@@ -6372,11 +6386,11 @@ int pip_divine(void) /*占卜師來訪*/
     tm = d.bbtime / 60 / 30;
     move(b_lines - 2, 0);
     money = 300 * (tm + 1);
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
     move(10, 14);
     prints("\x1b[1;33;5m叩叩叩...\x1b[0;1;37m突然傳來陣陣的敲門聲.........\x1b[0m");
     vmsg("去瞧瞧是誰吧......");
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
     move(10, 14);
     prints("\x1b[1;37;46m    原來是雲遊四海的占卜師來訪了.......    \x1b[0m");
     vmsg("開門讓他進來吧....");
@@ -6399,7 +6413,7 @@ int pip_divine(void) /*占卜師來訪*/
             else if (randvalue == 4)
                 sprintf(buf, "\x1b[1;37m  你的小雞%s以後可能的身份是%s  \x1b[m", d.name, endbuf1);
             d.money -= money;
-            clrchyiuan(6, 18);
+            clrchyiuan(6, b_lines - 6);
             move(10, 14);
             prints("\x1b[1;33m在我占卜結果看來....\x1b[m");
             move(12, 14);
@@ -6425,7 +6439,7 @@ pip_money(void)
 
     int money = -1;
     if (!d.name[0] || d.death) return 0;
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
     /* move(12, 0);
     clrtobot();*/
     prints("你身上有 %d 次點歌次數，雞金 %d 元\n", cuser.request, d.money);
@@ -6637,7 +6651,7 @@ char *genbuf)
                 show_basic_pic(13);
                 break;
             }
-            move(18, 0);
+            move(b_lines - 5, 0);
             if (shit1 == 0) prints("很乾淨..");
             if (shit1 > 40 && shit1 < 60) prints("臭臭的..");
             if (shit1 >= 60 && shit1 < 80) prints("好臭喔..");
@@ -6782,8 +6796,7 @@ int
 pip_system_freepip(void)
 {
     char buf[256];
-    move(b_lines - 1, 0);
-    clrtoeol();
+    clrchyiuan(b_lines - 2, b_lines);
     getdata(b_lines - 1, 1, "真的要放生嗎？(y/N): ", buf, 2, 1, 0);
     if (buf[0] != 'y' && buf[0] != 'Y') return 0;
     sprintf(buf, "%s 被狠心的 %s 丟掉了~", d.name, cuser.userid);
@@ -6803,7 +6816,7 @@ pip_system_service(void)
     char oldname[21];
     time_t now;
 
-    move(b_lines, 0);
+    move(b_lines - 1, 0);
     clrtoeol();
     move(b_lines, 0);
     prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                                \x1b[0m");
@@ -6980,7 +6993,7 @@ char *userid)
     prints("       \x1b[1;34m╚═══╯╚╝╚═╝  ╚╝    ╚╝╚═╝\x1b[32m......................\x1b[m");
     do
     {
-        clrchyiuan(5, 23);
+        clrchyiuan(5, b_lines);
         switch (page)
         {
         case 1:
@@ -7234,6 +7247,8 @@ pip_meet_vs_man(void)
 
     while (d.hp > 0)
     {
+        move(b_lines - 1, 0);
+        clrtoeol();
         move(b_lines, 0);
         outs("\x1b[1;44;37m 方向 \x1b[46m[R]回家 [F]餵食 (E/W/S/N)東西南北                                        \x1b[m");
         ans = vkey();
@@ -7423,21 +7438,21 @@ int mode)
         move(5, 0);
         sprintf(buf, "\x1b[1;31m└─────────────────────────────────────┘\x1b[m");
         prints(buf);
-        move(19, 0);
+        move(b_lines - 4, 0);
         sprintf(buf, "\x1b[1;34m┌─────────────────────────────────────┐\x1b[m");
         prints(buf);
-        move(20, 0);
+        move(b_lines - 3, 0);
         sprintf(inbuf1, "%d%s/%d%s", m.hp > 1000 ? m.hp / 1000 : m.hp, m.hp > 1000 ? "K" : "", m.maxhp > 1000 ? m.maxhp / 1000 : m.maxhp, m.maxhp > 1000 ? "K" : "");
         sprintf(inbuf2, "%d%s/%d%s", m.mp > 1000 ? m.mp / 1000 : m.mp, m.mp > 1000 ? "K" : "", m.maxmp > 1000 ? m.maxmp / 1000 : m.maxmp, m.maxmp > 1000 ? "K" : "");
 
         sprintf(buf, "\x1b[1;34m│\x1b[32m姓  名:\x1b[37m%-10s  \x1b[32m生  命:\x1b[37m%-11s \x1b[32m法  力:\x1b[37m%-11s                  \x1b[34m│\x1b[m",
                 p[n].name, inbuf1, inbuf2);
         prints(buf);
-        move(21, 0);
+        move(b_lines - 2, 0);
         sprintf(buf, "\x1b[1;34m│\x1b[32m攻  擊:\x1b[37m%-6d      \x1b[32m防  禦:\x1b[37m%-6d      \x1b[32m速  度:\x1b[37m%-6d      \x1b[32m金  錢:\x1b[37m%-6d    \x1b[34m│\x1b[m",
                 m.attack, m.resist, m.speed, m.money);
         prints(buf);
-        move(22, 0);
+        move(b_lines - 1, 0);
         sprintf(buf, "\x1b[1;34m└─────────────────────────────────────┘\x1b[m");
         prints(buf);
         move(b_lines, 0);
@@ -7665,20 +7680,20 @@ int mode)
         move(6, 0);
         if (mode == 1)
             show_badman_pic(m.map/*n*/);
-        move(19, 0);
+        move(b_lines - 4, 0);
         sprintf(buf, "\x1b[1;34m┌─────────────────────────────────────┐\x1b[m");
         prints(buf);
-        move(20, 0);
+        move(b_lines - 3, 0);
         sprintf(inbuf1, "%d/%d", m.hp, m.maxhp);
         sprintf(inbuf2, "%d/%d", m.mp, m.maxmp);
         sprintf(buf, "\x1b[1;34m│\x1b[32m姓  名:\x1b[37m%-10s  \x1b[32m生  命:\x1b[37m%-11s \x1b[32m法  力:\x1b[37m%-11s                  \x1b[34m│\x1b[m",
                 p[n].name, inbuf1, inbuf2);
         prints(buf);
-        move(21, 0);
+        move(b_lines - 2, 0);
         sprintf(buf, "\x1b[1;34m│\x1b[32m攻  擊:\x1b[37m%-6d      \x1b[32m防  禦:\x1b[37m%-6d      \x1b[32m速  度:\x1b[37m%-6d      \x1b[32m金  錢:\x1b[37m%-6d    \x1b[34m│\x1b[m",
                 m.attack, m.resist, m.speed, m.money);
         prints(buf);
-        move(22, 0);
+        move(b_lines - 1, 0);
         sprintf(buf, "\x1b[1;34m└─────────────────────────────────────┘\x1b[m");
         prints(buf);
         move(b_lines, 0);
@@ -8018,7 +8033,7 @@ struct magicset *p)
 
     d.nodone = 0;
 
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
     move(7, 0);
     sprintf(buf, "\x1b[1;31m┤\x1b[37;41m   可用[%s]一覽表   \x1b[0;1;31m├────────────\x1b[m", p[0].name);
     prints(buf);
@@ -8119,7 +8134,7 @@ UTMP *opt)
     s = p;
     d.nodone = 0;
 
-    clrchyiuan(6, 18);
+    clrchyiuan(6, b_lines - 6);
     move(7, 0);
     sprintf(buf, "\x1b[1;31m┤\x1b[37;41m   可用[%s]一覽表   \x1b[0;1;31m├────────────\x1b[m", s->name);
     prints(buf);
@@ -8817,11 +8832,11 @@ int mode)
     }
 
 
-    move(18, 0);
+    move(b_lines - 5, 0);
     prints("\x1b[1;%dm└─────────────────────────────────────┘\x1b[m", color);
-    move(19, 0);
+    move(b_lines - 4, 0);
     prints(" \x1b[1;34m─\x1b[37;44m  狀 態  \x1b[0;1;34m─\x1b[0m");
-    move(20, 0);
+    move(b_lines - 3, 0);
     prints(" 戰鬥中.............\n");
 
 }
