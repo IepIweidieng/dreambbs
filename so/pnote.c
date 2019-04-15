@@ -212,13 +212,10 @@ do_pnote(char *userid)
 static void
 show_pnote(notedata *pitem)
 {
-    char str[200];
-
     clrchyiuan(2, 6);
     move(2, 0);
-    sprintf(str, "\x1b[1;36m┌─── \x1b[37m%s(%s)在 \x1b[33m%s\x1b[37m 留的話 \x1b[m", pitem->userid, pitem->username,
+    prints("\x1b[1;36m┌─── \x1b[37m%s(%s)在 \x1b[33m%s\x1b[37m 留的話 \x1b[m", pitem->userid, pitem->username,
             Cdate(&(pitem->date)));
-    prints(str);
     prints("\n\x1b[1;37m  %s\n  %s\n  %s\n\x1b[0m", pitem->buf[0], pitem->buf[1], pitem->buf[2]);
     prints("                 \x1b[1;36m──────────────────────────────┘\x1b[m\n");
     pitem->mode = 1;
