@@ -448,28 +448,28 @@ int cal)
 char *menuname[8][2] =
 {
     {"             ",
-     "\x1b[1;44;37m 選單 \x1b[46m[1]基本 [2]逛街 [3]修行 [4]玩樂 [5]打工 [6]特殊 [7]系統 [Q]離開          %*s\x1b[m"},
+     "\x1b[1;44;37m 選單 \x1b[46m[1]基本 [2]逛街 [3]修行 [4]玩樂 [5]打工 [6]特殊 [7]系統 [Q]離開         %*s\x1b[m"},
 
     {"             ",
-     "\x1b[1;44;37m  基本選單  \x1b[46m[1]餵食 [2]清潔 [3]休息 [4]親親 [5]換錢         %*s[Q]跳出            \x1b[m"},
+     "\x1b[1;44;37m  基本選單  \x1b[46m[1]餵食 [2]清潔 [3]休息 [4]親親 [5]換錢         %*s[Q]跳出           \x1b[m"},
 
-    {"\x1b[1;44;37m 逛街 \x1b[46m【日常用品】[1]便利商店 [2]" NICKNAME "藥鋪 [3]夜裡書局                        %*s\x1b[m",
-     "\x1b[1;44;37m 選單 \x1b[46m【武器百貨】[A]頭部裝備 [B]右手裝備 [C]左手裝備 [D]身體裝備 [E]腳部裝備  %*s\x1b[m"},
+    {"\x1b[1;44;37m 逛街 \x1b[46m【日常用品】[1]便利商店 [2]" NICKNAME "藥鋪 [3]夜裡書局         %*s\x1b[m",
+     "\x1b[1;44;37m 選單 \x1b[46m【武器百貨】[A]頭部裝備 [B]右手裝備 [C]左手裝備 [D]身體裝備 [E]腳部裝備 %*s\x1b[m"},
 
-    {"\x1b[1;44;37m 修行 \x1b[46m[A]科學(%d) [B]詩詞(%d) [C]神學(%d) [D]軍學(%d) [E]劍術(%d)                   %*s\x1b[m",
-     "\x1b[1;44;37m 選單 \x1b[46m[F]格鬥(%d) [G]魔法(%d) [H]禮儀(%d) [I]繪畫(%d) [J]舞蹈(%d) [Q]跳出           %*s\x1b[m"},
-
-    {"   ",
-     "\x1b[1;44;37m  玩樂選單  \x1b[46m[1]散步 [2]運動 [3]約會 [4]猜拳 [5]旅遊 [6]郊外 [7]唱歌 [Q]跳出    %*s\x1b[m"},
-
-    {"\x1b[1;44;37m 打工 \x1b[46m[A]家事 [B]保姆 [C]旅館 [D]農場 [E]餐\廳 [F]教堂 [G]地攤 [H]伐木          %*s\x1b[m",
-     "\x1b[1;44;37m 選單 \x1b[46m[I]美髮 [J]獵人 [K]工地 [L]守墓 [M]家教 [N]酒家 [O]酒店 [P]夜總會 %*s[Q]跳出\x1b[m"},
-
-    {"\x1b[1;44;37m 特殊 \x1b[46m[1]" NICKNAME "醫院 [2]媚登峰 [3]戰鬥修行 [4]拜訪朋友 [5]" NICKNAME "                %*s\x1b[m",
-     "\x1b[1;44;37m 選單 \x1b[46m                                                                  %*s[Q]跳出\x1b[m"},
+    {"\x1b[1;44;37m 修行 \x1b[46m[A]科學(%d) [B]詩詞(%d) [C]神學(%d) [D]軍學(%d) [E]劍術(%d)                  %*s\x1b[m",
+     "\x1b[1;44;37m 選單 \x1b[46m[F]格鬥(%d) [G]魔法(%d) [H]禮儀(%d) [I]繪畫(%d) [J]舞蹈(%d) [Q]跳出          %*s\x1b[m"},
 
     {"   ",
-     "\x1b[1;44;37m  系統選單  \x1b[46m[1]詳細資料 [2]小雞自由 [3]特別服務 [4]儲存進度 [5]讀取進度 [Q]跳出%*s\x1b[m"}
+     "\x1b[1;44;37m  玩樂選單  \x1b[46m[1]散步 [2]運動 [3]約會 [4]猜拳 [5]旅遊 [6]郊外 [7]唱歌 [Q]跳出   %*s\x1b[m"},
+
+    {"\x1b[1;44;37m 打工 \x1b[46m[A]家事 [B]保姆 [C]旅館 [D]農場 [E]餐\廳 [F]教堂 [G]地攤 [H]伐木 [I]美髮 %*s\x1b[m",
+     "\x1b[1;44;37m 選單 \x1b[46m[J]獵人 [K]工地 [L]守墓 [M]家教 [N]酒家 [O]酒店 [P]夜總會       %*s[Q]跳出 \x1b[m"},
+
+    {"\x1b[1;44;37m 特殊 \x1b[46m[1]" NICKNAME "醫院 [2]媚登峰 [3]戰鬥修行 [4]拜訪朋友 [5]" NICKNAME "       %*s\x1b[m",
+     "\x1b[1;44;37m 選單 \x1b[46m                                                                %*s[Q]跳出 \x1b[m"},
+
+    {"\x1b[1;44;37m 系統 \x1b[46m[1]詳細資料 [2]小雞自由 [3]特別服務 [4]儲存進度 [5]讀取進度             %*s\x1b[m",
+     "\x1b[1;44;37m 選單 \x1b[46m                                                                %*s[Q]跳出 \x1b[m"}
 };
 
 /*主選單*/
@@ -668,7 +668,21 @@ struct pipcommands cmdtable[])
         else
         {
             move(b_lines - 1, 0);
-            prints(menuname[menunum][0], d_cols, "");
+
+            int fill;
+            switch (menunum)
+            {
+            case 2:
+                fill = 20 + d_cols - (sizeof(NICKNAME) - 1);
+                break;
+            case 6:
+                fill = 20 + d_cols - 2 * (sizeof(NICKNAME) - 1);
+                break;
+            default:
+                fill = d_cols;
+            }
+            prints(menuname[menunum][0], fill, "");
+
             move(b_lines, 0);
             prints(menuname[menunum][1], d_cols, "");
         }
@@ -898,11 +912,11 @@ int mode)
     /*vs_head("電子養小雞", BoardName);*/
     move(0, 0);
     if (d.sex == 1)
-        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[32m♂ \x1b[37m%-15s                                  %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, d_cols, "");
+        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[32m♂ \x1b[37m%-15s     %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, 40 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
     else if (d.sex == 2)
-        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[33m♀ \x1b[37m%-15s                                  %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, d_cols, "");
+        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[33m♀ \x1b[37m%-15s     %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, 40 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
     else
-        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[34m？ \x1b[37m%-15s                                  %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, d_cols, "");
+        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[34m？ \x1b[37m%-15s     %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, 40 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
     outs(buf);
 
     move(1, 0);
@@ -2130,7 +2144,7 @@ int oldnum[])
         }
         clrchyiuan(b_lines - 4, b_lines);
         move(b_lines, 0);
-        sprintf(inbuf, "\x1b[1;44;37m  %8s選單  \x1b[46m  [B]買入物品  [S]賣出物品  [Q]跳出                           %*s\x1b[m", shopname[mode], d_cols, "");
+        sprintf(inbuf, "\x1b[1;44;37m  %8s選單  \x1b[46m  [B]買入物品  [S]賣出物品  [Q]跳出     %*s\x1b[m", shopname[mode], 30 + d_cols - strlen(shopname[mode]), "");
         outs(inbuf);
         pipkey = vkey();
         switch (pipkey)
@@ -4568,7 +4582,7 @@ struct royalset *p)
         clrtoeol();
         move(b_lines, 0);
         prints(
-            "\x1b[1;37;46m  參見選單  \x1b[44m [字母]選擇欲拜訪的人物  [Q]離開" NICKNAME "總司令部                    %*s\x1b[0m", d_cols, "");
+            "\x1b[1;37;46m  參見選單  \x1b[44m [字母]選擇欲拜訪的人物  [Q]離開" NICKNAME "總司令部      %*s\x1b[0m", 20 + d_cols - (sizeof(NICKNAME) - 1), "");
         pipkey = vkey();
         choice = pipkey - 64;
         if (choice < 1 || choice > 10)
@@ -4763,7 +4777,7 @@ int first)
     while (gameover == 0 && (opponent->pip == NULL || opponent->pip->leaving == 0))
     {
         move(b_lines, 0);
-        prints("\x1b[1;46m 對方還在準備中                                                        %*s\x1b[m", d_cols, "");
+        prints("\x1b[1;46m 對方還在準備中                                                               %*s\x1b[m", d_cols, "");
         ch = vkey();
     }
     if (currutmp->pip->mode != opponent->pip->mode)
@@ -6829,7 +6843,7 @@ pip_system_service(void)
     move(b_lines - 1, 0);
     clrtoeol();
     move(b_lines, 0);
-    prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                                %*s\x1b[0m", d_cols, "");
+    prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                               %*s\x1b[0m", d_cols, "");
     pipkey = vkey();
 
     switch (pipkey)
@@ -6872,7 +6886,7 @@ pip_system_service(void)
             outs("\x1b[1;33m將小雞由\x1b[35m♀\x1b[33m變性成\x1b[35m♂\x1b[33m的嗎？ \x1b[37m[y/N]\x1b[0m");
         }
         move(b_lines, 0);
-        prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                                %*s\x1b[0m", d_cols, "");
+        prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                               %*s\x1b[0m", d_cols, "");
         pipkey = vkey();
         if (pipkey == 'Y' || pipkey == 'y')
         {
@@ -6908,7 +6922,7 @@ pip_system_service(void)
             sprintf(buf, "小雞遊戲設定成[沒有20歲結局]..");
         }
         move(b_lines, 0);
-        prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                                %*s\x1b[0m", d_cols, "");
+        prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                               %*s\x1b[0m", d_cols, "");
         pipkey = vkey();
         if (pipkey == 'Y' || pipkey == 'y')
         {
@@ -7165,7 +7179,7 @@ char *userid)
             break;
         }
         move(b_lines, 0);
-        sprintf(buf, "\x1b[1;44;37m  資料選單  \x1b[46m  [↑/PAGE UP]往上一頁 [↓/PAGE DOWN]往下一頁 [Q]離開             %*s\x1b[m", d_cols, "");
+        sprintf(buf, "\x1b[1;44;37m  資料選單  \x1b[46m  [↑/PAGE UP]往上一頁 [↓/PAGE DOWN]往下一頁 [Q]離開            %*s\x1b[m", d_cols, "");
         outs(buf);
         pipkey = vkey();
         switch (pipkey)
@@ -7237,8 +7251,8 @@ pip_meet_vs_man(void)
     class = (d.maxhp * 30 + d.maxmp * 20 + d.attack * 20 + d.resist * 15 + d.mexp * 5 + d.hexp * 5 + d.speed * 10) / 8500 + 1;
 
     move(b_lines - 1, 0);
-    prints("\x1b[1;44;37m 區域 \x1b[46m[1]炎之洞窟  [2]北方冰原  [3]古代遺跡  [4]人工島  [5]地獄之門            %*s\x1b[m\n", d_cols, "");
-    prints("\x1b[1;44;37m 區域 \x1b[46m                                                                  %*s[Q]回家\x1b[m", d_cols, "");
+    prints("\x1b[1;44;37m 區域 \x1b[46m[1]炎之洞窟  [2]北方冰原  [3]古代遺跡  [4]人工島  [5]地獄之門           %*s\x1b[m\n", d_cols, "");
+    prints("\x1b[1;44;37m 區域 \x1b[46m                                                                %*s[Q]回家 \x1b[m", d_cols, "");
     while (1)
     {
         char buf[128];
@@ -7260,7 +7274,7 @@ pip_meet_vs_man(void)
         move(b_lines - 1, 0);
         clrtoeol();
         move(b_lines, 0);
-        prints("\x1b[1;44;37m 方向 \x1b[46m[R]回家 [F]餵食 (E/W/S/N)東西南北                                        %*s\x1b[m", d_cols, "");
+        prints("\x1b[1;44;37m 方向 \x1b[46m[R]回家 [F]餵食 (E/W/S/N)東西南北                                       %*s\x1b[m", d_cols, "");
         ans = vkey();
         if (ans == 'r' || ans == 'R')
             return 0;
@@ -7411,11 +7425,11 @@ int mode)
         /*vs_head("電子養小雞", BoardName);*/
         move(0, 0);
         if (d.sex == 1)
-            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[32m♂ \x1b[37m%-10s                                                %*s\x1b[0m", d.name, d_cols, "");
+            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[32m♂ \x1b[37m%-10s        %*s\x1b[0m", d.name, 50 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
         else if (d.sex == 2)
-            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-10s                                                %*s\x1b[0m", d.name, d_cols, "");
+            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-10s        %*s\x1b[0m", d.name, 50 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
         else
-            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-10s                                                %*s\x1b[0m", d.name, d_cols, "");
+            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-10s        %*s\x1b[0m", d.name, 50 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
         outs(buf);
         move(6, 0);
         if (mode == 1)
@@ -7466,7 +7480,7 @@ int mode)
         sprintf(buf, "\x1b[1;34m└─────────────────────────────────────┘\x1b[m");
         outs_centered(buf);
         move(b_lines, 0);
-        sprintf(buf, "\x1b[1;44;37m  戰鬥命令  \x1b[46m  [1]普通  [2]全力  [3]魔法  [4]防禦  [5]補充  [6]逃命         %*s\x1b[m", d_cols, "");
+        sprintf(buf, "\x1b[1;44;37m  戰鬥命令  \x1b[46m  [1]普通  [2]全力  [3]魔法  [4]防禦  [5]補充  [6]逃命            %*s\x1b[m", d_cols, "");
         outs(buf);
 
         if (m.death == 0 && d.death == 0)
@@ -7651,11 +7665,11 @@ int mode)
         clear();
         move(0, 0);
         if (d.sex == 1)
-            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[32m♂ \x1b[37m%-10s                                                  %*s\x1b[0m", d.name, d_cols, "");
+            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[32m♂ \x1b[37m%-10s        %*s\x1b[0m", d.name, 50 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
         else if (d.sex == 2)
-            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-10s                                                  %*s\x1b[0m", d.name, d_cols, "");
+            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-10s        %*s\x1b[0m", d.name, 50 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
         else
-            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-10s                                                  %*s\x1b[0m", d.name, d_cols, "");
+            sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-10s        %*s\x1b[0m", d.name, 50 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
         outs(buf);
         move(1, 0);
         sprintf(buf, "\x1b[1;31m┌─────────────────────────────────────┐\x1b[m");
@@ -7961,12 +7975,12 @@ UTMP *opt)
         if (mode)
         {
             sprintf(buf,
-                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [7]特殊 [Q]放棄  %*s\x1b[m", d_cols, "");
+                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [7]特殊 [Q]放棄 %*s\x1b[m", d_cols, "");
         }
         else
         {
             sprintf(buf,
-                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [Q]放棄  %*s\x1b[m", d_cols, "");
+                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [Q]放棄         %*s\x1b[m", d_cols, "");
         }
         move(b_lines, 0);
         outs(buf);
@@ -8677,11 +8691,11 @@ int mode)
     clear();
     move(0, 0);
     if (d.sex == 1)
-        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[32m♂ \x1b[37m%-15s                                           %*s\x1b[0m", d.name, d_cols, "");
+        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[32m♂ \x1b[37m%-15s    %*s\x1b[0m", d.name, 55 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
     else if (d.sex == 2)
-        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-15s                                           %*s\x1b[0m", d.name, d_cols, "");
+        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-15s    %*s\x1b[0m", d.name, 55 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
     else
-        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-15s                                           %*s\x1b[0m", d.name, d_cols, "");
+        sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-15s    %*s\x1b[0m", d.name, 55 + d_cols - (sizeof(NICKNAME PIPNAME) - 1), "");
     outs(buf);
 
     move(1, 0);
