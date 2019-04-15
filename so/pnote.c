@@ -125,7 +125,7 @@ do_pnote(char *userid)
 
     clrtobot();
     move(13, 0);
-    prints("\x1b[1;33m口畢～～～！\x1b[m");
+    outs("\x1b[1;33m口畢～～～！\x1b[m");
     memset(&myitem, 0, sizeof(notedata));
     do
     {
@@ -218,7 +218,7 @@ show_pnote(notedata *pitem)
             Cdate(&(pitem->date)));
     prints("\n\x1b[1;37m%*s  %s\n%*s  %s\n%*s  %s\n\x1b[0m",
            d_cols>>1, "", pitem->buf[0], d_cols>>1, "", pitem->buf[1], d_cols>>1, "", pitem->buf[2]);
-    prints_centered("                 \x1b[1;36m──────────────────────────────┘\x1b[m\n");
+    outs_centered("                 \x1b[1;36m──────────────────────────────┘\x1b[m\n");
     pitem->mode = 1;
 }
 
@@ -284,7 +284,7 @@ char *uid)
     }
     else
         prints("您好，這是 %s 的電話答錄機，", uid);
-    prints("\n請在聽到「嗶」聲後，開始留言，謝謝。");
+    outs("\n請在聽到「嗶」聲後，開始留言，謝謝。");
 }
 
 /*                                                              *
