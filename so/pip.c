@@ -636,32 +636,42 @@ struct pipcommands cmdtable[])
         if (pip_mainmenu(menumode))
             return 0;
 
-        class1 = d.wisdom / 200 + 1;                            /*科學*/
-        if (class1 > 5)  class1 = 5;
-        class2 = (d.affect * 2 + d.wisdom + d.art * 2 + d.character) / 400 + 1; /*詩詞*/
-        if (class2 > 5)  class2 = 5;
-        class3 = (d.belief * 2 + d.wisdom) / 400 + 1;           /*神學*/
-        if (class3 > 5)  class3 = 5;
-        class4 = (d.hskill * 2 + d.wisdom) / 400 + 1;           /*軍學*/
-        if (class4 > 5)  class4 = 5;
-        class5 = (d.hskill + d.attack) / 400 + 1;               /*劍術*/
-        if (class5 > 5)  class5 = 5;
-        class6 = (d.hskill + d.resist) / 400 + 1;               /*格鬥*/
-        if (class6 > 5)  class6 = 5;
-        class7 = (d.mskill + d.maxmp) / 400 + 1;                /*魔法*/
-        if (class7 > 5)  class7 = 5;
-        class8 = (d.manners * 2 + d.character) / 400 + 1;       /*禮儀*/
-        if (class8 > 5)  class8 = 5;
-        class9 = (d.art * 2 + d.character) / 400 + 1;           /*繪畫*/
-        if (class9 > 5)  class9 = 5;
-        class10 = (d.art * 2 + d.charm) / 400 + 1;              /*舞蹈*/
-        if (class10 > 5) class10 = 5;
-
         clrchyiuan(b_lines - 1, b_lines);
-        move(b_lines - 1, 0);
-        prints(menuname[menunum][0], class1, class2, class3, class4, class5);
-        move(b_lines, 0);
-        prints(menuname[menunum][1], class6, class7, class8, class9, class10);
+        if (menunum == 3)                                           /*修行*/
+        {
+            class1 = d.wisdom / 200 + 1;                            /*科學*/
+            if (class1 > 5)  class1 = 5;
+            class2 = (d.affect * 2 + d.wisdom + d.art * 2 + d.character) / 400 + 1; /*詩詞*/
+            if (class2 > 5)  class2 = 5;
+            class3 = (d.belief * 2 + d.wisdom) / 400 + 1;           /*神學*/
+            if (class3 > 5)  class3 = 5;
+            class4 = (d.hskill * 2 + d.wisdom) / 400 + 1;           /*軍學*/
+            if (class4 > 5)  class4 = 5;
+            class5 = (d.hskill + d.attack) / 400 + 1;               /*劍術*/
+            if (class5 > 5)  class5 = 5;
+            class6 = (d.hskill + d.resist) / 400 + 1;               /*格鬥*/
+            if (class6 > 5)  class6 = 5;
+            class7 = (d.mskill + d.maxmp) / 400 + 1;                /*魔法*/
+            if (class7 > 5)  class7 = 5;
+            class8 = (d.manners * 2 + d.character) / 400 + 1;       /*禮儀*/
+            if (class8 > 5)  class8 = 5;
+            class9 = (d.art * 2 + d.character) / 400 + 1;           /*繪畫*/
+            if (class9 > 5)  class9 = 5;
+            class10 = (d.art * 2 + d.charm) / 400 + 1;              /*舞蹈*/
+            if (class10 > 5) class10 = 5;
+
+            move(b_lines - 1, 0);
+            prints(menuname[menunum][0], class1, class2, class3, class4, class5);
+            move(b_lines, 0);
+            prints(menuname[menunum][1], class6, class7, class8, class9, class10);
+        }
+        else
+        {
+            move(b_lines - 1, 0);
+            prints(menuname[menunum][0]);
+            move(b_lines, 0);
+            prints(menuname[menunum][1]);
+        }
 
         now = time(0);
         pip_time_change(now);
