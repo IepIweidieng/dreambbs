@@ -196,13 +196,13 @@ void pip_new_game(void)
         clear();
         vs_head(NICKNAME PIPNAME, BoardName);
         move(4, 6);
-        prints("歡迎來到 \x1b[1;5;33m" NICKNAME "生物科技研究院\x1b[0m");
+        outs("歡迎來到 \x1b[1;5;33m" NICKNAME "生物科技研究院\x1b[0m");
         move(6, 6);
-        prints("經我們調查顯示  先前你有養過小雞喔  可是被你養死了...");
+        outs("經我們調查顯示  先前你有養過小雞喔  可是被你養死了...");
         move(8, 6);
         if (d.liveagain < 4)
         {
-            prints("我們可以幫你幫小雞復活  但是需要付出一點代價");
+            outs("我們可以幫你幫小雞復活  但是需要付出一點代價");
             getdata(10, 6, "你要我們讓他重生嗎? [y/N]: ", buf, 2, DOECHO, 0);
             if (buf[0] == 'y' || buf[0] == 'Y')
             {
@@ -211,9 +211,9 @@ void pip_new_game(void)
         }
         else if (d.liveagain >= 4)
         {
-            prints("可是你復活手術太多次了  小雞身上都是開刀痕跡");
+            outs("可是你復活手術太多次了  小雞身上都是開刀痕跡");
             move(10, 6);
-            prints("我們找不到可以手術的地方了  所以....");
+            outs("我們找不到可以手術的地方了  所以....");
             vmsg("重新再來吧....唉....");
         }
     }
@@ -237,11 +237,11 @@ void pip_new_game(void)
             d.sex = 2;
         }
         move(6, 3);
-        prints(NICKNAME PIPNAME "的遊戲現今分成兩種玩法");
+        outs(NICKNAME PIPNAME "的遊戲現今分成兩種玩法");
         move(7, 3);
-        prints("選有結局會在小雞20歲時結束遊戲，並告知小雞後續的發展");
+        outs("選有結局會在小雞20歲時結束遊戲，並告知小雞後續的發展");
         move(8, 3);
-        prints("選沒有結局則一直養到小雞死亡才結束遊戲....");
+        outs("選沒有結局則一直養到小雞死亡才結束遊戲....");
         /*1:不要且未婚 4:要且未婚 */
         getdata(9, 3, "你希望小雞遊戲是否要有20歲結局? [Y/n]: ", buf, 2, DOECHO, 0);
         if (buf[0] == 'n' || buf[0] == 'N')
@@ -903,7 +903,7 @@ int mode)
         sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[33m♀ \x1b[37m%-15s                                  %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, d_cols, "");
     else
         sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ [%s代雞] \x1b[34m？ \x1b[37m%-15s                                  %*s\x1b[m", d.chickenmode ? "二" : "一", d.name, d_cols, "");
-    prints(buf);
+    outs(buf);
 
     move(1, 0);
     if (d.money <= 100)
@@ -916,7 +916,7 @@ int mode)
     sprintf(buf
             , " \x1b[1;32m[狀  態]\x1b[37m %-5s     \x1b[32m[生  日]\x1b[37m %-9s \x1b[32m[年  齡]\x1b[37m %-5d     \x1b[32m[金  錢]\x1b[%dm %-8d \x1b[m"
             , yo[age], inbuf1, tm, color1, d.money);
-    prints_centered(buf);
+    outs_centered(buf);
 
     move(2, 0);
 
@@ -945,7 +945,7 @@ int mode)
     sprintf(buf
             , " \x1b[1;32m[生  命]\x1b[%dm %-10d\x1b[32m[法  力]\x1b[%dm %-10d\x1b[32m[體  重]\x1b[37m %-5d     \x1b[32m[疲  勞]\x1b[%dm %-4d\x1b[0m "
             , color1, d.hp, color2, d.mp, d.weight, color3, d.tired);
-    prints_centered(buf);
+    outs_centered(buf);
 
     move(3, 0);
     if (d.shit >= 80)
@@ -975,7 +975,7 @@ int mode)
     sprintf(buf
             , " \x1b[1;32m[命 MAX]\x1b[37m %-10d\x1b[32m[法 MAX]\x1b[37m %-10d\x1b[32m[髒／病]\x1b[%dm %-4d\x1b[37m/\x1b[%dm%-4d \x1b[32m[快／滿]\x1b[%dm %-4d\x1b[37m/\x1b[%dm%-4d\x1b[m"
             , d.maxhp, d.maxmp, color1, d.shit, color2, d.sick, color3, d.happy, color4, d.satisfy);
-    prints_centered(buf);
+    outs_centered(buf);
     if (mode == 0)  /*主要畫面*/
     {
         anynum = 0;
@@ -989,7 +989,7 @@ int mode)
             sprintf(buf, " \x1b[1;35m[站長曰]:\x1b[37m隨時注意小雞的生命數值唷!\x1b[0m");
         else if (anynum == 3)
             sprintf(buf, " \x1b[1;35m[站長曰]:\x1b[37m快快樂樂的小雞才是幸福的小雞.....\x1b[0m");
-        prints_centered(buf);
+        outs_centered(buf);
     }
     else if (mode == 1)/*餵食*/
     {
@@ -1021,7 +1021,7 @@ int mode)
         sprintf(buf
                 , " \x1b[1;36m[食物]\x1b[%dm%-7d\x1b[36m[零食]\x1b[%dm%-7d\x1b[36m[補丸]\x1b[%dm%-7d\x1b[36m[靈芝]\x1b[%dm%-7d\x1b[36m[人參]\x1b[37m%-7d\x1b[36m[雪蓮]\x1b[37m%-7d\x1b[0m"
                 , color1, d.food, color2, d.cookie, color3, d.bighp, color4, d.medicine, d.ginseng, d.snowgrass);
-        prints_centered(buf);
+        outs_centered(buf);
 
     }
     else if (mode == 2)/*打工*/
@@ -1030,7 +1030,7 @@ int mode)
         sprintf(buf
                 , " \x1b[1;36m[愛心]\x1b[37m%-5d\x1b[36m[智慧]\x1b[37m%-5d\x1b[36m[氣質]\x1b[37m%-5d\x1b[36m[藝術]\x1b[37m%-5d\x1b[36m[道德]\x1b[37m%-5d\x1b[36m[勇敢]\x1b[37m%-5d\x1b[36m[家事]\x1b[37m%-5d\x1b[0m"
                 , d.love, d.wisdom, d.character, d.art, d.ethics, d.brave, d.homework);
-        prints_centered(buf);
+        outs_centered(buf);
 
     }
     else if (mode == 3)/*修行*/
@@ -1039,7 +1039,7 @@ int mode)
         sprintf(buf
                 , " \x1b[1;36m[智慧]\x1b[37m%-5d\x1b[36m[氣質]\x1b[37m%-5d\x1b[36m[藝術]\x1b[37m%-5d\x1b[36m[勇敢]\x1b[37m%-5d\x1b[36m[攻擊]\x1b[37m%-5d\x1b[36m[防禦]\x1b[37m%-5d\x1b[36m[速度]\x1b[37m%-5d\x1b[0m"
                 , d.wisdom, d.character, d.art, d.brave, d.attack, d.resist, d.speed);
-        prints_centered(buf);
+        outs_centered(buf);
 
     }
     move(5, 0);
@@ -1097,18 +1097,18 @@ int mode)
     move(b_lines - 5, 0);
     prints_centered("\x1b[1;%dm└─────────────────────────────────────┘\x1b[m", color);
     move(b_lines - 4, 0);
-    prints_centered(" \x1b[1;34m─\x1b[37;44m  狀 態  \x1b[0;1;34m─\x1b[0m");
+    outs_centered(" \x1b[1;34m─\x1b[37;44m  狀 態  \x1b[0;1;34m─\x1b[0m");
     move(b_lines - 3, 0);
-    prints_centered(" ");
+    outs_centered(" ");
     if (d.shit == 0)
-        prints("乾淨小雞  ");
+        outs("乾淨小雞  ");
     if (d.shit > 40 && d.shit < 60)
-        prints("有點臭臭  ");
+        outs("有點臭臭  ");
     if (d.shit >= 60 && d.shit < 80)
-        prints("\x1b[1;33m很臭了說\x1b[m  ");
+        outs("\x1b[1;33m很臭了說\x1b[m  ");
     if (d.shit >= 80 && d.shit < 100)
     {
-        prints("\x1b[1;35m快臭死了\x1b[m  ");
+        outs("\x1b[1;35m快臭死了\x1b[m  ");
         d.sick += 4;
         d.character -= (rand() % 3 + 3);
     }
@@ -1131,26 +1131,26 @@ int mode)
     }
     if (pc < 20)
     {
-        prints("\x1b[1;35m快餓昏了\x1b[m  ");
+        outs("\x1b[1;35m快餓昏了\x1b[m  ");
         d.sick += 3;
         d.happy -= 5;
         d.satisfy -= 3;
     }
     if (pc < 40 && pc >= 20)
-        prints("\x1b[1;33m想吃東西\x1b[m  ");
+        outs("\x1b[1;33m想吃東西\x1b[m  ");
     if (pc <= 100 && pc >= 90)
-        prints("肚子飽飽  ");
+        outs("肚子飽飽  ");
     if (pc < 110 && pc > 100)
-        prints("\x1b[1;33m撐撐的說\x1b[m  ");
+        outs("\x1b[1;33m撐撐的說\x1b[m  ");
 
     pc = d.tired;
     if (pc < 20)
-        prints("精神很好  ");
+        outs("精神很好  ");
     if (pc < 80 && pc >= 60)
-        prints("\x1b[1;33m有點小累\x1b[m  ");
+        outs("\x1b[1;33m有點小累\x1b[m  ");
     if (pc < 100 && pc >= 80)
     {
-        prints("\x1b[1;35m真的很累\x1b[m  ");
+        outs("\x1b[1;35m真的很累\x1b[m  ");
         d.sick += 5;
     }
     if (pc >= 100)
@@ -1162,10 +1162,10 @@ int mode)
 
     pc = 60 + 10 * tm;
     if (d.weight < (pc + 30) && d.weight >= (pc + 10))
-        prints("\x1b[1;33m有點小胖\x1b[m  ");
+        outs("\x1b[1;33m有點小胖\x1b[m  ");
     if (d.weight < (pc + 50) && d.weight >= (pc + 30))
     {
-        prints("\x1b[1;35m太胖了啦\x1b[m  ");
+        outs("\x1b[1;35m太胖了啦\x1b[m  ");
         d.sick += 3;
         if (d.speed >= 2)
             d.speed -= 2;
@@ -1187,18 +1187,18 @@ int mode)
         return -1;
     }
     if (d.weight > (pc - 30) && d.weight <= (pc - 10))
-        prints("\x1b[1;33m有點小瘦\x1b[m  ");
+        outs("\x1b[1;33m有點小瘦\x1b[m  ");
     if (d.weight > (pc - 50) && d.weight <= (pc - 30))
-        prints("\x1b[1;35m太瘦了喔\x1b[m ");
+        outs("\x1b[1;35m太瘦了喔\x1b[m ");
 
     if (d.sick < 75 && d.sick >= 50)
     {
-        prints("\x1b[1;33m生病了啦\x1b[m  ");
+        outs("\x1b[1;33m生病了啦\x1b[m  ");
         count_tired(1, 8, "Y", 100, 1);
     }
     if (d.sick < 100 && d.sick >= 75)
     {
-        prints("\x1b[1;35m正病重中\x1b[m  ");
+        outs("\x1b[1;35m正病重中\x1b[m  ");
         d.sick += 5;
         count_tired(1, 15, "Y", 100, 1);
     }
@@ -1211,21 +1211,21 @@ int mode)
 
     pc = d.happy;
     if (pc < 20)
-        prints("\x1b[1;35m很不快樂\x1b[m  ");
+        outs("\x1b[1;35m很不快樂\x1b[m  ");
     if (pc < 40 && pc >= 20)
-        prints("\x1b[1;33m不太快樂\x1b[m  ");
+        outs("\x1b[1;33m不太快樂\x1b[m  ");
     if (pc < 95 && pc >= 80)
-        prints("快樂啦..  ");
+        outs("快樂啦..  ");
     if (pc <= 100 && pc >= 95)
-        prints("很快樂..  ");
+        outs("很快樂..  ");
 
     pc = d.satisfy;
-    if (pc < 20) prints("\x1b[1;35m很不滿足..\x1b[m  ");
-    if (pc < 40 && pc >= 20) prints("\x1b[1;33m不太滿足\x1b[m  ");
-    if (pc < 95 && pc >= 80) prints("滿足啦..  ");
-    if (pc <= 100 && pc >= 95) prints("很滿足..  ");
+    if (pc < 20) outs("\x1b[1;35m很不滿足..\x1b[m  ");
+    if (pc < 40 && pc >= 20) outs("\x1b[1;33m不太滿足\x1b[m  ");
+    if (pc < 95 && pc >= 80) outs("滿足啦..  ");
+    if (pc <= 100 && pc >= 95) outs("很滿足..  ");
 
-    prints("\n");
+    outs("\n");
 
     pip_write_file();
     return 0;
@@ -1391,7 +1391,7 @@ int pip_basic_feed(void)     /* 餵食*/
         clrtoeol();
         move(b_lines - 2, 1);
         sprintf(buf, "%s該做什麼事呢?", d.name);
-        prints_centered(buf);
+        outs_centered(buf);
         now = time(0);
         move(b_lines, 0);
         clrtoeol();
@@ -1664,7 +1664,7 @@ pip_write_backup(void)
         move(b_lines - 1, 0);
         clrtoeol();
         move(b_lines - 1, 1);
-        prints("儲存 [1]進度一 [2]進度二 [3]進度三 [Q]放棄 [1/2/3/Q]：");
+        outs("儲存 [1]進度一 [2]進度二 [3]進度三 [Q]放棄 [1/2/3/Q]：");
         pipkey = vkey();
 
         if (pipkey == '1')
@@ -1720,7 +1720,7 @@ pip_read_backup(void)
         move(b_lines - 1, 0);
         clrtoeol();
         move(b_lines - 1, 1);
-        prints("讀取 [1]進度一 [2]進度二 [3]進度三 [Q]放棄 [1/2/3/Q]：");
+        outs("讀取 [1]進度一 [2]進度二 [3]進度三 [Q]放棄 [1/2/3/Q]：");
         pipkey = vkey();
 
         if (pipkey == '1')
@@ -1746,7 +1746,7 @@ pip_read_backup(void)
             {
 
                 move(b_lines - 2, 1);
-                prints("讀取出檔案會覆蓋\現在正在玩的小雞的檔案喔！請考慮清楚...");
+                outs("讀取出檔案會覆蓋\現在正在玩的小雞的檔案喔！請考慮清楚...");
                 sprintf(buf, "確定要讀取出 [%s] 檔案嗎？ [y/N]: ", files[num]);
                 getdata(b_lines - 1, 1, buf, ans, 2, DOECHO, 0);
                 if (ans[0] != 'y' && ans[0] != 'Y')
@@ -2120,18 +2120,18 @@ int oldnum[])
         clrchyiuan(6, b_lines - 6);
         move(6, 0);
         sprintf(inbuf, "\x1b[1;31m  ─\x1b[41;37m 編號 \x1b[0;1;31m─\x1b[41;37m 商      品 \x1b[0;1;31m──\x1b[41;37m 效            能 \x1b[0;1;31m──\x1b[41;37m 價     格 \x1b[0;1;31m─\x1b[37;41m 擁有數量 \x1b[0;1;31m─\x1b[0m  ");
-        prints_centered(inbuf);
+        outs_centered(inbuf);
         for (i = 1; i <= oldnum[0]; i++)
         {
             move(7 + i, 0);
             sprintf(inbuf, "     \x1b[1;35m[\x1b[37m%2d\x1b[35m]     \x1b[36m%-10s      \x1b[37m%-14s        \x1b[1;33m%-10d   \x1b[1;32m%-9d    \x1b[0m",
                     p[i].num, p[i].name, p[i].msgbuy, p[i].money, oldnum[i]);
-            prints_centered(inbuf);
+            outs_centered(inbuf);
         }
         clrchyiuan(b_lines - 4, b_lines);
         move(b_lines, 0);
         sprintf(inbuf, "\x1b[1;44;37m  %8s選單  \x1b[46m  [B]買入物品  [S]賣出物品  [Q]跳出：                         %*s\x1b[m", shopname[mode], d_cols, "");
-        prints(inbuf);
+        outs(inbuf);
         pipkey = vkey();
         switch (pipkey)
         {
@@ -2298,13 +2298,13 @@ struct weapon *p)
    /*   move(10, 2);
         sprintf(buf, "\x1b[1;37m現今能力:體力Max:\x1b[36m%-5d\x1b[37m  法力Max:\x1b[36m%-5d\x1b[37m  攻擊:\x1b[36m%-5d\x1b[37m  防禦:\x1b[36m%-5d\x1b[37m  速度:\x1b[36m%-5d \x1b[m",
                 d.maxhp, d.maxmp, d.attack, d.resist, d.speed);
-        prints_centered(buf);*/
+        outs_centered(buf);*/
         move(11, 2);
         sprintf(buf, "\x1b[1;37;41m [NO]  [器具名]  [體力]  [法力]  [速度]  [攻擊]  [防禦]  [速度]  [售  價] \x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(12, 2);
         sprintf(buf, " \x1b[1;31m──\x1b[37m白色 可以購買\x1b[31m──\x1b[32m綠色 擁有裝備\x1b[31m──\x1b[33m黃色 錢錢不夠\x1b[31m──\x1b[35m紫色 能力不足\x1b[31m──\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
 
         n = 0;
         while ((s = p[n].name))
@@ -2339,12 +2339,12 @@ struct weapon *p)
                         n, p[n].name, p[n].needmaxhp, p[n].needmaxmp, p[n].needspeed,
                         p[n].attack, p[n].resist, p[n].speed, p[n].cost);
             }
-            prints_centered(buf);
+            outs_centered(buf);
             n++;
         }
         move(b_lines, 0);
         sprintf(buf, "\x1b[1;44;37m  武器購買選單  \x1b[46m  [B]購買武器  [S]賣掉裝備  [W]個人資料  [Q]跳出：            %*s\x1b[m", d_cols, "");
-        prints(buf);
+        outs(buf);
         now = time(0);
         pip_time_change(now);
         pipkey = vkey();
@@ -2356,7 +2356,7 @@ struct weapon *p)
         case 'b':
             move(b_lines - 1, 1);
             sprintf(shortbuf, "想要購買啥呢? 你的錢錢[%d]元:[數字]: ", d.money);
-            prints(shortbuf);
+            outs(shortbuf);
             getdata(b_lines - 1, 1, shortbuf, choicekey, 4, LCECHO, "0");
             choice = atoi(choicekey);
             if (choice >= 0 && choice <= n)
@@ -3583,14 +3583,14 @@ int pip_play_outing(void)       /*郊遊*/
             move(b_lines - 6, (d_cols>>1) + 10);
             prints("\x1b[1;36m親愛的 \x1b[1;33m%s ～\x1b[0m", d.name);
             move(b_lines - 5, (d_cols>>1) + 10);
-            prints("\x1b[1;37m看到你這樣努力的培養自己的能力  讓我心中十分的高興喔..\x1b[m");
+            outs("\x1b[1;37m看到你這樣努力的培養自己的能力  讓我心中十分的高興喔..\x1b[m");
             move(b_lines - 4, (d_cols>>1) + 10);
-            prints("\x1b[1;36m小天使我決定給你獎賞鼓勵鼓勵  偷偷地幫助你一下....^_^\x1b[0m");
+            outs("\x1b[1;36m小天使我決定給你獎賞鼓勵鼓勵  偷偷地幫助你一下....^_^\x1b[0m");
             move(b_lines - 3, (d_cols>>1) + 10);
             lucky = rand() % 7;
             if (lucky == 6)
             {
-                prints("\x1b[1;33m我將幫你的各項能力全部提升百分之五喔......\x1b[0m");
+                outs("\x1b[1;33m我將幫你的各項能力全部提升百分之五喔......\x1b[0m");
                 d.maxhp = d.maxhp * 105 / 100;
                 d.hp = d.maxhp;
                 d.maxmp = d.maxmp * 105 / 100;
@@ -3608,7 +3608,7 @@ int pip_play_outing(void)       /*郊遊*/
 
             else if (lucky <= 5 && lucky >= 4)
             {
-                prints("\x1b[1;33m我將幫你的戰鬥能力全部提升百分之十喔.......\x1b[0m");
+                outs("\x1b[1;33m我將幫你的戰鬥能力全部提升百分之十喔.......\x1b[0m");
                 d.attack = d.attack * 110 / 100;
                 d.resist = d.resist * 110 / 100;
                 d.speed = d.speed * 110 / 100;
@@ -3617,7 +3617,7 @@ int pip_play_outing(void)       /*郊遊*/
 
             else if (lucky <= 3 && lucky >= 2)
             {
-                prints("\x1b[1;33m我將幫你的魔法能力和生命力全部提升百分之十喔.......\x1b[0m");
+                outs("\x1b[1;33m我將幫你的魔法能力和生命力全部提升百分之十喔.......\x1b[0m");
                 d.maxhp = d.maxhp * 110 / 100;
                 d.hp = d.maxhp;
                 d.maxmp = d.maxmp * 110 / 100;
@@ -3625,7 +3625,7 @@ int pip_play_outing(void)       /*郊遊*/
             }
             else if (lucky <= 1 && lucky >= 0)
             {
-                prints("\x1b[1;33m我將幫你的感受能力全部提升百分之二十喔....\x1b[0m");
+                outs("\x1b[1;33m我將幫你的感受能力全部提升百分之二十喔....\x1b[0m");
                 d.character = d.character * 110 / 100;
                 d.love = d.love * 110 / 100;
                 d.wisdom = d.wisdom * 110 / 100;
@@ -4510,10 +4510,10 @@ struct royalset *p)
         show_palace_pic(0);
         move(13, 4);
         sprintf(buf, "\x1b[1;31m┌──────┤\x1b[37;41m 來到總司令部了  請選擇你欲拜訪的對象 \x1b[0;1;31m├──────┐\x1b[0m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(14, 4);
         sprintf(buf, "\x1b[1;31m│                                                                  │\x1b[0m");
-        prints_centered(buf);
+        outs_centered(buf);
 
         for (n = 0; n < 5; n++)
         {
@@ -4535,14 +4535,14 @@ struct royalset *p)
             else
                 sprintf(buf, "\x1b[1;31m│ \x1b[36m(\x1b[37m%s\x1b[36m) \x1b[33m%-10s  \x1b[37m%-14s                                   \x1b[31m│\x1b[0m",
                         p[a].num, p[a].name, inbuf1);
-            prints_centered(buf);
+            outs_centered(buf);
         }
         move(20, 4);
         sprintf(buf, "\x1b[1;31m│                                                                  │\x1b[0m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(21, 4);
         sprintf(buf, "\x1b[1;31m└─────────────────────────────────┘\x1b[0m");
-        prints_centered(buf);
+        outs_centered(buf);
 
 
         if (d.death == 1 || d.death == 2 || d.death == 3)
@@ -4794,7 +4794,7 @@ int first)
         if (opponent->pip->nodone != 1)
             strcpy(mymsg[currutmp->pip->msgcount%8], currutmp->pip->msg);
         move(0, 0);
-        prints_centered("\x1b[1;34m═╣\x1b[44;37m 自己資料 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
+        outs_centered("\x1b[1;34m═╣\x1b[44;37m 自己資料 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
         prints_centered("\x1b[1m   \x1b[33m姓  名:\x1b[37m%-20s                                              \x1b[31m  \x1b[m\n",
                d.name);
         sprintf(buf1, "%d/%d", d.hp, d.maxhp);
@@ -4810,30 +4810,30 @@ int first)
         prints_centered("\x1b[1m   \x1b[33m人  蔘:\x1b[37m%-12d\x1b[33m雪  蓮:\x1b[37m%-12d\x1b[33m疲  勞:\x1b[37m%-15d               \x1b[m\n",
                d.ginseng, d.snowgrass, d.tired);
         move(7, 0);
-        prints_centered("\x1b[1;34m═╣\x1b[44;37m 戰鬥訊息 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
+        outs_centered("\x1b[1;34m═╣\x1b[44;37m 戰鬥訊息 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
         for (i = 0; i < 8; i++)
         {
             move(8 + i, 1);
 
             if (currutmp->pip->msgcount < 8)
             {
-                prints_centered(mymsg[i]);
+                outs_centered(mymsg[i]);
                 /*適用pip.msgcount在8行內*/
             }
             else
             {
-                prints_centered(mymsg[(currutmp->pip->msgcount-8+i)%8]);
+                outs_centered(mymsg[(currutmp->pip->msgcount-8+i)%8]);
                 /*pip.msgcount=8:表示已經有9個 所以從0->7*/
             }
         }
         move(16, 0);
-        prints_centered("\x1b[1;34m═╣\x1b[44;37m 談話訊息 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
+        outs_centered("\x1b[1;34m═╣\x1b[44;37m 談話訊息 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
         for (i = 0; i < 2; i++)
         {
             move(17 + i, 0);
             if (currutmp->pip->chatcount < 3)
             {
-                prints_centered(currutmp->pip->chat[i]);
+                outs_centered(currutmp->pip->chat[i]);
                 /*適用pip.chatcount在2行內*/
             }
             else
@@ -4843,14 +4843,14 @@ int first)
             }
         }
         move(19, 0);
-        prints_centered("\x1b[1;34m═╣\x1b[1;37;44m 對手資料 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
+        outs_centered("\x1b[1;34m═╣\x1b[1;37;44m 對手資料 \x1b[0;1;34m╠═══════════════════════════════\x1b[m\n");
         prints_centered("\x1b[1m   \x1b[33m姓  名:\x1b[37m%-20s                                                \x1b[m\n",
                opponent->pip->name);
         sprintf(buf1, "%d/%d", opponent->pip->hp, opponent->pip->maxhp);
         sprintf(buf2, "%d/%d", opponent->pip->mp, opponent->pip->maxmp);
         prints_centered("\x1b[1m   \x1b[33m體  力:\x1b[37m%-24s       \x1b[33m法  力:\x1b[37m%-24s\x1b[m\n",
                buf1, buf2);
-        prints_centered("\x1b[1;34m═══════════════════════════════════════\x1b[m\n");
+        outs_centered("\x1b[1;34m═══════════════════════════════════════\x1b[m\n");
         if (opponent->pip->nodone == 1)
         {
             notyou = 1;
@@ -4895,13 +4895,13 @@ int first)
             add_io(fd, 30);
             clrchyiuan(7, b_lines - 4);
             move(7, 0);
-            prints_centered("\x1b[1;31m═╣\x1b[41;37m 回顧談話 \x1b[0;1;31m╠═══════════════════════════════\x1b[m\n");
+            outs_centered("\x1b[1;31m═╣\x1b[41;37m 回顧談話 \x1b[0;1;31m╠═══════════════════════════════\x1b[m\n");
             for (i = 0; i < 10; i++)
             {
                 move(8 + i, 0);
                 if (currutmp->pip->chatcount < 10)
                 {
-                    prints_centered(currutmp->pip->chat[i]);
+                    outs_centered(currutmp->pip->chat[i]);
                     /*適用pip.msgcount在七行內*/
                 }
                 else
@@ -4911,7 +4911,7 @@ int first)
                 }
             }
             move(18, 0);
-            prints_centered("\x1b[1;31m═╣\x1b[41;37m 到此為止 \x1b[0;1;31m╠═══════════════════════════════\x1b[m");
+            outs_centered("\x1b[1;31m═╣\x1b[41;37m 到此為止 \x1b[0;1;31m╠═══════════════════════════════\x1b[m");
             vmsg("回顧之前的談話 只有10通");
             add_io(fd, 1);
         }
@@ -5105,10 +5105,10 @@ int first)
                     clear();
                     vs_head("電子養小雞", BoardName);
                     move(10, 0);
-                    prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+                    outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
                     prints_centered("            \x1b[1;31m│  \x1b[37m實力不強的小雞 \x1b[33m%-10s                 \x1b[31m│\x1b[m\n", d.name);
                     prints_centered("            \x1b[1;31m│  \x1b[37m在與對手 \x1b[32m%-10s \x1b[37m戰鬥後落跑啦          \x1b[31m│\x1b[m\n", opponent->pip->name);
-                    prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
+                    outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
                     currutmp->pip->leaving = 0;
                     add_io(fd, 60);
                     vmsg("三十六計 走為上策...");
@@ -5130,10 +5130,10 @@ int first)
             clear();
             vs_head("電子養小雞", BoardName);
             move(10, 0);
-            prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+            outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
             prints_centered("            \x1b[1;31m│  \x1b[37m英勇的小雞 \x1b[33m%-10s                     \x1b[31m│\x1b[m\n", d.name);
             prints_centered("            \x1b[1;31m│  \x1b[37m打敗了對方小雞 \x1b[32m%-10s                 \x1b[31m│\x1b[m\n", opponent->pip->name);
-            prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m");
+            outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m");
             currutmp->pip->leaving = 0;
             add_io(fd, 60);
             if (opponent->pip->hp <= 0)
@@ -5146,11 +5146,11 @@ int first)
             clear();
             vs_head("電子養小雞", BoardName);
             move(10, 0);
-            prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+            outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
             prints_centered("            \x1b[1;31m│  \x1b[37m可憐的小雞 \x1b[33m%-10s                     \x1b[31m│\x1b[m\n", d.name);
             prints_centered("            \x1b[1;31m│  \x1b[37m在與 \x1b[32m%-10s \x1b[37m的戰鬥中，                \x1b[31m│\x1b[m\n", opponent->pip->name);
-            prints_centered("            \x1b[1;31m│  \x1b[37m不幸地打輸了，記者現場特別報導.........   \x1b[31m│\x1b[m\n");
-            prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
+            outs_centered("            \x1b[1;31m│  \x1b[37m不幸地打輸了，記者現場特別報導.........   \x1b[31m│\x1b[m\n");
+            outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
             currutmp->pip->leaving = 0;
             add_io(fd, 60);
             vmsg("小雞打輸了....");
@@ -5206,35 +5206,35 @@ pip_ending_screen(void)
     clear();
     pip_ending_decide(endbuf1, endbuf2, endbuf3, &endmode, &endgrade);
     move(1, (d_cols>>1) + 9);
-    prints("\x1b[1;33m╔═══╗╔══╮╗╔═══╮╔═══╗╔══╮╗╭═══╮\x1b[0m");
+    outs("\x1b[1;33m╔═══╗╔══╮╗╔═══╮╔═══╗╔══╮╗╭═══╮\x1b[0m");
     move(2, (d_cols>>1) + 9);
-    prints("\x1b[1;37m║      ║║    ║║║      ║║      ║║    ║║║      ║\x1b[0m");
+    outs("\x1b[1;37m║      ║║    ║║║      ║║      ║║    ║║║      ║\x1b[0m");
     move(3, (d_cols>>1) + 9);
-    prints("\x1b[0;37m║    ═╣║    ║║║  ╭╮║╚═╗╔╝║    ║║║  ╔═╗\x1b[0m");
+    outs("\x1b[0;37m║    ═╣║    ║║║  ╭╮║╚═╗╔╝║    ║║║  ╔═╗\x1b[0m");
     move(4, (d_cols>>1) + 9);
-    prints("\x1b[0;37m║    ═╣║  ║  ║║  ╰╯║╔═╝╚╗║  ║  ║║  ╰╯║\x1b[0m");
+    outs("\x1b[0;37m║    ═╣║  ║  ║║  ╰╯║╔═╝╚╗║  ║  ║║  ╰╯║\x1b[0m");
     move(5, (d_cols>>1) + 9);
-    prints("\x1b[1;37m║      ║║  ║  ║║      ║║      ║║  ║  ║║      ║\x1b[0m");
+    outs("\x1b[1;37m║      ║║  ║  ║║      ║║      ║║  ║  ║║      ║\x1b[0m");
     move(6, (d_cols>>1) + 9);
-    prints("\x1b[1;35m╚═══╝╚═╰═╝╚═══╯╚═══╝╚═╰═╝╰═══╯\x1b[0m");
+    outs("\x1b[1;35m╚═══╝╚═╰═╝╚═══╯╚═══╝╚═╰═╝╰═══╯\x1b[0m");
     move(b_lines - 16, (d_cols>>1) + 8);
-    prints("\x1b[1;31m──────────\x1b[41;37m " NICKNAME PIPNAME "結局報告 \x1b[0;1;31m──────────\x1b[0m");
+    outs("\x1b[1;31m──────────\x1b[41;37m " NICKNAME PIPNAME "結局報告 \x1b[0;1;31m──────────\x1b[0m");
     move(b_lines - 14, (d_cols>>1) + 10);
-    prints("\x1b[1;36m這個時間不知不覺地還是到臨了...\x1b[0m");
+    outs("\x1b[1;36m這個時間不知不覺地還是到臨了...\x1b[0m");
     move(b_lines - 12, (d_cols>>1) + 10);
     prints("\x1b[1;37m\x1b[33m%s\x1b[37m 得離開你的溫暖懷抱，自己一隻雞在外面求生存了.....\x1b[0m", d.name);
     move(b_lines - 10, (d_cols>>1) + 10);
-    prints("\x1b[1;36m在你照顧教導他的這段時光，讓他接觸了很多領域，培養了很多的能力....\x1b[0m");
+    outs("\x1b[1;36m在你照顧教導他的這段時光，讓他接觸了很多領域，培養了很多的能力....\x1b[0m");
     move(b_lines - 8, (d_cols>>1) + 10);
     prints("\x1b[1;37m因為這些，讓小雞 \x1b[33m%s\x1b[37m 之後的生活，變得更多采多姿了........\x1b[0m", d.name);
     move(b_lines - 6, (d_cols>>1) + 10);
-    prints("\x1b[1;36m對於你的關心，你的付出，你所有的愛......\x1b[0m");
+    outs("\x1b[1;36m對於你的關心，你的付出，你所有的愛......\x1b[0m");
     move(b_lines - 4, (d_cols>>1) + 10);
     prints("\x1b[1;37m\x1b[33m%s\x1b[37m 會永遠都銘記在心的....\x1b[0m", d.name);
     vmsg("接下來看未來發展");
     clrchyiuan(b_lines - 16, b_lines - 4);
     move(b_lines - 16, (d_cols>>1) + 8);
-    prints("\x1b[1;34m──────────\x1b[44;37m " NICKNAME PIPNAME "未來發展 \x1b[0;1;34m──────────\x1b[0m");
+    outs("\x1b[1;34m──────────\x1b[44;37m " NICKNAME PIPNAME "未來發展 \x1b[0;1;34m──────────\x1b[0m");
     move(b_lines - 14, (d_cols>>1) + 10);
     prints("\x1b[1;36m透過水晶球，讓我們一起來看 \x1b[33m%s\x1b[36m 的未來發展吧.....\x1b[0m", d.name);
     move(b_lines - 12, (d_cols>>1) + 10);
@@ -5244,7 +5244,7 @@ pip_ending_screen(void)
     move(b_lines - 8, (d_cols>>1) + 10);
     prints("\x1b[1;37m至於小雞的婚姻狀況，他後來%s，婚姻算是很美滿.....\x1b[0m", endbuf3);
     move(b_lines - 6, (d_cols>>1) + 10);
-    prints("\x1b[1;36m嗯..這是一個不錯的結局唷..........\x1b[0m");
+    outs("\x1b[1;36m嗯..這是一個不錯的結局唷..........\x1b[0m");
     vmsg("我想  你一定很感動吧.....");
     show_ending_pic(0);
     vmsg("看一看分數囉");
@@ -6372,9 +6372,9 @@ int endgrade)
     clrchyiuan(1, b_lines);
     gradeall = gradebasic + endgrade;
     move(8, (d_cols>>1) + 17);
-    prints("\x1b[1;36m感謝您玩完整個" NICKNAME "小雞的遊戲.....\x1b[0m");
+    outs("\x1b[1;36m感謝您玩完整個" NICKNAME "小雞的遊戲.....\x1b[0m");
     move(10, (d_cols>>1) + 17);
-    prints("\x1b[1;37m經過系統計算的結果：\x1b[0m");
+    outs("\x1b[1;37m經過系統計算的結果：\x1b[0m");
     move(12, (d_cols>>1) + 17);
     prints("\x1b[1;36m您的小雞 \x1b[37m%s \x1b[36m總得分＝ \x1b[1;5;33m%d \x1b[0m", d.name, gradeall);
     return gradeall;
@@ -6398,11 +6398,11 @@ int pip_divine(void) /*占卜師來訪*/
     money = 300 * (tm + 1);
     clrchyiuan(6, b_lines - 6);
     move(10, (d_cols>>1) + 14);
-    prints("\x1b[1;33;5m叩叩叩...\x1b[0;1;37m突然傳來陣陣的敲門聲.........\x1b[0m");
+    outs("\x1b[1;33;5m叩叩叩...\x1b[0;1;37m突然傳來陣陣的敲門聲.........\x1b[0m");
     vmsg("去瞧瞧是誰吧......");
     clrchyiuan(6, b_lines - 6);
     move(10, (d_cols>>1) + 14);
-    prints("\x1b[1;37;46m    原來是雲遊四海的占卜師來訪了.......    \x1b[0m");
+    outs("\x1b[1;37;46m    原來是雲遊四海的占卜師來訪了.......    \x1b[0m");
     vmsg("開門讓他進來吧....");
     if (d.money >= money)
     {
@@ -6425,9 +6425,9 @@ int pip_divine(void) /*占卜師來訪*/
             d.money -= money;
             clrchyiuan(6, b_lines - 6);
             move(10, (d_cols>>1) + 14);
-            prints("\x1b[1;33m在我占卜結果看來....\x1b[m");
+            outs("\x1b[1;33m在我占卜結果看來....\x1b[m");
             move(12, (d_cols>>1) + 14);
-            prints(buf);
+            outs(buf);
             vmsg("謝謝惠顧，有緣再見面了.(不準不能怪我喔)");
         }
         else
@@ -6662,54 +6662,54 @@ char *genbuf)
                 break;
             }
             move(b_lines - 5, 0);
-            if (shit1 == 0) prints("很乾淨..");
-            if (shit1 > 40 && shit1 < 60) prints("臭臭的..");
-            if (shit1 >= 60 && shit1 < 80) prints("好臭喔..");
-            if (shit1 >= 80 && shit1 < 100) prints("\x1b[1;34m快臭死了..\x1b[m");
-            if (shit1 >= 100) {prints("\x1b[1;31m臭死了..\x1b[m"); return -1;}
+            if (shit1 == 0) outs("很乾淨..");
+            if (shit1 > 40 && shit1 < 60) outs("臭臭的..");
+            if (shit1 >= 60 && shit1 < 80) outs("好臭喔..");
+            if (shit1 >= 80 && shit1 < 100) outs("\x1b[1;34m快臭死了..\x1b[m");
+            if (shit1 >= 100) {outs("\x1b[1;31m臭死了..\x1b[m"); return -1;}
 
             pc1 = hp1 * 100 / maxhp1;
-            if (pc1 == 0) {prints("餓死了.."); return -1;}
-            if (pc1 < 20) prints("\x1b[1;35m全身無力中.快餓死了.\x1b[m");
-            if (pc1 < 40 && pc1 >= 20) prints("體力不太夠..想吃點東西..");
-            if (pc1 < 100 && pc1 >= 80) prints("嗯～肚子飽飽有體力..");
-            if (pc1 >= 100) prints("\x1b[1;34m快撐死了..\x1b[m");
+            if (pc1 == 0) {outs("餓死了.."); return -1;}
+            if (pc1 < 20) outs("\x1b[1;35m全身無力中.快餓死了.\x1b[m");
+            if (pc1 < 40 && pc1 >= 20) outs("體力不太夠..想吃點東西..");
+            if (pc1 < 100 && pc1 >= 80) outs("嗯～肚子飽飽有體力..");
+            if (pc1 >= 100) outs("\x1b[1;34m快撐死了..\x1b[m");
 
             pc1 = tired1;
-            if (pc1 < 20) prints("精神抖擻中..");
-            if (pc1 < 80 && pc1 >= 60) prints("\x1b[1;34m有點小累..\x1b[m");
-            if (pc1 < 100 && pc1 >= 80) {prints("\x1b[1;31m好累喔，快不行了..\x1b[m"); }
-            if (pc1 >= 100) {prints("累死了..."); return -1;}
+            if (pc1 < 20) outs("精神抖擻中..");
+            if (pc1 < 80 && pc1 >= 60) outs("\x1b[1;34m有點小累..\x1b[m");
+            if (pc1 < 100 && pc1 >= 80) {outs("\x1b[1;31m好累喔，快不行了..\x1b[m"); }
+            if (pc1 >= 100) {outs("累死了..."); return -1;}
 
             pc1 = 60 + 10 * age;
-            if (weight1 < (pc1 + 30) && weight1 >= (pc1 + 10)) prints("有點小胖..");
-            if (weight1 < (pc1 + 50) && weight1 >= (pc1 + 30)) prints("太胖了..");
-            if (weight1 > (pc1 + 50)) {prints("胖死了..."); return -1;}
+            if (weight1 < (pc1 + 30) && weight1 >= (pc1 + 10)) outs("有點小胖..");
+            if (weight1 < (pc1 + 50) && weight1 >= (pc1 + 30)) outs("太胖了..");
+            if (weight1 > (pc1 + 50)) {outs("胖死了..."); return -1;}
 
-            if (weight1 < (pc1 - 50)) {prints("瘦死了.."); return -1;}
-            if (weight1 > (pc1 - 30) && weight1 <= (pc1 - 10)) prints("有點小瘦..");
-            if (weight1 > (pc1 - 50) && weight1 <= (pc1 - 30)) prints("太瘦了..");
+            if (weight1 < (pc1 - 50)) {outs("瘦死了.."); return -1;}
+            if (weight1 > (pc1 - 30) && weight1 <= (pc1 - 10)) outs("有點小瘦..");
+            if (weight1 > (pc1 - 50) && weight1 <= (pc1 - 30)) outs("太瘦了..");
 
-            if (sick1 < 75 && sick1 >= 50) prints("\x1b[1;34m生病了..\x1b[m");
-            if (sick1 < 100 && sick1 >= 75) {prints("\x1b[1;31m病重!!..\x1b[m"); }
-            if (sick1 >= 100) {prints("病死了.!."); return -1;}
+            if (sick1 < 75 && sick1 >= 50) outs("\x1b[1;34m生病了..\x1b[m");
+            if (sick1 < 100 && sick1 >= 75) {outs("\x1b[1;31m病重!!..\x1b[m"); }
+            if (sick1 >= 100) {outs("病死了.!."); return -1;}
 
             pc1 = happy1;
-            if (pc1 < 20) prints("\x1b[1;31m很不快樂..\x1b[m");
-            if (pc1 < 40 && pc1 >= 20) prints("不快樂..");
-            if (pc1 < 95 && pc1 >= 80) prints("快樂..");
-            if (pc1 <= 100 && pc1 >= 95) prints("很快樂..");
+            if (pc1 < 20) outs("\x1b[1;31m很不快樂..\x1b[m");
+            if (pc1 < 40 && pc1 >= 20) outs("不快樂..");
+            if (pc1 < 95 && pc1 >= 80) outs("快樂..");
+            if (pc1 <= 100 && pc1 >= 95) outs("很快樂..");
 
             pc1 = satisfy1;
-            if (pc1 < 40) prints("\x1b[31;1m不滿足..\x1b[m");
-            if (pc1 < 95 && pc1 >= 80) prints("滿足..");
-            if (pc1 <= 100 && pc1 >= 95) prints("很滿足..");
+            if (pc1 < 40) outs("\x1b[31;1m不滿足..\x1b[m");
+            if (pc1 < 95 && pc1 >= 80) outs("滿足..");
+            if (pc1 <= 100 && pc1 >= 95) outs("很滿足..");
         }
         else if (death1 == 1)
         {
             show_die_pic(2);
             move(14, (d_cols>>1) + 20);
-            prints("可憐的小雞嗚呼哀哉了");
+            outs("可憐的小雞嗚呼哀哉了");
         }
         else if (death1 == 2)
         {
@@ -6863,13 +6863,13 @@ pip_system_service(void)
         {
             oldchoice = 2; /*公-->母*/
             move(b_lines - 1, 0);
-            prints("\x1b[1;33m將小雞由\x1b[32m♂\x1b[33m變性成\x1b[35m♀\x1b[33m的嗎？ \x1b[37m[y/N]\x1b[0m");
+            outs("\x1b[1;33m將小雞由\x1b[32m♂\x1b[33m變性成\x1b[35m♀\x1b[33m的嗎？ \x1b[37m[y/N]\x1b[0m");
         }
         else
         {
             oldchoice = 1; /*母-->公*/
             move(b_lines - 1, 0);
-            prints("\x1b[1;33m將小雞由\x1b[35m♀\x1b[33m變性成\x1b[35m♂\x1b[33m的嗎？ \x1b[37m[y/N]\x1b[0m");
+            outs("\x1b[1;33m將小雞由\x1b[35m♀\x1b[33m變性成\x1b[35m♂\x1b[33m的嗎？ \x1b[37m[y/N]\x1b[0m");
         }
         move(b_lines, 0);
         prints("\x1b[1;44m  服務項目  \x1b[46m[1]命名大師 [2]變性手術 [3]結局設局                                %*s\x1b[0m", d_cols, "");
@@ -6897,14 +6897,14 @@ pip_system_service(void)
         {
             oldchoice += 3; /*沒有-->有*/
             move(b_lines - 1, 0);
-            prints("\x1b[1;33m將小雞遊戲改成\x1b[32m[有20歲結局]\x1b[33m? \x1b[37m[y/N]\x1b[0m");
+            outs("\x1b[1;33m將小雞遊戲改成\x1b[32m[有20歲結局]\x1b[33m? \x1b[37m[y/N]\x1b[0m");
             sprintf(buf, "小雞遊戲設定成[有20歲結局]..");
         }
         else
         {
             oldchoice -= 3; /*有-->沒有*/
             move(b_lines - 1, 0);
-            prints("\x1b[1;33m將小雞遊戲改成\x1b[32m[沒有20歲結局]\x1b[33m? \x1b[37m[y/N]\x1b[0m");
+            outs("\x1b[1;33m將小雞遊戲改成\x1b[32m[沒有20歲結局]\x1b[33m? \x1b[37m[y/N]\x1b[0m");
             sprintf(buf, "小雞遊戲設定成[沒有20歲結局]..");
         }
         move(b_lines, 0);
@@ -6997,10 +6997,10 @@ char *userid)
 
     clear();
     move(1, 0);
-    prints_centered("       \x1b[1;33m╔═══╮╭═══╮╔═══╗╭═══╮\x1b[m\n");
-    prints_centered("       \x1b[0;37m║╭╮  ║║ ═   ║╚╗╔═╝║ ═   ║\x1b[m\n");
-    prints_centered("       \x1b[1;37m║╰╯  ║║╔╗  ║  ║║    ║╔╗  ║\x1b[m\n");
-    prints_centered("       \x1b[1;34m╚═══╯╚╝╚═╝  ╚╝    ╚╝╚═╝\x1b[32m......................\x1b[m");
+    outs_centered("       \x1b[1;33m╔═══╮╭═══╮╔═══╗╭═══╮\x1b[m\n");
+    outs_centered("       \x1b[0;37m║╭╮  ║║ ═   ║╚╗╔═╝║ ═   ║\x1b[m\n");
+    outs_centered("       \x1b[1;37m║╰╯  ║║╔╗  ║  ║║    ║╔╗  ║\x1b[m\n");
+    outs_centered("       \x1b[1;34m╚═══╯╚╝╚═╝  ╚╝    ╚╝╚═╝\x1b[32m......................\x1b[m");
     do
     {
         clrchyiuan(5, b_lines);
@@ -7010,12 +7010,12 @@ char *userid)
             move(5, 0);
             sprintf(buf,
                     "\x1b[1;31m ╭┤\x1b[41;37m 基本資料 \x1b[0;1;31m├─────────────────────────────╮\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟姓    名 :\x1b[37m %-10s \x1b[33m﹟生    日 :\x1b[37m %02d/%02d/%02d   \x1b[33m﹟年    紀 :\x1b[37m %-2d         \x1b[31m│\x1b[m\n",
                     chicken.name, (chicken.year) % 100, chicken.month, chicken.day, tm);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(inbuf1, "%d%s/%d%s", chicken.hp > 1000 ? chicken.hp / 1000 : chicken.hp, chicken.hp > 1000 ? "K" : "", chicken.maxhp > 1000 ? chicken.maxhp / 1000 : chicken.maxhp, chicken.maxhp > 1000 ? "K" : "");
             sprintf(inbuf2, "%d%s/%d%s", chicken.mp > 1000 ? chicken.mp / 1000 : chicken.mp, chicken.mp > 1000 ? "K" : "", chicken.maxmp > 1000 ? chicken.maxmp / 1000 : chicken.maxmp, chicken.maxmp > 1000 ? "K" : "");
@@ -7023,150 +7023,150 @@ char *userid)
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟體    重 :\x1b[37m %-5d(米克)\x1b[33m﹟體    力 :\x1b[37m %-11s\x1b[33m﹟法    力 :\x1b[37m %-11s\x1b[31m│\x1b[m\n",
                     chicken.weight, inbuf1, inbuf2);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟疲    勞 :\x1b[37m %-3d        \x1b[33m﹟病    氣 :\x1b[37m %-3d        \x1b[33m﹟髒    髒 :\x1b[37m %-3d        \x1b[31m│\x1b[m\n",
                     chicken.tired, chicken.sick, chicken.shit);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟腕    力 :\x1b[37m %-7d    \x1b[33m﹟親子關係 :\x1b[37m %-7d    \x1b[33m﹟金    錢 :\x1b[37m %-11d\x1b[31m│\x1b[m\n",
                     chicken.wrist, chicken.relation, chicken.money);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ├┤\x1b[41;37m 能力資料 \x1b[0;1;31m├─────────────────────────────┤\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟氣    質 :\x1b[37m %-10d \x1b[33m﹟智    力 :\x1b[37m %-10d \x1b[33m﹟愛    心 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.character, chicken.wisdom, chicken.love);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟藝    術 :\x1b[37m %-10d \x1b[33m﹟道    德 :\x1b[37m %-10d \x1b[33m﹟家    事 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.art, chicken.ethics, chicken.homework);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟禮    儀 :\x1b[37m %-10d \x1b[33m﹟應    對 :\x1b[37m %-10d \x1b[33m﹟烹    飪 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.manners, chicken.speech, chicken.cookskill);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ├┤\x1b[41;37m 狀態資料 \x1b[0;1;31m├─────────────────────────────┤\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟快    樂 :\x1b[37m %-10d \x1b[33m﹟滿    意 :\x1b[37m %-10d \x1b[33m﹟人    際 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.happy, chicken.satisfy, chicken.toman);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟魅    力 :\x1b[37m %-10d \x1b[33m﹟勇    敢 :\x1b[37m %-10d \x1b[33m﹟信    仰 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.charm, chicken.brave, chicken.belief);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟罪    孽 :\x1b[37m %-10d \x1b[33m﹟感    受 :\x1b[37m %-10d \x1b[33m            \x1b[37m            \x1b[31m│\x1b[m\n",
                     chicken.offense, chicken.affect);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ├┤\x1b[41;37m 評價資料 \x1b[0;1;31m├─────────────────────────────┤\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟社交評價 :\x1b[37m %-10d \x1b[33m﹟戰鬥評價 :\x1b[37m %-10d \x1b[33m﹟魔法評價 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.social, chicken.hexp, chicken.mexp);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟家事評價 :\x1b[37m %-10d                                                 \x1b[31m│\x1b[m\n",
                     chicken.family);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ╰────────────────────────────────────╯\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             move(b_lines - 1, 0);
             sprintf(buf,
                     "                                                              \x1b[1;36m第一頁\x1b[37m/\x1b[36m共二頁\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
             break;
 
         case 2:
             move(5, 0);
             sprintf(buf,
                     "\x1b[1;31m ╭┤\x1b[41;37m 物品資料 \x1b[0;1;31m├─────────────────────────────╮\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟食    物 :\x1b[37m %-10d \x1b[33m﹟零    食 :\x1b[37m %-10d \x1b[33m﹟大 補 丸 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.food, chicken.cookie, chicken.bighp);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟靈    芝 :\x1b[37m %-10d \x1b[33m﹟書    本 :\x1b[37m %-10d \x1b[33m﹟玩    具 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.medicine, chicken.book, chicken.playtool);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ├┤\x1b[41;37m 遊戲資料 \x1b[0;1;31m├─────────────────────────────┤\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟猜 拳 贏 :\x1b[37m %-10d \x1b[33m﹟猜 拳 輸 :\x1b[37m %-10d                         \x1b[31m│\x1b[m\n",
                     chicken.winn, chicken.losee);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ├┤\x1b[41;37m 武力資料 \x1b[0;1;31m├─────────────────────────────┤\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟攻 擊 力 :\x1b[37m %-10d \x1b[33m﹟防 禦 力 :\x1b[37m %-10d \x1b[33m﹟速 度 值 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.attack, chicken.resist, chicken.speed);
-            prints_centered(buf);
+            outs_centered(buf);
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟抗魔能力 :\x1b[37m %-10d \x1b[33m﹟戰鬥技術 :\x1b[37m %-10d \x1b[33m﹟魔法技術 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.mresist, chicken.hskill, chicken.mskill);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟頭部裝備 :\x1b[37m %-10s \x1b[33m﹟右手裝備 :\x1b[37m %-10s \x1b[33m﹟左手裝備 :\x1b[37m %-10s \x1b[31m│\x1b[m\n",
                     weaponhead[chicken.weaponhead], weaponrhand[chicken.weaponrhand], weaponlhand[chicken.weaponlhand]);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟身體裝備 :\x1b[37m %-10s \x1b[33m﹟腳部裝備 :\x1b[37m %-10s \x1b[33m            \x1b[37m            \x1b[31m│\x1b[m\n",
                     weaponbody[chicken.weaponbody], weaponfoot[chicken.weaponfoot]);
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ├┤\x1b[41;37m 等級資料 \x1b[0;1;31m├─────────────────────────────┤\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m │\x1b[33m﹟等    級 :\x1b[37m %-10d \x1b[33m﹟經 驗 值 :\x1b[37m %-10d \x1b[33m﹟下次升級 :\x1b[37m %-10d \x1b[31m│\x1b[m\n",
                     chicken.level, chicken.exp, twice(d.level, 10000, 100));
-            prints_centered(buf);
+            outs_centered(buf);
 
             sprintf(buf,
                     "\x1b[1;31m ╰────────────────────────────────────╯\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
 
             move(b_lines - 1, 0);
             sprintf(buf,
                     "                                                              \x1b[1;36m第二頁\x1b[37m/\x1b[36m共二頁\x1b[m\n");
-            prints_centered(buf);
+            outs_centered(buf);
             break;
         }
         move(b_lines, 0);
         sprintf(buf, "\x1b[1;44;37m  資料選單  \x1b[46m  [↑/PAGE UP]往上一頁 [↓/PAGE DOWN]往下一頁 [Q]離開:            %*s\x1b[m", d_cols, "");
-        prints(buf);
+        outs(buf);
         pipkey = vkey();
         switch (pipkey)
         {
@@ -7416,13 +7416,13 @@ int mode)
             sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-10s                                                %*s\x1b[0m", d.name, d_cols, "");
         else
             sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-10s                                                %*s\x1b[0m", d.name, d_cols, "");
-        prints(buf);
+        outs(buf);
         move(6, 0);
         if (mode == 1)
             show_badman_pic(m.map/*n*/);
         move(1, 0);
         sprintf(buf, "\x1b[1;31m┌─────────────────────────────────────┐\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(2, 0);
         /* lucky拿來當color用*/
         if (d.tired >= 80)
@@ -7436,38 +7436,38 @@ int mode)
 
         sprintf(buf, "\x1b[1;31m│\x1b[33m生  命:\x1b[37m%-12s\x1b[33m法  力:\x1b[37m%-12s\x1b[33m疲  勞:\x1b[%dm%-12d\x1b[33m金  錢:\x1b[37m%-10d\x1b[31m│\x1b[m",
                 inbuf1, inbuf2, lucky, d.tired, d.money);
-        prints_centered(buf);
+        outs_centered(buf);
         move(3, 0);
         sprintf(buf, "\x1b[1;31m│\x1b[33m攻  擊:\x1b[37m%-10d  \x1b[33m防  禦:\x1b[37m%-10d  \x1b[33m速  度:\x1b[37m%-10d  \x1b[33m經  驗:\x1b[37m%-10d\x1b[31m│\x1b[m",
                 d.attack, d.resist, d.speed, d.exp);
-        prints_centered(buf);
+        outs_centered(buf);
         move(4, 0);
         sprintf(buf, "\x1b[1;31m│\x1b[33m食  物:\x1b[37m%-5d       \x1b[33m大補丸:\x1b[37m%-5d       \x1b[33m零  食:\x1b[37m%-5d       \x1b[33m靈  芝:\x1b[37m%-5d     \x1b[31m│\x1b[m",
                 d.food, d.bighp, d.cookie, d.medicine);
-        prints_centered(buf);
+        outs_centered(buf);
         move(5, 0);
         sprintf(buf, "\x1b[1;31m└─────────────────────────────────────┘\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 4, 0);
         sprintf(buf, "\x1b[1;34m┌─────────────────────────────────────┐\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 3, 0);
         sprintf(inbuf1, "%d%s/%d%s", m.hp > 1000 ? m.hp / 1000 : m.hp, m.hp > 1000 ? "K" : "", m.maxhp > 1000 ? m.maxhp / 1000 : m.maxhp, m.maxhp > 1000 ? "K" : "");
         sprintf(inbuf2, "%d%s/%d%s", m.mp > 1000 ? m.mp / 1000 : m.mp, m.mp > 1000 ? "K" : "", m.maxmp > 1000 ? m.maxmp / 1000 : m.maxmp, m.maxmp > 1000 ? "K" : "");
 
         sprintf(buf, "\x1b[1;34m│\x1b[32m姓  名:\x1b[37m%-10s  \x1b[32m生  命:\x1b[37m%-11s \x1b[32m法  力:\x1b[37m%-11s                  \x1b[34m│\x1b[m",
                 p[n].name, inbuf1, inbuf2);
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 2, 0);
         sprintf(buf, "\x1b[1;34m│\x1b[32m攻  擊:\x1b[37m%-6d      \x1b[32m防  禦:\x1b[37m%-6d      \x1b[32m速  度:\x1b[37m%-6d      \x1b[32m金  錢:\x1b[37m%-6d    \x1b[34m│\x1b[m",
                 m.attack, m.resist, m.speed, m.money);
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 1, 0);
         sprintf(buf, "\x1b[1;34m└─────────────────────────────────────┘\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines, 0);
         sprintf(buf, "\x1b[1;44;37m  戰鬥命令  \x1b[46m  [1]普通  [2]全力  [3]魔法  [4]防禦  [5]補充  [6]逃命         %*s\x1b[m", d_cols, "");
-        prints(buf);
+        outs(buf);
 
         if (m.death == 0 && d.death == 0)
         {
@@ -7635,14 +7635,14 @@ int mode)
                 clear();
                 vs_head("電子養小雞", BoardName);
                 move(10, 0);
-                prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+                outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
                 prints_centered("            \x1b[1;31m│  \x1b[37m實力不強的小雞 \x1b[33m%-10s                 \x1b[31m│\x1b[m\n", d.name);
                 prints_centered("            \x1b[1;31m│  \x1b[37m在與對手 \x1b[32m%-10s \x1b[37m戰鬥後落跑啦          \x1b[31m│\x1b[m\n", p[n].name);
                 sprintf(inbuf1, "%d/%d", d.hexp - oldhexp, d.mexp - oldmexp);
                 prints_centered("            \x1b[1;31m│  \x1b[37m評價增加了 \x1b[36m%-5s \x1b[37m點  技術增加了 \x1b[36m%-2d/%-2d \x1b[37m點  \x1b[31m│\x1b[m\n", inbuf1, d.hskill - oldhskill, d.mskill - oldmskill);
                 sprintf(inbuf1, "%d \x1b[37m元", oldmoney - d.money);
                 prints_centered("            \x1b[1;31m│  \x1b[37m勇敢降低了 \x1b[36m%-5d \x1b[37m點  金錢減少了 \x1b[36m%-13s  \x1b[31m│\x1b[m\n", oldbrave - d.brave, inbuf1);
-                prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m");
+                outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m");
                 vmsg("三十六計 走為上策...");
                 winorlose = 0;
                 break;
@@ -7656,10 +7656,10 @@ int mode)
             sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-10s                                                  %*s\x1b[0m", d.name, d_cols, "");
         else
             sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-10s                                                  %*s\x1b[0m", d.name, d_cols, "");
-        prints(buf);
+        outs(buf);
         move(1, 0);
         sprintf(buf, "\x1b[1;31m┌─────────────────────────────────────┐\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(2, 0);
         /* lucky拿來當color用*/
         if (d.tired >= 80)
@@ -7674,41 +7674,41 @@ int mode)
 
         sprintf(buf, "\x1b[1;31m│\x1b[33m生  命:\x1b[37m%-12s\x1b[33m法  力:\x1b[37m%-12s\x1b[33m疲  勞:\x1b[%dm%-12d\x1b[33m金  錢:\x1b[37m%-10d\x1b[31m│\x1b[m",
                 inbuf1, inbuf2, lucky, d.tired, d.money);
-        prints_centered(buf);
+        outs_centered(buf);
 
         move(3, 0);
         sprintf(buf, "\x1b[1;31m│\x1b[33m攻  擊:\x1b[37m%-10d  \x1b[33m防  禦:\x1b[37m%-10d  \x1b[33m速  度:\x1b[37m%-10d  \x1b[33m經  驗:\x1b[37m%-10d\x1b[31m│\x1b[m",
                 d.attack, d.resist, d.speed, d.exp);
-        prints_centered(buf);
+        outs_centered(buf);
         move(4, 0);
         sprintf(buf, "\x1b[1;31m│\x1b[33m食  物:\x1b[37m%-5d       \x1b[33m大補丸:\x1b[37m%-5d       \x1b[33m零  食:\x1b[37m%-5d       \x1b[33m靈  芝:\x1b[37m%-5d     \x1b[31m│\x1b[m",
                 d.food, d.bighp, d.cookie, d.medicine);
-        prints_centered(buf);
+        outs_centered(buf);
         move(5, 0);
         sprintf(buf, "\x1b[1;31m└─────────────────────────────────────┘\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(6, 0);
         if (mode == 1)
             show_badman_pic(m.map/*n*/);
         move(b_lines - 4, 0);
         sprintf(buf, "\x1b[1;34m┌─────────────────────────────────────┐\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 3, 0);
         sprintf(inbuf1, "%d/%d", m.hp, m.maxhp);
         sprintf(inbuf2, "%d/%d", m.mp, m.maxmp);
         sprintf(buf, "\x1b[1;34m│\x1b[32m姓  名:\x1b[37m%-10s  \x1b[32m生  命:\x1b[37m%-11s \x1b[32m法  力:\x1b[37m%-11s                  \x1b[34m│\x1b[m",
                 p[n].name, inbuf1, inbuf2);
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 2, 0);
         sprintf(buf, "\x1b[1;34m│\x1b[32m攻  擊:\x1b[37m%-6d      \x1b[32m防  禦:\x1b[37m%-6d      \x1b[32m速  度:\x1b[37m%-6d      \x1b[32m金  錢:\x1b[37m%-6d    \x1b[34m│\x1b[m",
                 m.attack, m.resist, m.speed, m.money);
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines - 1, 0);
         sprintf(buf, "\x1b[1;34m└─────────────────────────────────────┘\x1b[m");
-        prints_centered(buf);
+        outs_centered(buf);
         move(b_lines, 0);
         sprintf(buf, "\x1b[1;41;37m  \x1b[37m攻擊命令  \x1b[47m  \x1b[31m[1]\x1b[30m普通  \x1b[31m[2]\x1b[30m全力  \x1b[31m[3]\x1b[30m魔法  \x1b[31m[4]\x1b[30m防禦  \x1b[31m[5]\x1b[30m逃命                     %*s\x1b[m", d_cols, "");
-        prints(buf);
+        outs(buf);
 
         if ((m.hp > 0) && (pipkey != '6') && (pipkey == '1' || pipkey == '2' || pipkey == '3' || pipkey == '4' || pipkey == '5') && (d.death == 0) && (d.nodone == 0))
         {
@@ -7867,14 +7867,14 @@ int mode)
             if (mode == 1)
             {
                 move(10, 0);
-                prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+                outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
                 prints_centered("            \x1b[1;31m│  \x1b[37m英勇的小雞 \x1b[33m%-10s                     \x1b[31m│\x1b[m\n", d.name);
                 prints_centered("            \x1b[1;31m│  \x1b[37m打敗了邪惡的怪物 \x1b[32m%-10s               \x1b[31m│\x1b[m\n", p[n].name);
             }
             else
             {
                 move(10, 0);
-                prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+                outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
                 prints_centered("            \x1b[1;31m│  \x1b[37m武術大會的小雞 \x1b[33m%-10s                 \x1b[31m│\x1b[m\n", d.name);
                 prints_centered("            \x1b[1;31m│  \x1b[37m打敗了強勁的對手 \x1b[32m%-10s               \x1b[31m│\x1b[m\n", p[n].name);
             }
@@ -7883,7 +7883,7 @@ int mode)
             sprintf(inbuf1, "%d 元", d.money - oldmoney);
             prints_centered("            \x1b[1;31m│  \x1b[37m勇敢提升了 %-5d 點  金錢增加了 %-9s \x1b[31m│\x1b[m\n", d.brave - oldbrave, inbuf1);
             prints_centered("            \x1b[1;31m│  \x1b[37m經驗值增加了 %-6d 點  升級尚需 %-6d 點\x1b[31m│\x1b[m\n", oldexp, twice(d.level, 10000, 100) - d.exp);
-            prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
+            outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
 
             if (m.hp <= 0)
                 vmsg("對方死掉囉..所以你贏囉..");
@@ -7896,11 +7896,11 @@ int mode)
             clear();
             vs_head("電子養小雞", BoardName);
             move(10, 0);
-            prints_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
+            outs_centered("            \x1b[1;31m┌──────────────────────┐\x1b[m\n");
             prints_centered("            \x1b[1;31m│  \x1b[37m可憐的小雞 \x1b[33m%-10s                     \x1b[31m│\x1b[m\n", d.name);
             prints_centered("            \x1b[1;31m│  \x1b[37m在與 \x1b[32m%-10s \x1b[37m的戰鬥中，                \x1b[31m│\x1b[m\n", p[n].name);
-            prints_centered("            \x1b[1;31m│  \x1b[37m不幸地陣亡了，在此特別默哀..........      \x1b[31m│\x1b[m\n");
-            prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
+            outs_centered("            \x1b[1;31m│  \x1b[37m不幸地陣亡了，在此特別默哀..........      \x1b[31m│\x1b[m\n");
+            outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
             vmsg("小雞陣亡了....");
             pipdie("\x1b[1;31m戰鬥中被打死了...\x1b[m  ", 1);
         }
@@ -7909,11 +7909,11 @@ int mode)
             clear();
             vs_head("電子養小雞", BoardName);
             move(10, 0);
-            prints_centered("            \x1b[1;31m┌──────────────────────┐\n\x1b[m");
+            outs_centered("            \x1b[1;31m┌──────────────────────┐\n\x1b[m");
             prints_centered("            \x1b[1;31m│  \x1b[37m可憐的小雞 \x1b[33m%-10s                     \x1b[31m│\x1b[m\n", d.name);
             prints_centered("            \x1b[1;31m│  \x1b[37m在與 \x1b[32m%-10s \x1b[37m的戰鬥中，                \x1b[31m│\x1b[m\n", p[n].name);
-            prints_centered("            \x1b[1;31m│  \x1b[37m不幸地打輸了，記者現場特別報導.........   \x1b[31m│\x1b[m\n");
-            prints_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
+            outs_centered("            \x1b[1;31m│  \x1b[37m不幸地打輸了，記者現場特別報導.........   \x1b[31m│\x1b[m\n");
+            outs_centered("            \x1b[1;31m└──────────────────────┘\x1b[m\n");
             vmsg("小雞打輸了....");
         }
     }
@@ -7969,7 +7969,7 @@ UTMP *opt)
                     "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [Q]放棄: %*s\x1b[m", d_cols, "");
         }
         move(b_lines, 0);
-        prints(buf);
+        outs(buf);
         pipkey = vkey();
         switch (pipkey)
         {
@@ -8046,7 +8046,7 @@ struct magicset *p)
     clrchyiuan(6, b_lines - 6);
     move(7, 0);
     sprintf(buf, "\x1b[1;31m┤\x1b[37;41m   可用[%s]一覽表   \x1b[0;1;31m├────────────\x1b[m", p[0].name);
-    prints_centered(buf);
+    outs_centered(buf);
     while ((s = p[n].name) && (p[n].needmp <= d.mp))
     {
         move(7 + n, 4);
@@ -8054,19 +8054,19 @@ struct magicset *p)
         {
             sprintf(buf,
                     "\x1b[1;37m[\x1b[36m%d\x1b[37m] \x1b[33m%-12s  \x1b[37m需要法力: \x1b[32m%-6d  \x1b[37m恢復體力: \x1b[32m%-6d \x1b[37m恢復疲勞: \x1b[32m%-6d\x1b[m   ", n, p[n].name, p[n].needmp, p[n].hp, p[n].tired);
-            prints_centered(buf);
+            outs_centered(buf);
         }
         else if (p[n].hpmode == 2)
         {
             sprintf(buf,
                     "\x1b[1;37m[\x1b[36m%d\x1b[37m] \x1b[33m%-12s  \x1b[37m需要法力: \x1b[32m%-6d  \x1b[37m恢復體力到\x1b[35m最大值\x1b[37m 恢復疲勞到\x1b[35m最小值\x1b[m  ", n, p[n].name, p[n].needmp);
-            prints_centered(buf);
+            outs_centered(buf);
         }
         else if (p[n].hpmode == 0)
         {
             sprintf(buf,
                     "\x1b[1;37m[\x1b[36m%d\x1b[37m] \x1b[33m%-12s  \x1b[37m需要法力: \x1b[32m%-6d \x1b[m             ", n, p[n].name, p[n].needmp);
-            prints_centered(buf);
+            outs_centered(buf);
         }
         n++;
     }
@@ -8147,7 +8147,7 @@ UTMP *opt)
     clrchyiuan(6, b_lines - 6);
     move(7, 0);
     sprintf(buf, "\x1b[1;31m┤\x1b[37;41m   可用[%s]一覽表   \x1b[0;1;31m├────────────\x1b[m", s->name);
-    prints_centered(buf);
+    outs_centered(buf);
     s++;
     while (s->name)
     {
@@ -8156,7 +8156,7 @@ UTMP *opt)
         {
             sprintf(buf,
                     "\x1b[1;37m[\x1b[36m%d\x1b[37m] \x1b[33m%-12s  \x1b[37m需要法力: \x1b[32m%-6d \x1b[m             ", n, s->name, s->needmp);
-            prints_centered(buf);
+            outs_centered(buf);
             mg[n] = cur;
             n++;
         }
@@ -8281,13 +8281,13 @@ int pip_results_show(void)  /*收穫季*/
 
     clear();
     move(10, (d_cols>>1) + 14);
-    prints("\x1b[1;33m叮咚叮咚～ 辛苦的郵差幫我們送信來了喔...\x1b[0m");
+    outs("\x1b[1;33m叮咚叮咚～ 辛苦的郵差幫我們送信來了喔...\x1b[0m");
     vmsg("嗯  把信打開看看吧...");
     clear();
     show_resultshow_pic(0);
     sprintf(buf, "[A]%s [B]%s [C]%s [D]%s [Q]放棄:", showname[1], showname[2], showname[3], showname[4]);
     move(b_lines, 0);
-    prints(buf);
+    outs(buf);
     do
     {
         pipkey = vkey();
@@ -8682,7 +8682,7 @@ int mode)
         sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[33m♀ \x1b[37m%-15s                                           %*s\x1b[0m", d.name, d_cols, "");
     else
         sprintf(buf, "\x1b[1;41m  " NICKNAME PIPNAME " ～ \x1b[34m？ \x1b[37m%-15s                                           %*s\x1b[0m", d.name, d_cols, "");
-    prints(buf);
+    outs(buf);
 
     move(1, 0);
     if (d.money <= 100)
@@ -8695,7 +8695,7 @@ int mode)
     sprintf(buf
             , " \x1b[1;32m[狀  態]\x1b[37m %-5s     \x1b[32m[生  日]\x1b[37m %-9s \x1b[32m[年  齡]\x1b[37m %-5d     \x1b[32m[金  錢]\x1b[%dm %-8d \x1b[m"
             , yo[age], inbuf1, m, color1, d.money);
-    prints_centered(buf);
+    outs_centered(buf);
 
     move(2, 0);
 
@@ -8726,7 +8726,7 @@ int mode)
     sprintf(buf
             , " \x1b[1;32m[生  命]\x1b[%dm %-10s\x1b[32m[法  力]\x1b[%dm %-10s\x1b[32m[體  重]\x1b[37m %-5d     \x1b[32m[疲  勞]\x1b[%dm %-4d\x1b[0m "
             , color1, inbuf1, color2, inbuf2, d.weight, color3, d.tired);
-    prints_centered(buf);
+    outs_centered(buf);
 
     move(3, 0);
     if (d.shit >= 80)
@@ -8756,7 +8756,7 @@ int mode)
     sprintf(buf
             , " \x1b[1;32m[髒  髒]\x1b[%dm %-4d      \x1b[32m[病  氣]\x1b[%dm %-4d      \x1b[32m[快樂度]\x1b[%dm %-4d      \x1b[32m[滿意度]\x1b[%dm %-4d\x1b[0m"
             , color1, d.shit, color2, d.sick, color3, d.happy, color4, d.satisfy);
-    prints_centered(buf);
+    outs_centered(buf);
     if (mode == 1)/*餵食*/
     {
         move(4, 0);
@@ -8787,7 +8787,7 @@ int mode)
         sprintf(buf
                 , " \x1b[1;36m[食物]\x1b[%dm%-7d\x1b[36m[零食]\x1b[%dm%-7d\x1b[36m[補丸]\x1b[%dm%-7d\x1b[36m[靈芝]\x1b[%dm%-7d\x1b[36m[人參]\x1b[37m%-7d\x1b[36m[雪蓮]\x1b[37m%-7d\x1b[0m"
                 , color1, d.food, color2, d.cookie, color3, d.bighp, color4, d.medicine, d.ginseng, d.snowgrass);
-        prints_centered(buf);
+        outs_centered(buf);
 
     }
     move(5, 0);
@@ -8845,9 +8845,9 @@ int mode)
     move(b_lines - 5, 0);
     prints_centered("\x1b[1;%dm└─────────────────────────────────────┘\x1b[m", color);
     move(b_lines - 4, 0);
-    prints_centered(" \x1b[1;34m─\x1b[37;44m  狀 態  \x1b[0;1;34m─\x1b[0m");
+    outs_centered(" \x1b[1;34m─\x1b[37;44m  狀 態  \x1b[0;1;34m─\x1b[0m");
     move(b_lines - 3, 0);
-    prints_centered(" 戰鬥中.............\n");
+    outs_centered(" 戰鬥中.............\n");
 
 }
 #endif  /* #ifdef HAVE_PIP_FIGHT */
@@ -8869,7 +8869,7 @@ static int pip_fight_feed(void)     /* 餵食*/
         clrtoeol();
         move(b_lines - 2, 1);
         sprintf(buf, "%s該做什麼事呢?", d.name);
-        prints_centered(buf);
+        outs_centered(buf);
         now = time(0);
         move(b_lines, 0);
         clrtoeol();
