@@ -214,11 +214,11 @@ show_pnote(notedata *pitem)
 {
     clrchyiuan(2, 6);
     move(2, 0);
-    prints("\x1b[1;36m┌─── \x1b[37m%s(%s)在 \x1b[33m%s\x1b[37m 留的話 \x1b[m", pitem->userid, pitem->username,
+    prints_centered("\x1b[1;36m┌─── \x1b[37m%s(%s)在 \x1b[33m%s\x1b[37m 留的話 \x1b[m", pitem->userid, pitem->username,
             Cdate(&(pitem->date)));
     prints("\n\x1b[1;37m%*s  %s\n%*s  %s\n%*s  %s\n\x1b[0m",
            d_cols>>1, "", pitem->buf[0], d_cols>>1, "", pitem->buf[1], d_cols>>1, "", pitem->buf[2]);
-    prints("                 \x1b[1;36m──────────────────────────────┘\x1b[m\n");
+    prints_centered("                 \x1b[1;36m──────────────────────────────┘\x1b[m\n");
     pitem->mode = 1;
 }
 
@@ -273,13 +273,13 @@ char *uid)
     usr_fpath(genbuf, uid, fn_pnote_hint);
     if ((hintfile = fopen(genbuf, "r")))
     {
-        prints("\x1b[1;34m●────────────────────────────────●\x1b[m\n", uid);
+        prints_centered("\x1b[1;34m●────────────────────────────────●\x1b[m\n", uid);
         i = 0;
         while (i++ < MAXHINTLINES && fgets(genbuf, 256, hintfile))
         {
-            outs(genbuf);
+            outs_centered(genbuf);
         }
-        prints("\x1b[1;34m●────────────────────────────────●\x1b[m\n", uid);
+        prints_centered("\x1b[1;34m●────────────────────────────────●\x1b[m\n", uid);
         fclose(hintfile);
     }
     else
