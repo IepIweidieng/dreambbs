@@ -451,16 +451,16 @@ char *menuname[8][2] =
      "\x1b[1;44;37m 選單 \x1b[46m[1]基本 [2]逛街 [3]修行 [4]玩樂 [5]打工 [6]特殊 [7]系統 [Q]離開          %*s\x1b[m"},
 
     {"             ",
-     "\x1b[1;44;37m  基本選單  \x1b[46m[1]餵食 [2]清潔 [3]休息 [4]親親 [5]換錢         %*s[Q]跳出：          \x1b[m"},
+     "\x1b[1;44;37m  基本選單  \x1b[46m[1]餵食 [2]清潔 [3]休息 [4]親親 [5]換錢         %*s[Q]跳出            \x1b[m"},
 
     {"\x1b[1;44;37m 逛街 \x1b[46m【日常用品】[1]便利商店 [2]" NICKNAME "藥鋪 [3]夜裡書局                        %*s\x1b[m",
      "\x1b[1;44;37m 選單 \x1b[46m【武器百貨】[A]頭部裝備 [B]右手裝備 [C]左手裝備 [D]身體裝備 [E]腳部裝備  %*s\x1b[m"},
 
     {"\x1b[1;44;37m 修行 \x1b[46m[A]科學(%d) [B]詩詞(%d) [C]神學(%d) [D]軍學(%d) [E]劍術(%d)                   %*s\x1b[m",
-     "\x1b[1;44;37m 選單 \x1b[46m[F]格鬥(%d) [G]魔法(%d) [H]禮儀(%d) [I]繪畫(%d) [J]舞蹈(%d) [Q]跳出：         %*s\x1b[m"},
+     "\x1b[1;44;37m 選單 \x1b[46m[F]格鬥(%d) [G]魔法(%d) [H]禮儀(%d) [I]繪畫(%d) [J]舞蹈(%d) [Q]跳出           %*s\x1b[m"},
 
     {"   ",
-     "\x1b[1;44;37m  玩樂選單  \x1b[46m[1]散步 [2]運動 [3]約會 [4]猜拳 [5]旅遊 [6]郊外 [7]唱歌 [Q]跳出：  %*s\x1b[m"},
+     "\x1b[1;44;37m  玩樂選單  \x1b[46m[1]散步 [2]運動 [3]約會 [4]猜拳 [5]旅遊 [6]郊外 [7]唱歌 [Q]跳出    %*s\x1b[m"},
 
     {"\x1b[1;44;37m 打工 \x1b[46m[A]家事 [B]保姆 [C]旅館 [D]農場 [E]餐\廳 [F]教堂 [G]地攤 [H]伐木          %*s\x1b[m",
      "\x1b[1;44;37m 選單 \x1b[46m[I]美髮 [J]獵人 [K]工地 [L]守墓 [M]家教 [N]酒家 [O]酒店 [P]夜總會 %*s[Q]跳出\x1b[m"},
@@ -1396,7 +1396,7 @@ int pip_basic_feed(void)     /* 餵食*/
         move(b_lines, 0);
         clrtoeol();
         move(b_lines, 0);
-        prints("\x1b[1;44;37m  飲食選單  \x1b[46m[1]吃飯 [2]零食 [3]補丸 [4]靈芝 [5]人蔘 [6]雪蓮 [Q]跳出：         %*s\x1b[m", d_cols, "");
+        prints("\x1b[1;44;37m  飲食選單  \x1b[46m[1]吃飯 [2]零食 [3]補丸 [4]靈芝 [5]人蔘 [6]雪蓮 [Q]跳出           %*s\x1b[m", d_cols, "");
         pip_time_change(now);
         pipkey = vkey();
         pip_time_change(now);
@@ -2130,7 +2130,7 @@ int oldnum[])
         }
         clrchyiuan(b_lines - 4, b_lines);
         move(b_lines, 0);
-        sprintf(inbuf, "\x1b[1;44;37m  %8s選單  \x1b[46m  [B]買入物品  [S]賣出物品  [Q]跳出：                         %*s\x1b[m", shopname[mode], d_cols, "");
+        sprintf(inbuf, "\x1b[1;44;37m  %8s選單  \x1b[46m  [B]買入物品  [S]賣出物品  [Q]跳出                           %*s\x1b[m", shopname[mode], d_cols, "");
         outs(inbuf);
         pipkey = vkey();
         switch (pipkey)
@@ -2343,7 +2343,7 @@ struct weapon *p)
             n++;
         }
         move(b_lines, 0);
-        sprintf(buf, "\x1b[1;44;37m  武器購買選單  \x1b[46m  [B]購買武器  [S]賣掉裝備  [W]個人資料  [Q]跳出：            %*s\x1b[m", d_cols, "");
+        sprintf(buf, "\x1b[1;44;37m  武器購買選單  \x1b[46m  [B]購買武器  [S]賣掉裝備  [W]個人資料  [Q]跳出              %*s\x1b[m", d_cols, "");
         outs(buf);
         now = time(0);
         pip_time_change(now);
@@ -3702,7 +3702,7 @@ int pip_play_guess(void)   /* 猜拳程式 */
         move(b_lines, 0);
         clrtoeol();
         move(b_lines, 0);
-        prints("\x1b[1;44;37m  猜拳選單  \x1b[46m[1]我出剪刀 [2]我出石頭 [3]我出布啦 [4]猜拳記錄 [Q]跳出：         %*s\x1b[m", d_cols, "");
+        prints("\x1b[1;44;37m  猜拳選單  \x1b[46m[1]我出剪刀 [2]我出石頭 [3]我出布啦 [4]猜拳記錄 [Q]跳出           %*s\x1b[m", d_cols, "");
         move(b_lines - 1, 0);
         clrtoeol();
         pipkey = vkey();
@@ -4568,7 +4568,7 @@ struct royalset *p)
         clrtoeol();
         move(b_lines, 0);
         prints(
-            "\x1b[1;37;46m  參見選單  \x1b[44m [字母]選擇欲拜訪的人物  [Q]離開" NICKNAME "總司令部：                  %*s\x1b[0m", d_cols, "");
+            "\x1b[1;37;46m  參見選單  \x1b[44m [字母]選擇欲拜訪的人物  [Q]離開" NICKNAME "總司令部                    %*s\x1b[0m", d_cols, "");
         pipkey = vkey();
         choice = pipkey - 64;
         if (choice < 1 || choice > 10)
@@ -7165,7 +7165,7 @@ char *userid)
             break;
         }
         move(b_lines, 0);
-        sprintf(buf, "\x1b[1;44;37m  資料選單  \x1b[46m  [↑/PAGE UP]往上一頁 [↓/PAGE DOWN]往下一頁 [Q]離開:            %*s\x1b[m", d_cols, "");
+        sprintf(buf, "\x1b[1;44;37m  資料選單  \x1b[46m  [↑/PAGE UP]往上一頁 [↓/PAGE DOWN]往下一頁 [Q]離開             %*s\x1b[m", d_cols, "");
         outs(buf);
         pipkey = vkey();
         switch (pipkey)
@@ -7961,12 +7961,12 @@ UTMP *opt)
         if (mode)
         {
             sprintf(buf,
-                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [7]特殊 [Q]放棄: %*s\x1b[m", d_cols, "");
+                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [7]特殊 [Q]放棄  %*s\x1b[m", d_cols, "");
         }
         else
         {
             sprintf(buf,
-                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [Q]放棄: %*s\x1b[m", d_cols, "");
+                    "\x1b[1;44;37m  魔法選單  \x1b[46m  [1]治療 [2]雷系 [3]冰系 [4]火系 [5]土系 [6]風系 [Q]放棄  %*s\x1b[m", d_cols, "");
         }
         move(b_lines, 0);
         outs(buf);
@@ -8874,7 +8874,7 @@ static int pip_fight_feed(void)     /* 餵食*/
         move(b_lines, 0);
         clrtoeol();
         move(b_lines, 0);
-        prints("\x1b[1;44;37m  飲食選單  \x1b[46m[1]吃飯 [2]零食 [3]補丸 [4]靈芝 [5]人蔘 [6]雪蓮 [Q]跳出：         %*s\x1b[m", d_cols, "");
+        prints("\x1b[1;44;37m  飲食選單  \x1b[46m[1]吃飯 [2]零食 [3]補丸 [4]靈芝 [5]人蔘 [6]雪蓮 [Q]跳出           %*s\x1b[m", d_cols, "");
         pipkey = vkey();
 
         switch (pipkey)
