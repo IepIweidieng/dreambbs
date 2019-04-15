@@ -216,7 +216,8 @@ show_pnote(notedata *pitem)
     move(2, 0);
     prints("\x1b[1;36m¢z¢w¢w¢w \x1b[37m%s(%s)¦b \x1b[33m%s\x1b[37m ¯dªº¸Ü \x1b[m", pitem->userid, pitem->username,
             Cdate(&(pitem->date)));
-    prints("\n\x1b[1;37m  %s\n  %s\n  %s\n\x1b[0m", pitem->buf[0], pitem->buf[1], pitem->buf[2]);
+    prints("\n\x1b[1;37m%*s  %s\n%*s  %s\n%*s  %s\n\x1b[0m",
+           d_cols>>1, "", pitem->buf[0], d_cols>>1, "", pitem->buf[1], d_cols>>1, "", pitem->buf[2]);
     prints("                 \x1b[1;36m¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢w¢}\x1b[m\n");
     pitem->mode = 1;
 }
