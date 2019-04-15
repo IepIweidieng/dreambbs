@@ -825,6 +825,11 @@ out_rle(
         else
             outc(cc);
     }
+#ifndef M3_USE_PFTERM
+    // XXX(IID.20190415): Workaround for broken visio `move()`.
+    //    Without the workaround, the next line after the film will be offset
+    clrtoeol();
+#endif
 /*  while (count>=0) item_length[count--]=0;*/
 }
 
