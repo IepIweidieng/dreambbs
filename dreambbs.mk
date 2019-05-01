@@ -4,8 +4,6 @@ ARCHI	!= getconf LONG_BIT
 
 OPSYS	!= uname -o
 
-CLANG_MODERN != if [ $$(echo '__clang_major__' | clang -E - | tail -1) -ge 6 ]; then echo 1; fi
-
 BUILDTIME	!= date '+%s'
 
 BBSHOME	?= $(HOME)
@@ -29,11 +27,13 @@ CC	= clang
 
 RANLIB	= ranlib
 
-CPROTO	= cproto -E"clang -pipe -E" -I$(SRCROOT)/include
+CPROTO	= cproto -E"$(CC) -pipe -E" -I$(SRCROOT)/include
 
 CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encoding -I$(SRCROOT)/include
 
 LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
+
+CLANG_MODERN != if [ $$(echo '__clang_major__' | $(CC) -E - | tail -1) -ge 6 ]; then echo 1; fi
 
 .if $(ARCHI)=="64"
 CFLAGS	+= -m32
