@@ -25,7 +25,7 @@ LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
 ## Called with $(function$(para1::=arg1)$(para2::=arg2)...)
 UNQUOTE = S/^"//:S/"$$//
 VALUEIF = "\#ifdef $(conf)$(.newline)$(conf:M*)$(.newline)\#else$(.newline)$(default:M*)$(.newline)\#endif"
-GETCONF = echo "" | $(CC) -x c -dM -E -P $(hdr:@v@-imacros "$v"@) - | grep -wq $(conf)
+GETCONFS = echo "" | $(CC) -x c -dM -E -P $(hdr:@v@-imacros "$v"@) -
 GETVALUE = echo $(VALUEIF$(conf::= $(conf:M*:$(UNQUOTE)))$(default::= $(default:M*))) | $(CC) -x c -E -P $(hdr:@v@-imacros "$v"@) -
 
 ## BBS Release Version Prefix
@@ -34,12 +34,14 @@ BBSVER != ${GETVALUE${conf::= "BBSVER_PREFIX"}${default::= ""}${hdr::= ${BBSCONF
 
 # rules ref: PttBBS: mbbsd/Makefile
 BBSCONF		:= $(SRCROOT)/dreambbs.conf
+DEF_LIST	!= sh -c '${GETCONFS${hdr::= ${BBSCONF}}}'
+DEF_TEST	 = [ ${DEF_LIST:M${conf:M*:S/"//g:N"}} ]  # Balance the quotes
 DEF_YES		:= && echo "YES" || echo ""
-USE_PMORE	!= sh -c '${GETCONF${conf::= "M3_USE_PMORE"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
-USE_PFTERM	!= sh -c '${GETCONF${conf::= "M3_USE_PFTERM"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
-USE_BBSLUA	!= sh -c '${GETCONF${conf::= "M3_USE_BBSLUA"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
-USE_BBSRUBY	!= sh -c '${GETCONF${conf::= "M3_USE_BBSRUBY"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
-USE_LUAJIT	!= sh -c '${GETCONF${conf::= "BBSLUA_USE_LUAJIT"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
+USE_PMORE	!= sh -c '${DEF_TEST${conf::= "M3_USE_PMORE"}} ${DEF_YES}'
+USE_PFTERM	!= sh -c '${DEF_TEST${conf::= "M3_USE_PFTERM"}} ${DEF_YES}'
+USE_BBSLUA	!= sh -c '${DEF_TEST${conf::= "M3_USE_BBSLUA"}} ${DEF_YES}'
+USE_BBSRUBY	!= sh -c '${DEF_TEST${conf::= "M3_USE_BBSRUBY"}} ${DEF_YES}'
+USE_LUAJIT	!= sh -c '${DEF_TEST${conf::= "BBSLUA_USE_LUAJIT"}} ${DEF_YES}'
 
 CLANG_MODERN != [ $$(${GETVALUE${conf::= "__clang_major__"}${default::= 0}${hdr::=}}) -ge 6 ] ${DEF_YES}
 
