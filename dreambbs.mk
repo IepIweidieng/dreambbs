@@ -20,9 +20,9 @@ RANLIB	= ranlib
 
 CPROTO	= cproto -E"$(CC) -pipe -E" -I$(SRCROOT)/include
 
-CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encoding -I$(SRCROOT)/include
+CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encoding -I$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
 
-LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
+LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt $(LDFLAGS_ARCHI)
 
 ## Tool functions
 ## Called with $(function$(para1::=arg1)$(para2::=arg2)...)
@@ -49,22 +49,22 @@ USE_LUAJIT	!= sh -c '${DEF_TEST${conf::= "BBSLUA_USE_LUAJIT"}} ${DEF_YES}'
 CLANG_MODERN != [ $$(${GETVALUE${conf::= "__clang_major__"}${default::= 0}${hdr::=}}) -ge 6 ] ${DEF_YES}
 
 .if $(ARCHI)=="64"
-CFLAGS	+= -m32
-LDFLAGS	+= -m32
+CFLAGS_ARCHI	+= -m32
+LDFLAGS_ARCHI	+= -m32
 .endif
 
 .if $(OPSYS) == "GNU/Linux"
-LDFLAGS	+= -lresolv -ldl -rdynamic
+LDFLAGS_ARCHI	+= -lresolv -ldl -rdynamic
 .endif
 
 .if $(OPSYS) == "FreeBSD"
-LDFLAGS	+= -Wl,-export-dynamic
+LDFLAGS_ARCHI	+= -Wl,-export-dynamic
 .endif
 
 .if $(CLANG_MODERN)
-CFLAGS  += -Wunreachable-code-aggressive
+CFLAGS_COMPAT  += -Wunreachable-code-aggressive
 .else
-CFLAGS  += -Wunreachable-code
+CFLAGS_COMPAT  += -Wunreachable-code
 .endif
 
 # BBS-Lua & BBS-Ruby make rule definitions
