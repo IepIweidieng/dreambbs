@@ -8,6 +8,22 @@ BUILDTIME	!= date '+%s'
 
 BBSHOME	?= $(HOME)
 
+
+## Toolchain settings
+
+CC	= clang
+
+RANLIB	= ranlib
+
+CPROTO	= cproto -E"$(CC) -pipe -E" -I$(SRCROOT)/include
+
+CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encoding -I$(SRCROOT)/include
+
+LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
+
+CLANG_MODERN != if [ $$(echo '__clang_major__' | $(CC) -E - | tail -1) -ge 6 ]; then echo 1; fi
+
+
 ## BBS Release Version Prefix
 BBSCONF_ORIGIN		:= $(SRCROOT)/include/config.h
 BBSVER != grep BBSVER_PREFIX ${BBSCONF_ORIGIN} | awk 'NR==1 {printf $$3}'
@@ -22,18 +38,6 @@ USE_PFTERM	!= sh -c '${DEF_CMD}"M3_USE_PFTERM" ${BBSCONF} ${DEF_YES}'
 USE_BBSLUA	!= sh -c '${DEF_CMD}"M3_USE_BBSLUA" ${BBSCONF} ${DEF_YES}'
 USE_BBSRUBY	!= sh -c '${DEF_CMD}"M3_USE_BBSRUBY" ${BBSCONF} ${DEF_YES}'
 USE_LUAJIT	!= sh -c '${DEF_CMD}"BBSLUA_USE_LUAJIT" ${BBSCONF} ${DEF_YES}'
-
-CC	= clang
-
-RANLIB	= ranlib
-
-CPROTO	= cproto -E"$(CC) -pipe -E" -I$(SRCROOT)/include
-
-CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encoding -I$(SRCROOT)/include
-
-LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
-
-CLANG_MODERN != if [ $$(echo '__clang_major__' | $(CC) -E - | tail -1) -ge 6 ]; then echo 1; fi
 
 .if $(ARCHI)=="64"
 CFLAGS	+= -m32
