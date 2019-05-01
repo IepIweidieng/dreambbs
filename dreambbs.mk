@@ -23,6 +23,9 @@ LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
 
 CLANG_MODERN != if [ $$(echo '__clang_major__' | $(CC) -E - | tail -1) -ge 6 ]; then echo 1; fi
 
+## Tool functions
+## Called with $(function$(para1::=arg1)$(para2::=arg2)...)
+GETCONF = echo "" | $(CC) -x c -dM -E -P $(hdr:@v@-imacros "$v"@) - | grep -wq $(conf)
 
 ## BBS Release Version Prefix
 BBSCONF_ORIGIN		:= $(SRCROOT)/include/config.h
@@ -30,14 +33,12 @@ BBSVER != grep BBSVER_PREFIX ${BBSCONF_ORIGIN} | awk 'NR==1 {printf $$3}'
 
 # rules ref: PttBBS: mbbsd/Makefile
 BBSCONF		:= $(SRCROOT)/dreambbs.conf
-DEF_PATTERN	:= ^[ \t]*\#[ \t]*define[ \t]*
-DEF_CMD		:= grep -Ew "${DEF_PATTERN}"
 DEF_YES		:= && echo "YES" || echo ""
-USE_PMORE	!= sh -c '${DEF_CMD}"M3_USE_PMORE" ${BBSCONF} ${DEF_YES}'
-USE_PFTERM	!= sh -c '${DEF_CMD}"M3_USE_PFTERM" ${BBSCONF} ${DEF_YES}'
-USE_BBSLUA	!= sh -c '${DEF_CMD}"M3_USE_BBSLUA" ${BBSCONF} ${DEF_YES}'
-USE_BBSRUBY	!= sh -c '${DEF_CMD}"M3_USE_BBSRUBY" ${BBSCONF} ${DEF_YES}'
-USE_LUAJIT	!= sh -c '${DEF_CMD}"BBSLUA_USE_LUAJIT" ${BBSCONF} ${DEF_YES}'
+USE_PMORE	!= sh -c '${GETCONF${conf::= "M3_USE_PMORE"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
+USE_PFTERM	!= sh -c '${GETCONF${conf::= "M3_USE_PFTERM"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
+USE_BBSLUA	!= sh -c '${GETCONF${conf::= "M3_USE_BBSLUA"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
+USE_BBSRUBY	!= sh -c '${GETCONF${conf::= "M3_USE_BBSRUBY"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
+USE_LUAJIT	!= sh -c '${GETCONF${conf::= "BBSLUA_USE_LUAJIT"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
 
 .if $(ARCHI)=="64"
 CFLAGS	+= -m32
