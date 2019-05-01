@@ -3,6 +3,8 @@
 .ifndef DREAMBBS_MK
 DREAMBBS_MK	:= 1
 
+REALSRCROOT	?= $(SRCROOT)
+
 ARCHI	!= getconf LONG_BIT
 
 OPSYS	!= uname -o
@@ -18,12 +20,14 @@ CC	= clang
 
 RANLIB	= ranlib
 
-CPROTO	= cproto -E"$(CC) -pipe -E" -I$(SRCROOT)/include
+## To be expanded
+
+CPROTO	= cproto -E"$(CC) -pipe -E" -I$$(SRCROOT)/include
 
 CFLAGS_WARN	= -Wall
-CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer $(CFLAGS_WARN) -I$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
+CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer $(CFLAGS_WARN) -I$$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
 
-LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt $(LDFLAGS_ARCHI)
+LDFLAGS	= -L$$(SRCROOT)/lib -ldao -lcrypt $(LDFLAGS_ARCHI)
 
 ## Tool functions
 ## Called with $(function$(para1::=arg1)$(para2::=arg2)...)
@@ -33,11 +37,11 @@ GETCONFS = echo "" | $(CC) -x c -dM -E -P $(hdr:@v@-imacros "$v"@) -
 GETVALUE = echo $(VALUEIF$(conf::= $(conf:M*:$(UNQUOTE)))$(default::= $(default:M*))) | $(CC) -x c -E -P $(hdr:@v@-imacros "$v"@) -
 
 ## BBS Release Version Prefix
-BBSCONF_ORIGIN		:= $(SRCROOT)/include/config.h
+BBSCONF_ORIGIN		:= $(REALSRCROOT)/include/config.h
 BBSVER != ${GETVALUE${conf::= "BBSVER_PREFIX"}${default::= ""}${hdr::= ${BBSCONF_ORIGIN}}}
 
 # rules ref: PttBBS: mbbsd/Makefile
-BBSCONF		:= $(SRCROOT)/dreambbs.conf
+BBSCONF		:= $(REALSRCROOT)/dreambbs.conf
 DEF_LIST	!= sh -c '${GETCONFS${hdr::= ${BBSCONF}}}'
 DEF_TEST	 = [ ${DEF_LIST:M${conf:M*:S/"//g:N"}} ]  # Balance the quotes
 DEF_YES		:= && echo "YES" || echo ""
@@ -107,3 +111,11 @@ RUBY_LDFLAGS	!= pkg-config --libs ruby-2.2
 .endif
 
 .endif  # .ifndef DREAMBBS_MK
+
+
+## Expand `SRCROOT`
+.ifdef SRCROOT
+CPROTO	:= $(CPROTO)
+CFLAGS	:= $(CFLAGS)
+LDFLAGS	:= $(LDFLAGS)
+.endif
