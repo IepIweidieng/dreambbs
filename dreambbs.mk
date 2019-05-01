@@ -21,8 +21,6 @@ CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encodin
 
 LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt
 
-CLANG_MODERN != if [ $$(echo '__clang_major__' | $(CC) -E - | tail -1) -ge 6 ]; then echo 1; fi
-
 ## Tool functions
 ## Called with $(function$(para1::=arg1)$(para2::=arg2)...)
 GETCONF = echo "" | $(CC) -x c -dM -E -P $(hdr:@v@-imacros "$v"@) - | grep -wq $(conf)
@@ -40,6 +38,8 @@ USE_BBSLUA	!= sh -c '${GETCONF${conf::= "M3_USE_BBSLUA"}${hdr::= ${BBSCONF}}} ${
 USE_BBSRUBY	!= sh -c '${GETCONF${conf::= "M3_USE_BBSRUBY"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
 USE_LUAJIT	!= sh -c '${GETCONF${conf::= "BBSLUA_USE_LUAJIT"}${hdr::= ${BBSCONF}}} ${DEF_YES}'
 
+CLANG_MODERN != [ "$(CC)" = "clang" -a $$(echo '__clang_major__' | $(CC) -E - | tail -1) -ge 6 ] ${DEF_YES}
+
 .if $(ARCHI)=="64"
 CFLAGS	+= -m32
 LDFLAGS	+= -m32
@@ -53,7 +53,7 @@ LDFLAGS	+= -lresolv -ldl -rdynamic
 LDFLAGS	+= -Wl,-export-dynamic
 .endif
 
-.if ($(CLANG_MODERN) == "1") && ($(CC) == clang)
+.if $(CLANG_MODERN)
 CFLAGS  += -Wunreachable-code-aggressive
 .else
 CFLAGS  += -Wunreachable-code
