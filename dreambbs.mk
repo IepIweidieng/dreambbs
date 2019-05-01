@@ -1,5 +1,8 @@
 ## Common BSD make rules for DreamBBS Project
 
+.ifndef DREAMBBS_MK
+DREAMBBS_MK	:= 1
+
 ARCHI	!= getconf LONG_BIT
 
 OPSYS	!= uname -o
@@ -97,3 +100,5 @@ LUA_LDFLAGS	!= pkg-config --libs ${LUA_PKG_NAME}
 RUBY_CFLAGS	!= pkg-config --cflags ruby-2.2 ${RUBY_CFLAGS_CMD}
 RUBY_LDFLAGS	!= pkg-config --libs ruby-2.2
 .endif
+
+.endif  # .ifndef DREAMBBS_MK
