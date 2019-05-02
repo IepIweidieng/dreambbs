@@ -622,7 +622,7 @@ vkey_purge(void)
 #ifdef STATINC
     STATINC(STAT_SYSREADSOCKET);
 #endif
-    while (wait_input(0.01, 1) && max_try-- > 0)
+    while (wait_input(0, 0) && max_try-- > 0)
     {
         read_vin();
         vin_clear();
