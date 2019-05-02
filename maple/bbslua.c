@@ -25,6 +25,7 @@
 #ifdef M3_USE_BBSLUA     // For compiling on Maple3
  #include <assert.h>
  #include <stdarg.h>
+ #include <arpa/telnet.h>
  #include <sys/file.h>
  #define BBSLUA_HAVE_SYNCNOW
  #undef BBSLUA_HAVE_VKEY
@@ -368,184 +369,71 @@ newwin(int nlines, int ncols, int y, int x)
 
 // IID.20190124: If this BBS does not have the vkey input system,
 //                  give it a simplified one.
+// IID.20190502: Using visio internal variables.
 
-#define IBUFSIZE  128
-#define VIN_CAPACITY  (int) (IBUFSIZE - 1)
-#define VIN_END  (char *) (vin + IBUFSIZE)
-static char vin[IBUFSIZE];
-static char *vin_head = vin;
-static char *vin_tail = vin;
-
-
-// IID.20190124: Override `vkey()`.
-#define vkey()  vkey_getch()
+extern const int vi_max;
+extern unsigned char vi_pool[];
+extern int vi_size;
+extern int vi_head;
+extern int idle;
 
 static int vin_is_empty(void)
 {
-    return vin_head == vin_tail;
+    return vi_head >= vi_size;
 }
 
-static int vin_size(void)
+static void vin_clear(void)
 {
-    return (vin_tail >= vin_head)
-        ? (vin_tail - vin_head)
-        : (VIN_CAPACITY - (vin_tail - vin_head));
+    vi_head = vi_size = 0;
 }
 
-static int vin_space(void)
-{
-    return VIN_CAPACITY - vin_size();
-}
-
-static int vin_pop(void)
-{
-    int peaked_char;
-
-    if (vin_is_empty())
-        return EOF;
-
-    peaked_char = (unsigned char) *vin_head;
-
-    if (++vin_head == VIN_END)
-        vin_head = vin;
-
-    return peaked_char;
-}
-
-static void vin_clear()
-{
-    vin_head = vin_tail = vin;
-}
-
-#undef  TRAP_ESC
-
-static int
-vkey_getch(void)  // `vkey()`, but tries `vin_pop()` before `igetch()`
-{
-    int mode;
-    int ch, last, last2;
-
-    mode = last = last2 = 0;
-    for (;;)
-    {
-        ch = vin_pop();
-
-        if (ch == EOF)
-            ch = igetch();
-
-#ifdef  TRAP_ESC
-        if (mode == 0)
-        {
-            if (ch == KEY_ESC)
-                mode = 1;
-            else
-                return ch;              /* Normal Key */
-        }
-#else
-        if (ch == KEY_ESC)
-            mode = 1;
-        else if (mode == 0)             /* Normal Key */
-        {
-            return ch;
-        }
-#endif
-        else if (mode == 1)
-        {                               /* Escape sequence */
-            if (ch == '[' || ch == 'O')
-                mode = 2;
-            else if (ch == '1' || ch == '4')
-                mode = 3;
-            else
-            {
-#ifdef  TRAP_ESC
-                return Meta(ch);
-#else
-                return ch;
-#endif
-            }
-        }
-        else if (mode == 2)
-        {
-            if (ch >= 'A' && ch <= 'D')      /* Cursor key */
-                return KEY_UP + (ch - 'A');
-            else if (last == 'O')
-            {
-                if (ch >= 'P' && ch <= 'S')  /* F1 - F4 */
-                    return KEY_F1 + (ch - 'P');
-                else
-                    return ch;
-            }
-            else if (ch == 'Z')              /* Shift-Tab */
-                return KEY_STAB;
-            else if (ch >= '1' && ch <= '6')
-                mode = 3;
-            else
-                return ch;
-        }
-        else if (mode == 3)
-        {                               /* Ins Del Home End PgUp PgDn */
-            if (ch == '~')
-                return KEY_HOME + (last - '1');
-            else if (last >= '1' && last <= '2')
-                mode = 4;
-            else
-                return ch;
-        }
-        else if (mode == 4)
-        {                               /* F1 - F12 */
-            if (ch == '~')
-            {
-                if (last2 == '1')       /* F1 - F8 */
-                    return KEY_F1 + (last - '1') - (last > '6');
-                else if (last2 == '2')  /* F9 - F12 */
-                    return KEY_F9 + (last - '0') - (last > '2');
-                else
-                    return ch;
-            }
-            else
-                return ch;
-        }
-        last2 = last;
-        last = ch;
-    }
-}
 
 // After reading `VIN_AFTER_HEAD_SIZE()` chars from `vin`,
-//    the next char cursor will be at `vin_tail`
-//    or at `VIN_END` depending on which condition comes first.
+//    the next char cursor will be at `vi_size`.
 #define VIN_AFTER_HEAD_SIZE()  \
-    ((vin_tail >= vin_head) ? vin_tail - vin_head : VIN_END - vin_head)
+    ((vi_size >= vi_head) ? vi_size - vi_head : 0)
 
 // After reading `VIN_AFTER_TAIL_SPACE()` chars into `vin`,
-//    the next char cursor will be one char before `vin_head` in the queue
-//    or at `VIN_END` depending on which condition comes first.
+//    the next char cursor will be at `vi_max`.
 #define VIN_AFTER_TAIL_SPACE()  \
-    ((vin_head == vin) ? VIN_END - 1 - vin_tail \
-      : (vin_head > vin_tail) ? vin_head - 1 - vin_tail : VIN_END - vin_tail)
+    (vi_max - vi_size)
 
 static int
 read_vin(void)
 {
     int total_len = 0;
     int len;
+    int iac_len;
 
-    while (vin_space() > 0) {
-        len = read(0, vin_tail, VIN_AFTER_TAIL_SPACE());
-
-        if (len == 0 || (len < 0 && !(errno == EINTR || errno == EAGAIN)))
-            abort_bbs();
-
-        if (len > 0) {
-            total_len += len;
-            vin_tail += len;
-            if (vin_tail == VIN_END) {
-                vin_tail = vin;
-                continue;
-            }
+    unsigned char *vi_tail = vi_pool + vi_size;
+    len = recv(0, vi_tail, VIN_AFTER_TAIL_SPACE(), MSG_DONTWAIT);
+    if (len > 0)
+    {
+        vi_size += len;
+        iac_len = (*vi_tail == IAC) ? iac_count(vi_tail) : 0;
+        if (iac_len >= len)
+        {
+            vi_size -= len;
+            return 0;
         }
+        vi_size -= iac_len;
 
-        break;
+        memmove(vi_tail, vi_tail + iac_len, iac_len);
+        total_len += len - iac_len;
+
+        if (idle && cutmp)
+        {
+
+            cutmp->idle_time = idle = 0;
+        }
+#ifdef  HAVE_SHOWNUMMSG
+        if (cutmp)
+            cutmp->num_msg = 0;
+#endif
     }
+
+    if (len == 0 || (len < 0 && !(errno == EINTR || errno == EAGAIN)))
+        abort_bbs();
 
     return total_len;
 }
@@ -625,7 +513,7 @@ vkey_is_ready(void)
 static int
 vkey_is_full(void)
 {
-    return vin_size() >= VIN_CAPACITY;
+    return vi_size >= vi_max;
 }
 
 static void
@@ -664,16 +552,14 @@ vkey_prefetch(int timeout)
 static int
 vkey_is_prefetched(char c)
 {
-    char *res;
+    unsigned char *res;
 
     if (c == EOF)
         return 0;
 
-    res = (char *) memchr(vin_head, c, VIN_AFTER_HEAD_SIZE());
-    if (!res && vin_head > vin_tail)
-        res = (char *) memchr(vin, c, vin_tail - vin);
+    res = (unsigned char *) memchr(vi_pool + vi_head, c, VIN_AFTER_HEAD_SIZE());
 
-    return res >= vin;
+    return res >= vi_pool + vi_head;
 }
 
 #endif  // #ifndef BBSLUA_HAVE_VKEY
