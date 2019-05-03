@@ -2485,6 +2485,7 @@ mbox_sysop(
         XO *xx;
 
         xz[XZ_MBOX - XO_ZONE].xo = xx = xo_new("usr/s/sysop/.DIR");
+        xx->pos = 0;
         xover(XZ_MBOX);
         free(xx);
 
@@ -2517,6 +2518,7 @@ mbox_other(
         usr_fpath(cmbox.mail_xo.dir, acct.userid, fn_dir);
 
         xz[XZ_MBOX - XO_ZONE].xo = xx = xo_new(path);
+        xx->pos = 0;
         xover(XZ_MBOX);
         free(xx);
 
