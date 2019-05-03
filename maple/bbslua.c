@@ -421,6 +421,7 @@ static int peek_size;
 #endif
 
 // Try to empty `vl_pool`; may not be actually emptied
+// Use `vin_clear_fd()` beforehand to ensure a complete emptying
 static int vin_clear(void)
 {
     int max_try = IBUFSIZE;
@@ -560,6 +561,21 @@ wait_input(float f, int bIgnoreBuf)
     return (sel == 0) ? 0 : 1;
 }
 
+static void
+vin_clear_fd(int fd)
+{
+    // An arbitrarily large buffer
+    unsigned char ignore_buf[4096];
+
+    while (wait_input(fd, 1))
+    {
+        int len = recv(fd, ignore_buf, sizeof(ignore_buf), MSG_DONTWAIT);
+
+        if (len == 0 || (len < 0 && !(errno == EINTR || errno == EAGAIN)))
+            break;
+    }
+}
+
 static int
 vkey_is_ready(void)
 {
@@ -574,36 +590,6 @@ vkey_is_full(void)
 #else
     // No input buffer used; never be full
     return 0;
-#endif
-}
-
-// IID.20190502: Return `0` if encounter `Ctrl-C` with `vkey()`; return `1` otherwise.
-static int
-vkey_purge(void)
-{
-    int max_try = 64;
-#ifndef BBSLUA_EXPOSED_VISIO_VI
-    int no_break = 1;
-#endif
-    vin_clear();
-
-#ifdef STATINC
-    STATINC(STAT_SYSREADSOCKET);
-#endif
-#ifdef BBSLUA_EXPOSED_VISIO_VI
-    while (wait_input(0, 0) && max_try-- > 0)
-    {
-        read_vin();
-        vin_clear();
-    }
-    return 1;
-#else
-    while (max_try-- > 0)
-    {
-        if (!vin_clear())
-            no_break = 0;
-    }
-    return no_break;
 #endif
 }
 
@@ -647,6 +633,51 @@ vkey_is_prefetched(char c)
     res = (unsigned char *) memchr(peek_buf, c, peek_size);
     return res >= peek_buf;
 #endif
+}
+
+// IID.20190502: Return `0` if encounter `Ctrl-C` with `vkey()`; return `1` otherwise.
+static int
+vkey_purge(void)
+{
+#ifndef BBSLUA_EXPOSED_VISIO_VI
+    int no_break = 1;
+#else
+    // a magic number to set how much data we're going to process
+    // before a real purge (may contain telnet protocol)
+    int bytes_before_purge = 32;
+#endif
+
+#ifdef STATINC
+    STATINC(STAT_SYSREADSOCKET);
+#endif
+
+#ifdef BBSLUA_EXPOSED_VISIO_VI
+    // Process some of the remaining input bytes
+    vkey_prefetch(0);
+    while (wait_input(0, 0) && bytes_before_purge-- > 0)
+    {
+        int ch = vkey();
+#ifdef I_OTHERDATA
+        // we can't deal with I_OTHERDATA...
+        if (ch == I_OTHERDATA)
+            break;
+#endif
+    }
+    vin_clear_fd(0);
+    vin_clear();
+    return 1;
+
+#else  // #ifdef BBSLUA_EXPOSED_VISIO_VI
+
+    // Process some of the remaining input bytes
+    if (!vin_clear())
+        no_break = 0;
+
+    vin_clear_fd(0);
+    if (!vin_clear())
+        no_break = 0;
+    return no_break;
+#endif  // #ifdef BBSLUA_EXPOSED_VISIO_VI
 }
 
 #endif  // #ifndef BBSLUA_HAVE_VKEY
