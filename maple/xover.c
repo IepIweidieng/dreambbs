@@ -82,8 +82,7 @@ xo_free(
 {
     char *ptr;
 
-    if (ptr = xo->xyz)
-        free(ptr);
+    free(ptr = xo->xyz);
     free(xo);
 }
 #endif
