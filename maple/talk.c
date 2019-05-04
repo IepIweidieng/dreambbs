@@ -1320,8 +1320,8 @@ bm_image(void)
                 {
                     write(count, ubase, (char *) userno - (char *) ubase);
                     close(count);
-                    free(ubase);
                 }
+                free(ubase);
             }
             else  /* Thor.980811: lkchu patch: »P friend ¦P¨B */
             {
