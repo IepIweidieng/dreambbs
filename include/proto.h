@@ -264,7 +264,7 @@ void cursor_save(void);
 void cursor_restore(void);
 int vmsg(const char *msg);
 void zmsg(char *msg);
-void vs_bar(char *title);
+void vs_bar(const char *title);
 #ifndef M3_USE_PFTERM
 void grayout(int y, int end, int level);
 #endif  /* #ifndef M3_USE_PFTERM */

@@ -1275,7 +1275,7 @@ zmsg(                   /* easy message */
 
 void
 vs_bar(
-    char *title)
+    const char *title)
 {
 #ifdef  COLOR_HEADER
 /*  int color = (time(0) % 7) + 41;        lkchu.981201: random color */
