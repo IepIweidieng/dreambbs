@@ -1008,10 +1008,7 @@ class_load(
 
     max -= pos;
 
-    if ((cbase = (short *) xo->xyz))
-        cbase = (short *) realloc(cbase, max);
-    else
-        cbase = (short *) malloc(max);
+    cbase = (short *) realloc(xo->xyz, max);
     xo->xyz = (char *) cbase;
 
     max = 0;
