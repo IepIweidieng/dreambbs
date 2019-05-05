@@ -431,7 +431,7 @@ do_menu(
         }
     }
 
-    return 0;
+    // return 0;
 }
 
 
@@ -553,7 +553,7 @@ popupmenu_ans(char *desc[], char *title, int x, int y)
             draw_ans_item(desc[cur+1], 1, x+cur, y, hotkey);
         }
     }
-    return 0;
+    // return 0;
 }
 
 void
