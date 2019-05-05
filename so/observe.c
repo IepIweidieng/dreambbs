@@ -94,7 +94,7 @@ observe_sync(
 XO *xo)
 {
     char *fpath;
-    int fd, size = 0, total, userno;
+    int fd, size, total = 0, userno;
     struct stat st;
 
     fpath = xo->dir;

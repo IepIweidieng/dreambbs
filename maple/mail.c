@@ -2017,14 +2017,14 @@ hdr_outs(               /* print HDR's subject */
         {
             outc(' ');
         }
+
+        if (online != NULL)
+            outs("\x1b[m");
     }
     else
     {
         cc = 64;
     }
-
-    if (online != NULL)
-        outs("\x1b[m");
 
     title = str_ttl(mark = hdr->title);
     ch = title == mark;
