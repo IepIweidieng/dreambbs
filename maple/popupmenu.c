@@ -374,7 +374,6 @@ do_menu(
         {
             case KEY_LEFT:
                 return 1;
-                break;
             case KEY_UP:
                 cur = (cur==0)?num:cur-1;
                 break;
