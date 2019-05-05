@@ -430,16 +430,15 @@ static void acct_su(ACCT * u)
     memcpy(&cuser, u, sizeof(ACCT));
     cuser.userlevel = level;
     cuser.ufo = ufo;
-    str_lower(id, u->userid);
-    sprintf(path, "usr/%c/%s/.DIR", *id, id);
-    xz[XZ_MBOX - XO_ZONE].xo = xo = xo_new(path);
-    xo->pos = 0;
+    usr_fpath(path, u->userid, FN_DIR);
+    xo = xz[XZ_MBOX - XO_ZONE].xo;
+    xz[XZ_MBOX - XO_ZONE].xo =  xo_new(path);
+    xz[XZ_MBOX - XO_ZONE].xo->pos = 0;
     free(xo);
-    sprintf(path, "usr/%c/%s/bmw", *id, id);
-    //  xo = xz[XZ_BMW - XO_ZONE].xo;
-    //  xz[XZ_BMW - XO_ZONE].xo =  xo_new(path);
-    xz[XZ_BMW - XO_ZONE].xo = xo = xo_new(path);
-    xo->pos = 0;
+    usr_fpath(path, u->userid, FN_BMW);
+    xo = xz[XZ_BMW - XO_ZONE].xo;
+    xz[XZ_BMW - XO_ZONE].xo =  xo_new(path);
+    xz[XZ_BMW - XO_ZONE].xo->pos = 0;
     free(xo);
     pal_cache();
 }
