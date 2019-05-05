@@ -1316,6 +1316,8 @@ menu(void)
         case KEY_DOWN:
             if (++cc <= max)
                 break;
+            // Else falls through
+            //    to wrap around cursor
 
         case KEY_HOME:
             cc = 0;
@@ -1324,6 +1326,8 @@ menu(void)
         case KEY_UP:
             if (--cc >= 0)
                 break;
+            // Else falls through
+            //    to wrap around cursor
 
         case KEY_END:
             cc = max;
@@ -1432,6 +1436,9 @@ menu(void)
             }
 
             cmd = 'G';
+
+            // Falls through
+            //    to move the cursor to option 'G' ('Goodbye'; exiting BBS)
 
         default:
 
