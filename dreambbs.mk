@@ -20,7 +20,8 @@ RANLIB	= ranlib
 
 CPROTO	= cproto -E"$(CC) -pipe -E" -I$(SRCROOT)/include
 
-CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer -Wall -Wno-invalid-source-encoding -I$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
+CFLAGS_WARN	= -Wall
+CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer $(CFLAGS_WARN) -I$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
 
 LDFLAGS	= -L$(SRCROOT)/lib -ldao -lcrypt $(LDFLAGS_ARCHI)
 
@@ -47,6 +48,10 @@ USE_BBSRUBY	!= sh -c '${DEF_TEST${conf::= "M3_USE_BBSRUBY"}} ${DEF_YES}'
 USE_LUAJIT	!= sh -c '${DEF_TEST${conf::= "BBSLUA_USE_LUAJIT"}} ${DEF_YES}'
 
 CLANG_MODERN != [ $$(${GETVALUE${conf::= "__clang_major__"}${default::= 0}${hdr::=}}) -ge 6 ] ${DEF_YES}
+
+.if $(CC) == "clang"
+CFLAGS_WARN	+= -Wno-invalid-source-encoding
+.endif
 
 .if $(ARCHI)=="64"
 CFLAGS_ARCHI	+= -m32
