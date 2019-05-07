@@ -2034,6 +2034,7 @@ ve_key:
             case Ctrl('X'):             /* Save and exit */
             case Ctrl('W'):
             case Meta('X'):
+            case KEY_F10:
 
                 cc = ve_filer(fpath, ve_op & 11);
 #ifdef  HAVE_INPUT_TOOLS
@@ -2061,6 +2062,7 @@ ve_key:
                 continue;
 
             case Ctrl('Z'):
+            case KEY_F1:
 
                 film_out(FILM_EDIT, -1);
                 ve_mode = mode | VE_REDRAW;
@@ -2130,6 +2132,7 @@ ve_key:
 
             case Ctrl('U'):
             case Meta('U'):
+            case KEY_F8:
 
                 every_U();
                 /*ve_char(27);*/
