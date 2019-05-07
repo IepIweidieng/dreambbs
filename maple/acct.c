@@ -431,10 +431,15 @@ static void acct_su(ACCT * u)
     cuser.userlevel = level;
     cuser.ufo = ufo;
     usr_fpath(path, u->userid, FN_DIR);
+    // IID.20190507: Xover object for mailbox (`cmbox`) is statically allocated.
+/*
     xo = xz[XZ_MBOX - XO_ZONE].xo;
     xz[XZ_MBOX - XO_ZONE].xo =  xo_new(path);
     xz[XZ_MBOX - XO_ZONE].xo->pos = 0;
     free(xo);
+*/
+    // IID.20190508: Use `mbox_main()` to update `cmbox`.
+    mbox_main();
     usr_fpath(path, u->userid, FN_BMW);
     xo = xz[XZ_BMW - XO_ZONE].xo;
     xz[XZ_BMW - XO_ZONE].xo =  xo_new(path);
