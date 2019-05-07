@@ -1903,7 +1903,7 @@ xover(
                     static int (*mgp)(XO *xo);
                     if (!mgp)
                     {
-                        mgp = DL_get(BINARY_PREFIX"mailgem.so:mailgem_gather");
+                        mgp = DL_get(DL_NAME("mailgem.so", mailgem_gather));
                         if (mgp)
                             cmd = (*mgp)(xo);
                         else
