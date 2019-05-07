@@ -1345,7 +1345,7 @@ menu(void)
             /* Thor.990212: dynamic load, with negative umode */
             if (cmd < 0)
             {
-                void *p = DL_get(mptr->func);
+                void *p = DL_GET(mptr->func);
                 if (!p) break;
                 mptr->func = p;
                 cmd = -cmd;

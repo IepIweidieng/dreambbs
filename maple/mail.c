@@ -2735,7 +2735,7 @@ mbox_gem(
         return XO_NONE;
     if (!mgp)
     {
-        mgp = DL_get(DL_NAME("mailgem.so", mailgem_main));
+        mgp = DL_GET(DL_NAME("mailgem.so", mailgem_main));
         if (mgp)
             (*mgp)();
         else

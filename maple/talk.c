@@ -3023,7 +3023,7 @@ talk_page(
     else if (ans == 'c')
     {
         if (!p)
-            p = DL_get(DL_NAME("pip.so", pip_vf_fight));
+            p = DL_GET(DL_NAME("pip.so", pip_vf_fight));
         if (p)
         {
             up->pip = NULL;
@@ -4455,7 +4455,7 @@ over_for:
         else if (ans == 'c')
         {
             if (!p)
-                p = DL_get(DL_NAME("pip.so", pip_vf_fight));
+                p = DL_GET(DL_NAME("pip.so", pip_vf_fight));
             strcpy(cutmp->mateid, up->userid);
             if (p)
             {

@@ -86,4 +86,6 @@
 #define DL_NAME(module_str, func) \
     BINARY_PREFIX module_str ":" CPP_STR(CPP_UNPAREN_OPT(func))
 
+#define DL_GET(dl_name)  DL_get(dl_name)
+
 #endif  // #ifndef CPPDEF_H
