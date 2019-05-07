@@ -88,4 +88,12 @@
 
 #define DL_GET(dl_name)  DL_get(dl_name)
 
+#if __STDC_VERSION__ >= 199901L
+  #define CPP_APPEND_CLOSEPAREN(...)  __VA_ARGS__)
+#else
+  #define CPP_APPEND_CLOSEPAREN(args...)  args)
+#endif
+
+#define DL_CALL(dl_name)  DL_func((dl_name), CPP_APPEND_CLOSEPAREN
+
 #endif  // #ifndef CPPDEF_H
