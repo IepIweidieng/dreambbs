@@ -892,12 +892,21 @@ bl_peekbreak(float f)
     return 0;
 }
 
+#if KEY_UP > 0  /* Key values for special keys are negative on some BBSs */
+  #define IS_NORMAL_KEY(v) (v < 0x100)
+#else
+  #define IS_NORMAL_KEY(v) (v > 0 && v < 0x100)
+#endif
+
 static void
 bl_k2s(lua_State* L, int v)
 {
+#if IS_NORMAL_KEY(-1)  /* Negative key values are ignored */
     if (v <= 0)
         lua_pushnil(L);
-    else if (v == KEY_TAB)
+    else
+#endif
+    if (v == KEY_TAB)
         lua_pushstring(L, "TAB");
     else if (v == '\b' || v == 0x7F)
         lua_pushstring(L, "BS");
@@ -905,7 +914,7 @@ bl_k2s(lua_State* L, int v)
         lua_pushstring(L, "ENTER");
     else if (v < ' ')
         lua_pushfstring(L, "^%c", v-1+'A');
-    else if (v < 0x100)
+    else if (IS_NORMAL_KEY(v))
         lua_pushfstring(L, "%c", v);
 #ifdef KEY_F1
   #if KEY_F1 < KEY_F2
