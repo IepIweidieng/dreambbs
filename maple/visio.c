@@ -2374,24 +2374,57 @@ vkey(void)
         {
             if (ch >= 'A' && ch <= 'D')       /* "<Esc> <[O> <A-D>" */ /* Cursor key */
                 return KEY_UP + (ch - 'A');
-            else if (last == 'O')             /* "<Esc> O `ch`" */
+            else switch (ch)  /* "<Esc> <[O> <HF>" */ /* Home Ens (xterm) */
+            {
+              case 'H':
+                return KEY_HOME;
+              case 'F':
+                return KEY_END;
+            }
+            /* else */ if (last == 'O')             /* "<Esc> O `ch`" */
             {
                 if (ch >= 'P' && ch <= 'S')   /* "<Esc> O <PQRS>" */ /* F1 - F4 */
                     return KEY_F1 + (ch - 'P');
+                else if (ch == 'w')           /* "<Esc> O w" */ /* END (PuTTY-rxvt) */
+                    return KEY_END;
                 else
                     return ch;
             }
-            else if (ch == 'Z')               /* "<Esc> [ Z" */ /* Shift-Tab */
-                return KEY_STAB;
-            else if (ch >= '1' && ch <= '6')  /* "<Esc> [ <1-6>" */
+            else if (ch >= '1' && ch <= '8')  /* "<Esc> [ <1-8>" */
                 mode = 3;
-            else
+            else switch (ch)                  /* "<Esc> [ `ch`" */
+            {
+                                              /* "<Esc> [ <GIL>" */ /* PgDn PgUp Ins (SCO) */
+              case 'G':
+                return KEY_PGDN;
+              case 'I':
+                return KEY_PGUP;
+              case 'L':
+                return KEY_INS;
+
+              case 'Z':                       /* "<Esc> [ Z" */ /* Shift-Tab */
+                return KEY_STAB;
+
+              default:
                 return ch;
+            }
         }
-        else if (mode == 3)   /* "<Esc> [ <1-6> `ch`" */
+        else if (mode == 3)   /* "<Esc> [ <1-8> `ch`" */
         {                               /* Home Ins Del End PgUp PgDn */
-            if (ch == '~')                        /* "<Esc> [ <1-6> ~" */
-                return KEY_HOME + (last - '1');
+            if (ch == '~')              /* "<Esc> [ <1-8> ~" */
+            {
+                if (last <= '6')        /* "<Esc> [ <1-6> ~" */
+                    return KEY_HOME + (last - '1');
+                else switch (last)      /* "<Esc> [ <78> ~" */ /* Home End (rxvt) */
+                {
+                  case '7':
+                    return KEY_HOME;
+                  case '8':
+                    return KEY_END;
+                  default:
+                    return ch;
+                }
+            }
             else if (ch >= '0' && ch <= '9')      /* "<Esc> [ <1-6> <0-9>" */
                 mode = 4;
             else
