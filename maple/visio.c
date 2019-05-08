@@ -2361,51 +2361,51 @@ vkey(void)
             return ch;
         }
 #endif
-        else if (mode == 1)
+        else if (mode == 1)   /* "<Esc> `ch`" */
         {                               /* Escape sequence */
-            if (ch == '[' || ch == 'O')
+            if (ch == '[' || ch == 'O')       /* "<Esc> <[O>" */
                 mode = 2;
-            else if (ch == '1' || ch == '4')
+            else if (ch == '1' || ch == '4')  /* "<Esc> <14>" */
                 mode = 3;
             else
             {
                 return Meta(ch);
             }
         }
-        else if (mode == 2)
+        else if (mode == 2)   /* "<Esc> <[O> `ch`" */
         {
-            if (ch >= 'A' && ch <= 'D')      /* Cursor key */
+            if (ch >= 'A' && ch <= 'D')       /* "<Esc> <[O> <A-D>" */ /* Cursor key */
                 return KEY_UP + (ch - 'A');
-            else if (last == 'O')
+            else if (last == 'O')             /* "<Esc> O `ch`" */
             {
-                if (ch >= 'P' && ch <= 'S')  /* F1 - F4 */
+                if (ch >= 'P' && ch <= 'S')   /* "<Esc> O <PQRS>" */ /* F1 - F4 */
                     return KEY_F1 + (ch - 'P');
                 else
                     return ch;
             }
-            else if (ch == 'Z')              /* Shift-Tab */
+            else if (ch == 'Z')               /* "<Esc> [ Z" */ /* Shift-Tab */
                 return KEY_STAB;
-            else if (ch >= '1' && ch <= '6')
+            else if (ch >= '1' && ch <= '6')  /* "<Esc> [ <1-6>" */
                 mode = 3;
             else
                 return ch;
         }
-        else if (mode == 3)
+        else if (mode == 3)   /* "<Esc> [ <1-6> `ch`" | "<Esc> <14> `ch`" */
         {                               /* Ins Del Home End PgUp PgDn */
-            if (ch == '~')
+            if (ch == '~')                        /* "<Esc> [ <1-6> ~" | "<Esc> <14> ~" */
                 return KEY_HOME + (last - '1');
-            else if (last >= '1' && last <= '2')
+            else if (last >= '1' && last <= '2')  /* "<Esc> [ <12> `ch`" | "<Esc> 1 `ch`" */
                 mode = 4;
             else
                 return ch;
         }
-        else if (mode == 4)
+        else if (mode == 4)   /* "<Esc> [ <12> `last` `ch`" | "<Esc> 1 `last` `ch`" */
         {                               /* F1 - F12 */
-            if (ch == '~')
+            if (ch == '~')              /* "<Esc> [ <12> `last` ~" | "<Esc> 1 `last` ~" */
             {
-                if (last2 == '1')       /* F1 - F8 */
+                if (last2 == '1')       /* "<Esc> [ 1 `last` ~" | "<Esc> 1 `last` ~" */ /* F1 - F8 */
                     return KEY_F1 + (last - '1') - (last > '6');
-                else if (last2 == '2')  /* F9 - F12 */
+                else if (last2 == '2')  /* "<Esc> [ 2 `last` ~" */ /* F9 - F12 */
                     return KEY_F9 + (last - '0') - (last > '2');
                 else
                     return ch;
