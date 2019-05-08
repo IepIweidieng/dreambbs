@@ -2389,7 +2389,7 @@ vkey(void)
                 return ch;
         }
         else if (mode == 3)   /* "<Esc> [ <1-6> `ch`" */
-        {                               /* Ins Del Home End PgUp PgDn */
+        {                               /* Home Ins Del End PgUp PgDn */
             if (ch == '~')                        /* "<Esc> [ <1-6> ~" */
                 return KEY_HOME + (last - '1');
             else if (ch >= '0' && ch <= '9')      /* "<Esc> [ <1-6> <0-9>" */
