@@ -2365,8 +2365,6 @@ vkey(void)
         {                               /* Escape sequence */
             if (ch == '[' || ch == 'O')       /* "<Esc> <[O>" */
                 mode = 2;
-            else if (ch == '1' || ch == '4')  /* "<Esc> <14>" */
-                mode = 3;
             else
             {
                 return Meta(ch);
@@ -2390,20 +2388,20 @@ vkey(void)
             else
                 return ch;
         }
-        else if (mode == 3)   /* "<Esc> [ <1-6> `ch`" | "<Esc> <14> `ch`" */
+        else if (mode == 3)   /* "<Esc> [ <1-6> `ch`" */
         {                               /* Ins Del Home End PgUp PgDn */
-            if (ch == '~')                        /* "<Esc> [ <1-6> ~" | "<Esc> <14> ~" */
+            if (ch == '~')                        /* "<Esc> [ <1-6> ~" */
                 return KEY_HOME + (last - '1');
-            else if (last >= '1' && last <= '2')  /* "<Esc> [ <12> `ch`" | "<Esc> 1 `ch`" */
+            else if (ch >= '0' && ch <= '9')      /* "<Esc> [ <1-6> <0-9>" */
                 mode = 4;
             else
                 return ch;
         }
-        else if (mode == 4)   /* "<Esc> [ <12> `last` `ch`" | "<Esc> 1 `last` `ch`" */
+        else if (mode == 4)   /* "<Esc> [ <1-6> <0-9> `ch`" */
         {                               /* F1 - F12 */
-            if (ch == '~')              /* "<Esc> [ <12> `last` ~" | "<Esc> 1 `last` ~" */
+            if (ch == '~')              /* "<Esc> [ <1-6> <0-9> ~" */
             {
-                if (last2 == '1')       /* "<Esc> [ 1 `last` ~" | "<Esc> 1 `last` ~" */ /* F1 - F8 */
+                if (last2 == '1')       /* "<Esc> [ 1 `last` ~" */ /* F1 - F8 */
                     return KEY_F1 + (last - '1') - (last > '6');
                 else if (last2 == '2')  /* "<Esc> [ 2 `last` ~" */ /* F9 - F12 */
                     return KEY_F9 + (last - '0') - (last > '2');
