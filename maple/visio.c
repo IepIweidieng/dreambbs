@@ -2391,7 +2391,10 @@ vkey(void)
 #else
         if (ch == KEY_ESC)
         {
-            mod = 0;  /* Reset modifiers */
+            if (mode == 1)    /* "<Esc> <Esc>" */ /* <Esc> + possible special keys */
+                mod = META_CODE;    /* Make the key Meta-ed */
+            else
+                mod = 0;            /* Reset modifiers */
             mode = 1;
         }
         else if (mode == 0)             /* Normal Key */
@@ -2453,17 +2456,18 @@ vkey(void)
         }
         else if (ch == ';')   /* "<Esc> [ <1-6> ;" | "<Esc> [ <12> `last` `ch`" */
         {                               /* Modifier argument (xterm-style) */  /* "; <2-9>" | "; 1 <0-6>" */
-            mod = igetch();
-            if (mod < '1' || mod > '9')
+            int mod_ch = igetch();
+            if (mod_ch < '1' || mod_ch > '9')
                 return ch;
-            if (mod == '1')       /* "; 1 <0-6>" */
+            if (mod_ch == '1')       /* "; 1 <0-6>" */
             {
-                mod = igetch();
-                if (mod < '0' || mod > '6')
+                mod_ch = igetch();
+                if (mod_ch < '0' || mod_ch > '6')
                     return ch;
-                mod += 10;
+                mod_ch += 10;
             }
-            mod -= '1';   /* Change to bit number */
+            mod_ch -= '1';   /* Change to bit number */
+            mod |= mod_ch;
             if (mode == 3 && last == '1')  /* "<Esc> [ 1 ; <2-9>" | "<Esc> [ 1 ; 1 <0-6>" */
             {
                 /* Recover state to "<Esc> [ `ch`" */
@@ -2476,7 +2480,7 @@ vkey(void)
         {                               /* Home Ins Del End PgUp PgDn */
             if (char_mod(ch) != -1)     /* "<Esc> [ <1-8> <~$^@>" */
             {
-                mod = char_mod(ch);
+                mod |= char_mod(ch);
                 if (last <= '6')        /* "<Esc> [ <1-6> <~$^@>" */
                     return mod_key(mod, KEY_HOME + (last - '1'));
                 else switch (last)      /* "<Esc> [ <78> <~$^@>" */ /* Home End (rxvt) */
@@ -2498,7 +2502,7 @@ vkey(void)
         {                               /* F1 - F12 */
             if (char_mod(ch) != -1)     /* "<Esc> [ <1-6> <0-9> <~$^@>" */
             {
-                mod = char_mod(ch);
+                mod |= char_mod(ch);
                 if (last2 == '1')       /* "<Esc> [ 1 `last` <~$^@>" */ /* F1 - F8 */
                     return mod_key(mod, KEY_F1 + (last - '1') - (last > '6'));
                 else if (last2 == '2')  /* "<Esc> [ 2 `last` <~$^@>" */ /* F9 - F12 */
