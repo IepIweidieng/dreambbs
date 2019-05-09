@@ -2352,6 +2352,24 @@ mod_key(int mod, int key)   /* xterm-style modifier */
     return key;
 }
 
+static inline int
+char_mod(int ch)    /* rxvt-style modifier character */
+{
+    switch (ch)
+    {
+      case '~':
+        return 0;
+      case '$':
+        return SHIFT_CODE;
+      case '^':
+        return CTRL_CODE;
+      case '@':
+        return CTRL_CODE | SHIFT_CODE;
+      default:
+        return -1;
+    }
+}
+
 int
 vkey(void)
 {
@@ -2407,11 +2425,13 @@ vkey(void)
                     return mod_key(mod, KEY_F1 + (ch - 'P'));
                 else if (ch == 'w')           /* "<Esc> O w" */ /* END (PuTTY-rxvt) */
                     return mod_key(mod, KEY_END);
-                else
-                    return ch;
+                else if (ch >= 'a' && ch <= 'd')  /* "<Esc> O <a-d>" */ /* Ctrl-ed cursor key (rxvt) */
+                    return mod_key(mod | SHIFT_CODE, KEY_UP + (ch - 'a'));
             }
             if (last == 'O')
                 return ch;
+            else if (ch >= 'a' && ch <= 'd')  /* "<Esc> [ <a-d>" */ /* Shift-ed cursor key (rxvt) */
+                return mod_key(mod | SHIFT_CODE, KEY_UP + (ch - 'a'));
             else if (ch >= '1' && ch <= '8')  /* "<Esc> [ <1-8>" */
                 mode = 3;
             else switch (ch)                  /* "<Esc> [ `ch`" */
@@ -2454,11 +2474,12 @@ vkey(void)
         }
         else if (mode == 3)   /* "<Esc> [ <1-8> `ch`" */
         {                               /* Home Ins Del End PgUp PgDn */
-            if (ch == '~')              /* "<Esc> [ <1-8> ~" */
+            if (char_mod(ch) != -1)     /* "<Esc> [ <1-8> <~$^@>" */
             {
-                if (last <= '6')        /* "<Esc> [ <1-6> ~" */
+                mod = char_mod(ch);
+                if (last <= '6')        /* "<Esc> [ <1-6> <~$^@>" */
                     return mod_key(mod, KEY_HOME + (last - '1'));
-                else switch (last)      /* "<Esc> [ <78> ~" */ /* Home End (rxvt) */
+                else switch (last)      /* "<Esc> [ <78> <~$^@>" */ /* Home End (rxvt) */
                 {
                   case '7':
                     return mod_key(mod, KEY_HOME);
@@ -2475,11 +2496,12 @@ vkey(void)
         }
         else if (mode == 4)   /* "<Esc> [ <1-6> <0-9> `ch`" */
         {                               /* F1 - F12 */
-            if (ch == '~')              /* "<Esc> [ <1-6> <0-9> ~" */
+            if (char_mod(ch) != -1)     /* "<Esc> [ <1-6> <0-9> <~$^@>" */
             {
-                if (last2 == '1')       /* "<Esc> [ 1 `last` ~" */ /* F1 - F8 */
+                mod = char_mod(ch);
+                if (last2 == '1')       /* "<Esc> [ 1 `last` <~$^@>" */ /* F1 - F8 */
                     return mod_key(mod, KEY_F1 + (last - '1') - (last > '6'));
-                else if (last2 == '2')  /* "<Esc> [ 2 `last` ~" */ /* F9 - F12 */
+                else if (last2 == '2')  /* "<Esc> [ 2 `last` <~$^@>" */ /* F9 - F12 */
                     return mod_key(mod, KEY_F9 + (last - '0') - (last > '2'));
                 else
                     return ch;
