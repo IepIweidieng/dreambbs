@@ -706,7 +706,7 @@ m_verify(void)
         q += 11;
     while (*q == ' ') q++;
 
-    if (strlen(q) < 7 + 13)
+    if (strlen(q) < 7 + PASSLEN-1)
     {
         vmsg("¹q¤lÃ±³¹¦³»~");
         return 0;
