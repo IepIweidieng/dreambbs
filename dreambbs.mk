@@ -1,5 +1,14 @@
 ## Common BSD make rules for DreamBBS Project
 
+## Toolchain settings
+
+CC	= clang
+
+RANLIB	= ranlib
+
+CPROTO	= cproto -E"$(CC) -pipe -E" -I$$(SRCROOT)/include
+
+
 .ifndef DREAMBBS_MK
 DREAMBBS_MK	:= 1
 
@@ -13,21 +22,13 @@ BUILDTIME	!= date '+%s'
 
 BBSHOME	?= $(HOME)
 
-
-## Toolchain settings
-
-CC	= clang
-
-RANLIB	= ranlib
-
 ## To be expanded
 
-CPROTO	= cproto -E"$(CC) -pipe -E" -I$$(SRCROOT)/include
-
 CFLAGS_WARN	= -Wall
-CFLAGS	= -ggdb3 -O0 -pipe -fomit-frame-pointer $(CFLAGS_WARN) -I$$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
+CFLAGS_MK	= -ggdb3 -O0 -pipe -fomit-frame-pointer $(CFLAGS_WARN) -I$$(SRCROOT)/include $(CFLAGS_ARCHI) $(CFLAGS_COMPAT)
 
-LDFLAGS	= -L$$(SRCROOT)/lib -ldao -lcrypt $(LDFLAGS_ARCHI)
+LDFLAGS_MK = -L$$(SRCROOT)/lib -ldao -lcrypt $(LDFLAGS_ARCHI)
+
 
 ## Tool functions
 ## Called with $(function$(para1::=arg1)$(para2::=arg2)...)
@@ -116,6 +117,6 @@ RUBY_LDFLAGS	!= pkg-config --libs ruby-2.2
 ## Expand `SRCROOT`
 .ifdef SRCROOT
 CPROTO	:= $(CPROTO)
-CFLAGS	:= $(CFLAGS)
-LDFLAGS	:= $(LDFLAGS)
+CFLAGS	:= $(CFLAGS_MK)
+LDFLAGS	:= $(LDFLAGS_MK)
 .endif
