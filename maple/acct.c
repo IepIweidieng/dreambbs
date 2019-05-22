@@ -971,7 +971,7 @@ void acct_setup(ACCT * u, int adm)
 
     int i, num, tmp, mode;
     FILE *flog;
-    char *str, buf[80], pass[PASSLEN];
+    char *str, buf[80], pass[PLAINPASSLEN];
     char id[13];
     tmp = 0;
 
@@ -1890,7 +1890,7 @@ int ue_setup(void)
 
 int u_lock(void)
 {
-    char buf[PASSLEN];
+    char buf[PLAINPASSLEN];
     char swapmateid[IDLEN + 1] = "";
     char IdleState[][IDLEN] = {
         "自強觀星",
