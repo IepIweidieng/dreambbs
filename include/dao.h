@@ -125,7 +125,7 @@ void str_ncpy(char *dst, const char *src, int n);
 char *str_ndup(char *src, int len);
 char *getrandom_bytes(char *buf, size_t buflen);
 char *genpasswd(char *pw, int mode);
-int chkpasswd(char *passwd, char *test);
+int chkpasswd(char *passwd, char *passhash, char *test);
 int str_pat(const char *str, const char *pat);
 char *str_rev(char *dst, char *src);
 int str_rle(char *str);

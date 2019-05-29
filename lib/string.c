@@ -867,14 +867,23 @@ char *genpasswd(char *pw, int mode)
 
 
 /* Thor.990214: 註解: 合密碼時, 傳回0 */
-int chkpasswd(char *passwd, char *test)
+int chkpasswd(char *passwd, char *passhash, char *test)
 {
     char *pw;
 
     /* if (!*passwd) return -1 *//* Thor.990416: 怕有時passwd是空的 */
-    str_ncpy(pwbuf, test, PLAINPASSLEN);
-    pw = crypt(pwbuf, passwd);
-    return (strncmp(pw, passwd, PASSLEN));
+    if (*passwd == '$')   /* IID.20190522: `passhash` is the encrypted password. */
+    {
+        str_ncpy(pwbuf, test, PLAINPASSLEN);
+        pw = crypt(pwbuf, passwd) + PASSLEN;
+        return (strncmp(pw, passhash+1, PASSHASHLEN));  /* `passhash` is prefixed with `$` */
+    }
+    else  /* IID.20190522: `passwd` is the encrypted password; legacy/falled-back `passwd`. */
+    {
+        str_ncpy(pwbuf, test, PLAINPASSLEN);
+        pw = crypt(pwbuf, passwd);
+        return (strncmp(pw, passwd, PASSLEN));
+    }
 }
 
 /* str_pat : wild card string pattern match support ? * \ */
