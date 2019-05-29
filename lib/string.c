@@ -774,6 +774,18 @@ char *str_ndup(char *src, int len)
 #define PLAINPASSLEN 9
 #endif
 
+#ifndef PASSHASHLEN
+#define PASSHASHLEN 45
+#endif
+
+#ifndef SHA256_SALT
+#define SHA256_SALT "$5$"
+#endif
+
+#ifndef GENPASSWD_DES
+#define GENPASSWD_DES      0
+#define GENPASSWD_SHA256   5
+#endif
 
 /* ----------------------------------------------------- */
 /* password encryption                                   */
@@ -799,21 +811,34 @@ char *getrandom_bytes(char *buf, size_t buflen)
 }
 
 char *crypt(const char *key, const char *salt);
-static char pwbuf[PASSLEN];
+static char pwbuf[PASSLEN + PASSHASHLEN];
 
-char *genpasswd(char *pw)
+/* `mode`: Encryption method
+    `GENPASSWD_SHA256` (5): SHA-256
+    `GENPASSWD_DES` (0) / otherwise: DES
+*/
+char *genpasswd(char *pw, int mode)
 {
-    char saltc[2];
+    char saltc[PASSLEN], *hash;
     int i, c;
 
     if (!*pw)
         return pw;
 
+    c = 0;
+    if (mode == GENPASSWD_SHA256)
+    {
+        memcpy(saltc, SHA256_SALT, 3);  /* IID.20190522: SHA-256. */
+        c += 3;
+    }
+
     /* IID.20190524: Get salt from the system PRNG device. */
-    if (!getrandom_bytes(saltc, 2))
+    if (!getrandom_bytes(saltc + c, PASSLEN-1 - c))
         return NULL;
 
-    for (i = 0; i < 2; i++)
+    saltc[PASSLEN-1] = '\0';
+
+    for (i = c; i < PASSLEN-1; i++)
     {
         c = (saltc[i] & 0x3f) + '.';
         if (c > '9')
@@ -823,7 +848,21 @@ char *genpasswd(char *pw)
         saltc[i] = c;
     }
     strcpy(pwbuf, pw);
-    return crypt(pwbuf, saltc);
+
+    if (!(hash = crypt(pwbuf, saltc)))
+    {
+        if (mode)
+            return genpasswd(pw, GENPASSWD_DES);  /* Fall back to DES encryption */
+        return NULL;
+    }
+    str_ncpy(pwbuf, hash, PASSLEN + PASSHASHLEN);
+
+    if (mode == GENPASSWD_SHA256)
+        memmove(pwbuf + PASSLEN, pwbuf + PASSLEN-1, PASSHASHLEN);  /* Prefix `passhash` with `$` */
+    else
+        pwbuf[PASSLEN] = '\0';  /* Make `passhash` an empty string */
+    pwbuf[PASSLEN-1] = '\0';
+    return pwbuf;
 }
 
 
