@@ -865,6 +865,23 @@ char *genpasswd(char *pw, int mode)
     return pwbuf;
 }
 
+/* `genpasswd` for site signature */
+char *gensignature(char *pw)
+{
+    char *hash;
+
+    if (!(hash = genpasswd(pw, GENPASSWD_SHA256)))
+        return NULL;
+
+    if (hash[PASSLEN])  /* `genpasswd()` is not falled back */
+    {
+        memmove(hash, hash+3, PASSLEN-3);   /* Remove `SHA256_SALT` prefix */
+        memmove(hash + PASSLEN-1-3, hash + PASSLEN, PASSHASHLEN-1);   /* Remove `$` prefix for `passhash` */
+        hash[PASSLEN-1-3 + PASSHASHLEN-1-1] = '\0';
+    }
+    return hash;
+}
+
 
 /* Thor.990214: 註解: 合密碼時, 傳回0 */
 int chkpasswd(char *passwd, char *passhash, char *test)
@@ -885,6 +902,26 @@ int chkpasswd(char *passwd, char *passhash, char *test)
         return (strncmp(pw, passwd, PASSLEN));
     }
 }
+
+/* `chkpasswd` for site signature */
+int chksignature(char *passwd, char *test)
+{
+    char saltc[PASSLEN], hashc[PASSHASHLEN];
+
+    if (strlen(passwd) <= PASSLEN-1)  /* Legacy/falled-back `passwd` */
+        return chkpasswd(passwd, NULL, test);
+
+    memcpy(saltc, SHA256_SALT, 3);  /* Restore `SHA256_SALT` prefix */
+    str_ncpy(saltc+3, passwd, PASSLEN-3);
+    saltc[PASSLEN-1] = '\0';
+
+    hashc[0] = '$';   /* Restore `$` prefix for `passhash` */
+    str_ncpy(hashc+1, passwd + PASSLEN-3, PASSHASHLEN-1);
+    hashc[PASSHASHLEN-1] = '\0';
+
+    return chkpasswd(saltc, hashc, test);
+}
+
 
 /* str_pat : wild card string pattern match support ? * \ */
 
