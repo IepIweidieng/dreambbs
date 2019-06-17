@@ -413,7 +413,7 @@ int dns_open(char *host, int port)
 {
     querybuf ans;
     int n, ancount, qdcount;
-    unsigned char *cp, *eom;
+    const unsigned char *cp, *eom;
     char buf[MAXDNAME];
     struct sockaddr_in sin;
     int type;
@@ -422,7 +422,7 @@ int dns_open(char *host, int port)
     /* Thor.980707: 因gem.c呼叫時可能將host用ip放入，故作特別處理 */
     if (*host >= '0' && *host <= '9')
     {
-        for (n = 0, cp = (unsigned char *)host; n < 4; n++, cp++)
+        for (n = 0, cp = (const unsigned char *)host; n < 4; n++, cp++)
         {
             buf[n] = 0;
             while (*cp >= '0' && *cp <= '9')

@@ -40,7 +40,7 @@ typedef struct
 static int
 TchoiceCompare(const void * i, const void * j)
 {
-    return ((struct Tchoice *)j)->count - ((struct Tchoice *)i)->count;
+    return ((const struct Tchoice *)j)->count - ((const struct Tchoice *)i)->count;
 }
 
 

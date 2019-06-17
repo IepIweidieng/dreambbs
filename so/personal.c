@@ -407,10 +407,10 @@ sort_compare(
     const void *p1,
     const void *p2)
 {
-    HDR *a1, *a2;
+    const HDR *a1, *a2;
 
-    a1 = (HDR *) p1;
-    a2 = (HDR *) p2;
+    a1 = (const HDR *) p1;
+    a2 = (const HDR *) p2;
     return str_cmp(a1->xname, a2->xname);
 
 }

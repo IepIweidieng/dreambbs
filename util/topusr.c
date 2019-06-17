@@ -25,10 +25,10 @@ sort_compare(
     const void *p1,
     const void *p2)
 {
-    DATA *a1, *a2;
+    const DATA *a1, *a2;
 
-    a1 = (DATA *) p1;
-    a2 = (DATA *) p2;
+    a1 = (const DATA *) p1;
+    a2 = (const DATA *) p2;
 
     return (a2->num-a1->num);
 }

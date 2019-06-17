@@ -62,7 +62,7 @@ static int
 do_cmd(MENU *mptr, XO *xo, int x, int y)
 {
     unsigned int mode;
-    void *p;
+    const void *p;
     int (*func) (void);
     int (*func_unary) (XO *xo);
 

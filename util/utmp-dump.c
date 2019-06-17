@@ -442,7 +442,7 @@ static int
 ulist_cmp_userid(
     const void *i, const void *j)
 {
-    return str_cmp((*(const UTMP **)i) -> userid, (*(const UTMP **)j) -> userid);
+    return str_cmp((*(const UTMP *const *)i) -> userid, (*(const UTMP *const *)j) -> userid);
 }
 
 
@@ -450,28 +450,28 @@ static int
 ulist_cmp_host(
     const void *i, const void *j)
 {
-    return str_cmp((*(const UTMP **)i) -> from, (*(const UTMP **)j) -> from);
+    return str_cmp((*(const UTMP *const *)i) -> from, (*(const UTMP *const *)j) -> from);
 }
 
 static int
 ulist_cmp_idle(
     const void *i, const void *j)
 {
-    return (*(const UTMP **)i)->idle_time - (*(const UTMP **)j)->idle_time;
+    return (*(const UTMP *const *)i)->idle_time - (*(const UTMP *const *)j)->idle_time;
 }
 
 static int
 ulist_cmp_mode(
     const void *i, const void *j)
 {
-    return (*(const UTMP **)i)->mode - (*(const UTMP **)j)->mode;
+    return (*(const UTMP *const *)i)->mode - (*(const UTMP *const *)j)->mode;
 }
 
 static int
 ulist_cmp_nick(
     const void *i, const void *j)
 {
-    return str_cmp((*(const UTMP **)i) -> username, (*(const UTMP **)j) -> username);
+    return str_cmp((*(const UTMP *const *)i) -> username, (*(const UTMP *const *)j) -> username);
 }
 
 static int (*ulist_cmp[]) (const void *i, const void *j) =
