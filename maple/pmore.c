@@ -1398,8 +1398,8 @@ MFDISP_DBCS_HEADERWIDTH(int originalw)
         MFDISP_FORCEUPDATE2BOT(), 0 \
     ))
 
-static char *override_msg = NULL;
-static char *override_attr = NULL;
+static const char *override_msg = NULL;
+static const char *override_attr = NULL;
 
 #define RESET_OVERRIDE_MSG() (void) ( override_attr = override_msg = NULL )
 
@@ -3595,8 +3595,8 @@ mf_movieFrameHeader(unsigned char *p, unsigned char *end)
     // ANSI has ESC_STR [8m as "Conceal" but
     // not widely supported, even PieTTY.
     // So let's go back to fixed format...
-    static char *patHeader = "==" ESC_STR "[30;40m^L";
-    static char *patHeader2= ESC_STR "[30;40m^L"; // patHeader + 2; // "=="
+    static const char *patHeader = "==" ESC_STR "[30;40m^L";
+    static const char *patHeader2= ESC_STR "[30;40m^L"; // patHeader + 2; // "=="
     // static char *patHeader3= ESC_STR "[m^L";
     static size_t szPatHeader   = 12; // strlen(patHeader);
     static size_t szPatHeader2  = 10; // strlen(patHeader2);

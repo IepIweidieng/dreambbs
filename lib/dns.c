@@ -21,7 +21,7 @@ void dns_init(void)
 }
 
 
-int dns_query(char *name,       /* domain name */
+int dns_query(const char *name, /* domain name */
               int qtype,        /* type of query */
               querybuf * ans    /* buffer to put answer */
     )
@@ -409,7 +409,7 @@ int dns_name(unsigned char *addr, char *name)
 /* update : 96/12/15                                     */
 /*-------------------------------------------------------*/
 
-int dns_open(char *host, int port)
+int dns_open(const char *host, int port)
 {
     querybuf ans;
     int n, ancount, qdcount;

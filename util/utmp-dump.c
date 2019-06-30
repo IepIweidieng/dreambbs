@@ -44,14 +44,14 @@ attach_shm(
 
 static int pickup_way;
 
-char *
+const char *
 bmode(
     UTMP *up,
     int simple)
 {
     static char modestr[32];
     int mode;
-    char *word;
+    const char *word;
 
     if (!up)
         return "不在站上";
@@ -335,7 +335,7 @@ static int ulist_head(XO *xo);
 static int ulist_init(XO *xo);
 
 
-static char *msg_pickup_way[PICKUP_WAYS] =
+static const char *msg_pickup_way[PICKUP_WAYS] =
 {
     "任意",
     "代號",
@@ -374,7 +374,8 @@ ulist_body(
     pickup *pp;
     UTMP *up;
     int cnt, max, ufo, self, userno, sysop, diff, diffmsg, fcolor, colortmp;
-    char buf[16], color[20], ship[80], *wcolor[7] = {"\x1b[m", COLOR_PAL, COLOR_BAD, COLOR_BOTH, COLOR_OPAL, COLOR_CLOAK, COLOR_BOARDPAL};
+    char buf[16], color[20], ship[80];
+    const char *wcolor[7] = {"\x1b[m", COLOR_PAL, COLOR_BAD, COLOR_BOTH, COLOR_OPAL, COLOR_CLOAK, COLOR_BOARDPAL};
 
 //  pal = cuser.ufo;
 

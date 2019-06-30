@@ -66,13 +66,13 @@ merge_id_nick(
 
 void
 write_data(
-    char *title,
+    const char *title,
     DATA *data,
     int mode)
 {
     char buf[256];
     int i;
-    char *color;
+    const char *color;
 
     sprintf(buf, "\x1b[1;32m%%%ds\x1b[m\n\n", 80);
     printf(buf, "%s", title);
