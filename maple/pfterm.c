@@ -185,8 +185,8 @@
 // Few poor terminals do not have relative move (ABCD).
 #undef  FTCONF_USE_ANSI_RELMOVE
 
-// Handling ANSI commands with 2 parameters (ex, ESC[m; nH)
-// 2: Good terminals can accept any omit format (ESC[; nH)
+// Handling ANSI commands with 2 parameters (ex, ESC[m;nH)
+// 2: Good terminals can accept any omit format (ESC[;nH)
 // 1: Poor terminals (eg, Win/DOS telnet) can only omit 2nd (ESC[mH)
 // 0: Very few poor terminals (eg, CrazyTerm/BBMan) cannot omit any parameters
 #define FTCONF_ANSICMD2_OMIT    (0)
@@ -224,9 +224,9 @@
 #define FTATTR_MINCMD           (16)
 
 #ifndef FTCONF_USE_ANSI_RELMOVE
-# define FTMV_COST              (8)     // always ESC[m; nH will costs avg 8 bytes
+# define FTMV_COST              (8)     // always ESC[m;nH will costs avg 8 bytes
 #else
-# define FTMV_COST              (5)     // ESC[ABCD with ESC[m; nH costs avg 4+ bytes
+# define FTMV_COST              (5)     // ESC[ABCD with ESC[m;nH costs avg 4+ bytes
 #endif
 
 //////////////////////////////////////////////////////////////////////////
@@ -1611,8 +1611,8 @@ fterm_exec(void)
     case 'f':   // HVP: CSI n ; m f
         // Moves the cursor to row n, column m.
         // The values are 1-based, and default to 1 (top left corner) if omitted.
-        // A sequence such as CSI ; 5H is a synonym for CSI 1; 5H as well as
-        // CSI 17; H is the same as CSI 17H and CSI 17; 1H
+        // A sequence such as CSI ;5H is a synonym for CSI 1;5H as well as
+        // CSI 17;H is the same as CSI 17H and CSI 17;1H
         y = n;
         if (y >= 0 && isdigit(*p))
             x = atoi((char*)p);
@@ -1677,7 +1677,7 @@ fterm_exec(void)
         scrl(-n);
         break;
 
-    case 'm':   // SGR: CSI n [; k] m
+    case 'm':   // SGR: CSI n [;k] m
         // Sets SGR (Select Graphic Rendition) parameters.
         // After CSI can be zero or more parameters separated with ;.
         // With no parameters, CSI m is treated as CSI 0 m (reset / normal),
@@ -1835,9 +1835,9 @@ fterm_chattr(char *s, ftattr oattr, ftattr nattr)
 
 #ifdef FTCONF_WORKAROUND_BOLD
         // Issue here:
-        // PacketSite does not understand ESC[1m. It needs ESC[1; 37m
+        // PacketSite does not understand ESC[1m. It needs ESC[1;37m
         // NetTerm defaults bold color to yellow.
-        // As a result, we use ESC[1; 37m for the case.
+        // As a result, we use ESC[1;37m for the case.
         if (fg == FTATTR_DEFAULT_FG)
             ofg = ~ofg;
 #endif // FTCONF_WORKAROUND_BOLD
@@ -1965,7 +1965,7 @@ fterm_rawcmd2(int arg1, int arg2, int defval, char c)
 
     // See FTCONF_ANSICMD2_OMIT
     // XXX Win/DOS telnet does now accept omitting first value
-    // ESC[nX and ESC[n; X works, but ESC[; mX does not work.
+    // ESC[nX and ESC[n;X works, but ESC[;mX does not work.
     if (arg1 != defval || arg2 != defval)
     {
 #if (FTCONF_ANSICMD2_OMIT >= 2)
@@ -2110,7 +2110,7 @@ fterm_rawmove_opt(int y, int x)
 
 #endif // !DBG_TEXT_FD
 
-    // x--: compare with FTMV_COST: ESC[m; nH costs 5-8 bytes
+    // x--: compare with FTMV_COST: ESC[m;nH costs 5-8 bytes
     // in order to prevent wrap, don't use bs when rx exceed boundary (ft.cols)
     if (x < ft.rx && y >= ft.ry && (adx+ady) < FTMV_COST && ft.rx < ft.cols)
     {
