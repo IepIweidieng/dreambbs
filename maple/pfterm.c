@@ -31,6 +31,7 @@
 
 #ifdef M3_USE_PFTERM
  #include <assert.h>
+ #define USE_PFTERM
  #undef PFTERM_HAVE_VKEY
 #endif //M3_USE_PFTERM
 
@@ -160,7 +161,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 // Experimental now
-#if defined(EXP_PFTERM) || defined(M3_USE_PFTERM)
+#if defined(EXP_PFTERM) || defined(USE_PFTERM)
 
 //////////////////////////////////////////////////////////////////////////
 // pfterm Configurations
@@ -2558,6 +2559,6 @@ int main(int argc, char* argv[])
 }
 #endif // PFTERM_TEST_MAIN
 
-#endif // defined(EXP_PFTERM) || defined(M3_USE_PFTERM)
+#endif // defined(EXP_PFTERM) || defined(USE_PFTERM)
 
 // vim:ts=4:sw=4:expandtab
