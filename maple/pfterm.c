@@ -5,6 +5,7 @@
 
 #ifdef PFTERM_TEST_MAIN
 
+#define USE_PFTERM
 #define EXP_PFTERM
 #define DBCSAWARE
 #define FT_DBCS_NOINTRESC 1
