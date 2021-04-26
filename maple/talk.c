@@ -3869,16 +3869,15 @@ static int
 ulist_fromchange(
     XO *xo)
 {
-    char *str, buf[34];
+    char buf[sizeof(cutmp->from)];
 
     if (!HAS_PERM(PERM_ADMIN))
         return XO_NONE;
 
-    strcpy(buf, str = cutmp->from);
-    vget(B_LINES_REF, 0, "請輸入新的故鄉：", buf, sizeof(cutmp->from), GCARRY);
-    if (strcmp(buf, str))
+    strcpy(buf, cutmp->from);
+    vget(B_LINES_REF, 0, "請輸入新的故鄉：", buf, sizeof(buf), GCARRY);
+    if (strcmp(buf, cutmp->from))
     {
-        strcpy(str, buf);
         strcpy(cutmp->from, buf);
         return XO_INIT;
         /*return XO_LOAD;*/
@@ -3893,17 +3892,17 @@ static int
 ulist_nickchange(
     XO *xo)
 {
-    char *str, buf[24];
+    char buf[BMIN(sizeof(cuser.username), sizeof(cutmp->username))];
 
     if (!HAS_PERM(PERM_VALID) || (HAS_PERM(PERM_DENYNICK)&&!HAS_PERM(PERM_SYSOP)))
         return XO_NONE;
 
-    strcpy(buf, str = cuser.username);
-    vget(B_LINES_REF, 0, "請輸入新的暱稱：", buf, sizeof(cuser.username), GCARRY);
+    strcpy(buf, cuser.username);
+    vget(B_LINES_REF, 0, "請輸入新的暱稱：", buf, sizeof(buf), GCARRY);
 
-    if (strcmp(buf, str) && str_len_nospace(buf) > 0)
+    if (strcmp(buf, cuser.username) && str_len_nospace(buf) > 0)
     {
-        strcpy(str, buf);
+        strcpy(cuser.username, buf);
         strcpy(cutmp->username, buf);
         return XO_INIT;
         /*return XO_BODY;*/
@@ -3927,22 +3926,22 @@ ulist_pager(
 {
     if (!HAS_PERM(PERM_PAGE))
         return XO_NONE;
-    if ((cuser.ufo & UFO_PAGER) && (cuser.ufo & UFO_PAGER1))
+    if (!(cuser.ufo & UFO_PAGER))
     {
-        cuser.ufo ^= UFO_PAGER;
-        cutmp->ufo ^= UFO_PAGER;
-        cuser.ufo ^= UFO_PAGER1;
-        cutmp->ufo ^= UFO_PAGER1;
+        cuser.ufo |= UFO_PAGER;
+        cutmp->ufo |= UFO_PAGER;
     }
-    else if (cuser.ufo & UFO_PAGER)
+    else if (!(cuser.ufo & UFO_PAGER1))
     {
-        cuser.ufo ^= UFO_PAGER1;
-        cutmp->ufo ^= UFO_PAGER1;
+        cuser.ufo |= UFO_PAGER1;
+        cutmp->ufo |= UFO_PAGER1;
     }
     else
     {
-        cuser.ufo ^= UFO_PAGER;
-        cutmp->ufo ^= UFO_PAGER;
+        cuser.ufo &= ~UFO_PAGER;
+        cutmp->ufo &= ~UFO_PAGER;
+        cuser.ufo &= ~UFO_PAGER1;
+        cutmp->ufo &= ~UFO_PAGER1;
     }
     return XO_INIT;
 }
