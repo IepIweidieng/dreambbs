@@ -294,19 +294,26 @@ static const char *const ModeTypeTable[] =
 
 #define XO_RS           XO_SCRL
 
-#define RS_TITLE        0x0001  /* author/title */
-#define RS_FORWARD      0x0002  /* backward */
-#define RS_RELATED      0x0004
-#define RS_FIRST        0x0008  /* find first article */
-#define RS_CURRENT      0x0010  /* match current read article */
-#define RS_THREAD       0x0020  /* search the first article */
+/* Thread reading flags */      /* Set(/clear) behavior */
+
+/* Direction flags (relative to the cursor) */
+#define RS_FORWARD      0x0002  /* forward/backward */
+#define RS_FIRST        0x0008  /* find the farthest/nearest matched article */
+
+/* Filter flags */
+#define RS_TITLE        0x0001  /* by given title/author (ask user if needed) */
+#define RS_RELATED      0x0004  /* by the current article (do not ask) */
+#define RS_CURRENT      0x0010  /* current article = most recently read / under cursor */
+#define RS_THREAD       0x0020  /* thread-opening articles */
 #define RS_SEQUENT      0x0040  /* sequential read */
-#define RS_MARKED       0x0080  /* marked article */
-#define RS_UNREAD       0x0100  /* unread article */
+#define RS_MARKED       0x0080  /* marked articles */
+#define RS_UNREAD       0x0100  /* unread articles */
+
+/* Unused / for internal use */
 #define RS_UNUSED9      0x0200
 #define RS_UNUSED10     0x0400
 #define RS_UNUSED11     0x0800
-#define RS_BOARD        0x1000  /* 用於 RS_UNREAD，跟前面的不可重疊 */
+#define RS_BOARD        0x1000  /* Is searching in board/mailbox */ /* 用於 RS_UNREAD，跟前面的不可重疊 */
 #define RS_UNUSED13     0x2000
 
 /* Predefined combination of thread reading flags */
