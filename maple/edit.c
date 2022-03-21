@@ -1652,7 +1652,7 @@ ve_outs(
     }
 }
 
-#if 0  // Unused
+#ifdef CAN_POSTFIX
 static int
 select_title(
     char *title)
@@ -1687,17 +1687,15 @@ ve_subject(
         sprintf(title, "Re: %s", str_ttl(topic));
         title[TTLEN] = '\0';
     }
+    else if (dft)
+        strcpy(title, dft);
     else
     {
-
 /* 090924.cache: 選擇文章類別功能 */
 #ifdef CAN_POSTFIX
-        if (dft)
-            strcpy(title, dft);
-        else
+        select = select_title(title);
 #else
         *title = '\0';
-        //select = select_title(title);
 #endif
     }
     return vget(row, 0, "標題：", select ? title+6:title, select ?

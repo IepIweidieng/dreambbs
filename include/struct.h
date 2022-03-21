@@ -12,6 +12,7 @@
 #include "cppdef.h"
 #include "attrdef.h"
 #include "timetype.h"
+#include "modes.h"
 
 #include "dns.h"
 
@@ -676,42 +677,13 @@ typedef struct
 
 typedef struct
 {
+    int32_t zone[MZ_COUNT];
     int32_t shot[MOVIE_MAX];    /* Thor.980805: 可能還要再加1, 因合理範圍為0..MOVIE_MAX */
     char film[MOVIE_SIZE];
 } FCACHE;  /* SHMDATA(raw) */
 
 
 #define FILM_SIZ        4000    /* max size for each film */
-
-
-#define FILM_WELCOME    0
-#define FILM_GOODBYE    1
-#define FILM_APPLY      2       /* new account */
-#define FILM_TRYOUT     3
-#define FILM_POST       4
-#define FILM_GEM        5       /* help message */
-#define FILM_BOARD      6
-#define FILM_CLASS      7
-#define FILM_PAL        8
-#define FILM_MAIL       9
-#define FILM_ULIST      10
-#define FILM_VOTE       11
-#define FILM_MORE       12
-#define FILM_EDIT       13
-#define FILM_BMW        14
-#define FILM_BANMAIL    15
-#define FILM_INCOME     16
-#define FILM_ADMIN      17
-#define FILM_SONG       18
-#define FILM_MIME       19
-#define FILM_CONTACT    20
-#define FILM_MEMORANDUM 21
-#define FILM_ALOHA      22
-#define FILM_SIGNUP     23
-#define FILM_FAVORITE   24
-#define FILM_MOVIE      25      /* normal movies */
-
-
 #define FILM_ROW        40
 
 typedef struct

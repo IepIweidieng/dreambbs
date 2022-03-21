@@ -69,8 +69,6 @@
 /* Modules & Plug-in                       by cache      */
 /* ------------------------------------------------------*/
 
-#define USE_M3_MENU             /* 開啟 M3 選單介面 */
-
 #undef  AUTO_FIX_INFO           /* 開啟使用者列表同時檢查上站/板友資訊 (除非有問題否則請勿開啟) */
 
 #define loginAD                 /* 進站觀看廣告 */
@@ -78,25 +76,6 @@
 #define ANTI_PHONETIC           /* 開啟檢查注音文功能 */
 
 #define Modules                 /* 顯示模組資訊 */
-#define MultiRecommend          /* 顯示多重推文 */
-
-#ifdef  M3_USE_PMORE            /* Enable pmore */
-#define USE_PMORE
-#endif
-
-#ifdef  M3_USE_PFTERM           /* Enable pfterm */
-#define USE_PFTERM
-#endif
-
-#define GRAYOUT                 /* 淡入淡出特效系統 */
-
-#ifdef  M3_USE_BBSLUA           /* Enable BBS-Lua */
-#define USE_BBSLUA
-#endif
-
-#ifdef  M3_USE_BBSRUBY          /* Enable BBS-Ruby */
-#define USE_BBSRUBY
-#endif
 
 /* ----------------------------------------------------- */
 /* 隨 BBS 站規模成長而擴增                               */
@@ -165,8 +144,6 @@
 #undef  HAVE_PIP_FIGHT                 /* 小雞對戰 */ /* 尚未完工 很多 bug */
 #undef  HAVE_PIP_FIGHT1
 
-#define EMAIL_JUSTIFY                  /* 發出 InterNet Email 身份認證信函 */
-
 #define HAVE_BRDTITLE_CHANGE           /* 版主修改版名 */
 
 #define HAVE_OBSERVE_LIST              /* 系統觀察名單 */
@@ -202,8 +179,6 @@
 #define HAVE_MULTI_CROSSPOST    /* 群組轉貼 */
 
 #define HAVE_CROSSPOSTLOG       /* 轉貼文章紀錄到 CrossPost 看板 */
-
-#define HAVE_BM_CHECK           /* 板主確認 */
 
 #define HAVE_RAND_INCOME        /* 亂數進站畫面 */
 

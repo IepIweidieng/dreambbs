@@ -163,7 +163,8 @@ static const char *const ModeTypeTable[] =
 #define M_MENUTITLE     0x00020000  /* `item` is a string for the menu title */
 #define M_TAIL_MASK     0x00FF0000  /* Mask for the flags which indicate the menu list tail */
 
-#define M_MASK          0x0000FFFF  /* Mask for valid user modes */
+#define M_ZONE_MASK     0x0000FF00  /* Mask for menu zone specification */
+#define M_MASK          0x000000FF  /* Mask for valid user modes */
 
 /* For `level` */
 
@@ -174,6 +175,101 @@ static const char *const ModeTypeTable[] =
 #define XEASY   XO_FOOT         /* Return value to un-redraw screen */
 #define QUIT    XO_QUIT         /* Return value to abort recursive functions */
 #define SKIN    XO_SKIN         /* Return value to change skin */
+
+/* Menu indexes */
+
+#define MZ_INDEX_WELCOME    0
+#define MZ_INDEX_GOODBYE    1
+#define MZ_INDEX_APPLY      2       /* new account */
+#define MZ_INDEX_TRYOUT     3
+#define MZ_INDEX_POST       4
+#define MZ_INDEX_GEM        5       /* help message */
+#define MZ_INDEX_BOARD      6
+#define MZ_INDEX_CLASS      7
+#define MZ_INDEX_PAL        8
+#define MZ_INDEX_MAIL       9
+#define MZ_INDEX_ULIST      10
+#define MZ_INDEX_VOTE       11
+#define MZ_INDEX_MORE       12
+#define MZ_INDEX_EDIT       13
+#define MZ_INDEX_BMW        14
+#define MZ_INDEX_BANMAIL    15
+#define MZ_INDEX_INCOME     16
+#define MZ_INDEX_ADMIN      17
+#define MZ_INDEX_SONG       18
+#define MZ_INDEX_MIME       19
+#define MZ_INDEX_CONTACT    20
+#define MZ_INDEX_MEMORANDUM 21
+#define MZ_INDEX_ALOHA      22
+#define MZ_INDEX_SIGNUP     23
+#define MZ_INDEX_FAVORITE   24
+#define MZ_INDEX_MOVIE      25      /* normal movies */
+
+/* Count of menu zone indexes */
+
+#define MZ_INDEX_MAX        MZ_INDEX_MOVIE
+#define MZ_COUNT            (MZ_INDEX_MAX + 1)
+
+/* Legacy menu zone index specifications */
+
+#define FILM_WELCOME        (MZ_INDEX_WELCOME << 8U)
+#define FILM_GOODBYE        (MZ_INDEX_GOODBYE << 8U)
+#define FILM_APPLY          (MZ_INDEX_APPLY << 8U)
+#define FILM_TRYOUT         (MZ_INDEX_TRYOUT << 8U)
+#define FILM_POST           (MZ_INDEX_POST << 8U)
+#define FILM_GEM            (MZ_INDEX_GEM << 8U)
+#define FILM_BOARD          (MZ_INDEX_BOARD << 8U)
+#define FILM_CLASS          (MZ_INDEX_CLASS << 8U)
+#define FILM_PAL            (MZ_INDEX_PAL << 8U)
+#define FILM_MAIL           (MZ_INDEX_MAIL << 8U)
+#define FILM_ULIST          (MZ_INDEX_ULIST << 8U)
+#define FILM_VOTE           (MZ_INDEX_VOTE << 8U)
+#define FILM_MORE           (MZ_INDEX_MORE << 8U)
+#define FILM_EDIT           (MZ_INDEX_EDIT << 8U)
+#define FILM_BMW            (MZ_INDEX_BMW << 8U)
+#define FILM_BANMAIL        (MZ_INDEX_BANMAIL << 8U)
+#define FILM_INCOME         (MZ_INDEX_INCOME << 8U)
+#define FILM_ADMIN          (MZ_INDEX_ADMIN << 8U)
+#define FILM_SONG           (MZ_INDEX_SONG << 8U)
+#define FILM_MIME           (MZ_INDEX_MIME << 8U)
+#define FILM_CONTACT        (MZ_INDEX_CONTACT << 8U)
+#define FILM_MEMORANDUM     (MZ_INDEX_MEMORANDUM << 8U)
+#define FILM_ALOHA          (MZ_INDEX_ALOHA << 8U)
+#define FILM_SIGNUP         (MZ_INDEX_SIGNUP << 8U)
+#define FILM_FAVORITE       (MZ_INDEX_FAVORITE << 8U)
+#define FILM_MOVIE          (MZ_INDEX_MOVIE << 8U)
+
+#ifdef FILMS_C
+static const char *const films_list[] = {
+    "welcome",
+    "bye",
+    "apply",
+    "tryout",
+    "post",
+    "gem.hlp",
+    "board.hlp",
+    "class.hlp",
+    "friend.hlp",
+    "mbox.hlp",
+    "ulist.hlp",
+    "vote.hlp",
+    "more.hlp",
+    "edit.hlp",
+    "bmw.hlp",
+    "banmail.hlp",
+    "income",
+    "admin.hlp",
+    "song.hlp",
+    "mime.hlp",
+    "contact.hlp",
+    "memorandum.hlp",
+    "aloha.hlp",
+    "signup.hlp",
+//    NULL
+    "myfav.hlp",    /* r2.20170727: test add back my favorite*/
+    NULL
+};
+#endif                          /* FILMS_C */
 
 
 /* ----------------------------------------------------- */

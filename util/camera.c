@@ -6,38 +6,9 @@
 /* update : 97/03/29                                     */
 /*-------------------------------------------------------*/
 
+#define FILMS_C
+
 #include "bbs.h"
-
-
-static const char *const list[] = {
-    "welcome",
-    "bye",
-    "apply",
-    "tryout",
-    "post",
-    "gem.hlp",
-    "board.hlp",
-    "class.hlp",
-    "friend.hlp",
-    "mbox.hlp",
-    "ulist.hlp",
-    "vote.hlp",
-    "more.hlp",
-    "edit.hlp",
-    "bmw.hlp",
-    "banmail.hlp",
-    "income",
-    "admin.hlp",
-    "song.hlp",
-    "mime.hlp",
-    "contact.hlp",
-    "memorandum.hlp",
-    "aloha.hlp",
-    "signup.hlp",
-//    NULL
-    "myfav.hlp",    /* r2.20170727: test add back my favorite*/
-    NULL
-};
 
 
 #define MAX_LINE        MOVIE_LINES
@@ -170,7 +141,7 @@ main(
     strcpy(fpath, "gem/@/@");
     fname = fpath + 7;
 
-    for (i = 0; (str = list[i]); i++)
+    for (i = 0; (str = films_list[i]); i++)
     {
         strcpy(fname, str);
 #ifdef  HAVE_RAND_INCOME
