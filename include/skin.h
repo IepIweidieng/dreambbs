@@ -15,10 +15,10 @@
 # include __FILE__      /* Include the declarations */
 # define MAIN_C         /* Restore `MAIN_C` */
 # define VAR
-# define INI(...)       = __VA_ARGS__
+# define INI(x)         = x
 #else
 # define VAR            extern
-# define INI(...)
+# define INI(x)
 #endif
 
 #ifdef __cplusplus

@@ -825,7 +825,9 @@ typedef union {  /* IID.20191106: The field to be used is determined by the valu
 #endif
 } XoFunc;
 
-#if defined __cplusplus
+/* XXX(IID.20191227): Workaround for g++ not currently supporting
+ *    function overload resolution for designated initializer */
+#if defined __cplusplus && defined __clang__
 /* IID.20191225: Use hash table for xover callback function list */
 
 #define HAVE_HASH_KEYFUNCLIST
@@ -846,10 +848,7 @@ struct KeyFuncListRef {
     constexpr KeyFuncListRef(KeyFuncList& ref): ptr_ (&ref) { }
     CXX_CONSTEXPR_RELAXED KeyFuncList *&operator=(KeyFuncList& ref) { return ptr_ = &ref; }
     constexpr KeyFuncList *operator->(void) const { return ptr_; }
-    constexpr operator KeyFuncList *(void) const { return ptr_; }
-    constexpr bool operator==(const KeyFuncList &rhs) const { return ptr_ == &rhs; }
 };
-constexpr bool operator==(const KeyFuncList &lhs, const KeyFuncListRef &rhs) { return rhs == lhs; }
 
 #else
 

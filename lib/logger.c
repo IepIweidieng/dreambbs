@@ -59,7 +59,7 @@ void loggerf(const Logger *logger, enum LogLevel level, const char *format, ...)
 
     f_exlock(fd);
 
-    fprintf(file, "%s [%s] %d: ", buf, loglv_name[level], INT(getpid()));
+    fprintf(file, "%s [%s] %d: ", buf, loglv_name[level], (int)getpid());
     vfprintf(file, format, args);
     fputc('\n', file);
     fflush(file);

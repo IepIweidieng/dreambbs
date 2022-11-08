@@ -1036,6 +1036,30 @@ xo_usetup(
 /* ----------------------------------------------------- */
 
 
+#define RS_TITLE        0x001   /* author/title */
+#define RS_FORWARD      0x002   /* backward */
+#define RS_RELATED      0x004
+#define RS_FIRST        0x008   /* find first article */
+#define RS_CURRENT      0x010   /* match current read article */
+#define RS_THREAD       0x020   /* search the first article */
+#define RS_SEQUENT      0x040   /* sequential read */
+#define RS_MARKED       0x080   /* marked article */
+#define RS_UNREAD       0x100   /* unread article */
+
+#define CURSOR_FIRST    (RS_RELATED | RS_TITLE | RS_FIRST)
+#define CURSOR_NEXT     (RS_RELATED | RS_TITLE | RS_FORWARD)
+#define CURSOR_PREV     (RS_RELATED | RS_TITLE)
+#define RELATE_FIRST    (RS_RELATED | RS_TITLE | RS_FIRST | RS_CURRENT)
+#define RELATE_NEXT     (RS_RELATED | RS_TITLE | RS_FORWARD | RS_CURRENT)
+#define RELATE_PREV     (RS_RELATED | RS_TITLE | RS_CURRENT)
+#define THREAD_NEXT     (RS_THREAD | RS_FORWARD)
+#define THREAD_PREV     (RS_THREAD)
+
+/* Thor: 前後找mark文章, 方便知道有什麼問題未處理 */
+
+#define MARK_NEXT       (RS_MARKED | RS_FORWARD | RS_CURRENT)
+#define MARK_PREV       (RS_MARKED | RS_CURRENT)
+
 typedef PAIR_T(int /* key stroke */, int /* the mapped threading op-code */) KeyMap;
 
 #if defined __cplusplus
@@ -1053,53 +1077,53 @@ static const KeyMapList keymap =
 {
     /* search title / author */
 
-    {'"', XO_RS + (RS_TITLE | RS_FORWARD)},
-    {'?', XO_RS + RS_TITLE},
-    {'a', XO_RS + RS_FORWARD},
-    {'A', XO_RS},
+    {'"', RS_TITLE | RS_FORWARD},
+    {'?', RS_TITLE},
+    {'a', RS_FORWARD},
+    {'A', 0},
 
     /* thread : currtitle */
 
-    {'[', XO_RS + (RS_RELATED | RS_TITLE | RS_CURRENT)},
-    {']', XO_RS + (RS_RELATED | RS_TITLE | RS_FORWARD | RS_CURRENT)},
-    {'=', XO_RS + (RS_RELATED | RS_TITLE | RS_FIRST | RS_CURRENT)},
+    {'[', RS_RELATED | RS_TITLE | RS_CURRENT},
+    {']', RS_RELATED | RS_TITLE | RS_FORWARD | RS_CURRENT},
+    {'=', RS_RELATED | RS_TITLE | RS_FIRST | RS_CURRENT},
 
     /* i.e. < > : make life easier */
 
-    {',', XO_RS + RS_THREAD},
-    {'.', XO_RS + (RS_THREAD | RS_FORWARD)},
+    {',', RS_THREAD},
+    {'.', RS_THREAD | RS_FORWARD},
 
     /* thread : cursor */
 
-    {'-', XO_RS + (RS_RELATED | RS_TITLE)},
-    {'+', XO_RS + (RS_RELATED | RS_TITLE | RS_FORWARD)},
-    {'\\', XO_RS + (RS_RELATED | RS_TITLE | RS_FIRST)},
+    {'-', RS_RELATED | RS_TITLE},
+    {'+', RS_RELATED | RS_TITLE | RS_FORWARD},
+    {'\\', RS_RELATED | RS_TITLE | RS_FIRST},
 
     /* Thor: marked : cursor */
-    {'\'', XO_RS + (RS_MARKED | RS_FORWARD | RS_CURRENT)},
-    {';', XO_RS + (RS_MARKED | RS_CURRENT)},
+    {'\'', RS_MARKED | RS_FORWARD | RS_CURRENT},
+    {';', RS_MARKED | RS_CURRENT},
 
     /* Thor: 向前找第一篇未讀的文章 */
     /* Thor.980909: 向前找首篇未讀, 或末篇已讀 */
-    {'`', XO_RS + (RS_UNREAD /* | RS_FIRST */)},
+    {'`', RS_UNREAD /* | RS_FIRST */},
 
     /* sequential */
 
-    {' ', XO_RS + (RS_SEQUENT | RS_FORWARD)},
-    {KEY_RIGHT, XO_RS + (RS_SEQUENT | RS_FORWARD)},
-    {KEY_PGDN, XO_RS + (RS_SEQUENT | RS_FORWARD)},
-    {KEY_DOWN, XO_RS + (RS_SEQUENT | RS_FORWARD)},
+    {' ', RS_SEQUENT | RS_FORWARD},
+    {KEY_RIGHT, RS_SEQUENT | RS_FORWARD},
+    {KEY_PGDN, RS_SEQUENT | RS_FORWARD},
+    {KEY_DOWN, RS_SEQUENT | RS_FORWARD},
     /* Thor.990208: 為了方便看文章過程中, 移至下篇, 雖然上層被xover吃掉了:p */
-    {'j', XO_RS + (RS_SEQUENT | RS_FORWARD)},
+    {'j', RS_SEQUENT | RS_FORWARD},
 
-    {KEY_UP, XO_RS + RS_SEQUENT},
-    {KEY_PGUP, XO_RS + RS_SEQUENT},
+    {KEY_UP, RS_SEQUENT},
+    {KEY_PGUP, RS_SEQUENT},
     /* Thor.990208: 為了方便看文章過程中, 移至上篇, 雖然上層被xover吃掉了:p */
-    {'k', XO_RS + RS_SEQUENT},
+    {'k', RS_SEQUENT},
 
     /* end of keymap */
 
-    {KEY_NONE, XO_NONE}
+    {0, -1}
 };
 
 
@@ -1111,21 +1135,21 @@ xo_keymap(
 
 #ifdef HAVE_HASH_KEYMAPLIST
     km = keymap.find(key);
-    if (km != keymap.end())
-        return km->second;
+    if (km == keymap.end())
+        return -1;
 #else
     int ch;
 
     km = keymap;
-    while ((ch = km->first) != KEY_NONE)
+    while ((ch = km->first))
     {
         if (ch == key)
-            return km->second;
+            break;
         km++;
     }
 #endif
 
-    return key;
+    return km->second;
 }
 
 
@@ -1153,10 +1177,7 @@ xo_thread(
     int step, len;
     const HDR *fhdr;
 
-    if ((op & XO_POS_MASK) > XO_NONE || (op & XO_MFLAG_MASK) != XO_RS)
-        return op; /* Not supported xover cmd */
-
-    match = (op & ~XO_MOVE_MASK); /* Collect redraw/reloading flags */
+    match = 0;
     fhdr = (HDR *) xo_pool_base + pos;
     step = (op & RS_FORWARD) ? 1 : - 1;
 
@@ -1189,6 +1210,7 @@ xo_thread(
     }
     else if (op & RS_UNREAD)    /* Thor: 向前找尋第一篇未讀文章, 清 near */
     {
+#define RS_BOARD        0x1000  /* 用於 RS_UNREAD，跟前面的不可重疊 */
         /* Thor.980909: 詢問 "首篇未讀" 或 "末篇已讀" */
         /* Thor.980911: 找到時, 則沒清XO_FOOT, 再看看怎麼改 */
         match |= XR_FOOT;  /* IID.20200204: Redraw footer */
@@ -1201,9 +1223,7 @@ xo_thread(
         near = xo->dir[0];
         if (near == 'b')                /* search board */
             op |= RS_BOARD;
-        else if (near == 'u')   /* search user's mbox */
-            op &= ~RS_BOARD;
-        else
+        else if (near != 'u')   /* search user's mbox */
             goto notfound;
 
         near = -1;
@@ -1287,6 +1307,7 @@ xo_thread(
                     continue;
             }
 
+#undef  RS_BOARD
             /* Thor.980909: 末篇已讀(!RS_FIRST) */
             if (!(op & RS_FIRST))
                 goto found;
@@ -1386,7 +1407,7 @@ xo_getch(
         ch = vkey();
 
     op = xo_keymap(ch);
-    if ((op & XO_POS_MASK) <= XO_NONE && (op & XO_MFLAG_MASK) == XO_RS)
+    if (op >= 0)
     {
         ch = xo_thread(xo, pos, op);
         if ((ch & XO_POS_MASK) > XO_NONE)  /* Another thread article is found */
@@ -1749,6 +1770,8 @@ xover_exec_cb_pos(
     int pos)
 {
     const KeyFuncListRef xcmd = (xo) ? xo->cb : NULL;
+    KeyFuncIter cb;
+
     if (!xcmd)
     {
         /* Nothing to invoke */
@@ -1757,17 +1780,13 @@ xover_exec_cb_pos(
 
     /* IID.20191225: In C++ mode, use hash table for xover callback function list */
 #ifndef HAVE_HASH_KEYFUNCLIST  /* Callback function fetching loop */
-    for (KeyFuncIter cb = xcmd;; ++cb)
-#endif
+    cb = xcmd;
+    for (;;)
     {
-#ifdef HAVE_HASH_KEYFUNCLIST
-        KeyFuncIter cb;
-#endif
         XoFunc cbfunc = {0};
-#ifndef HAVE_HASH_KEYFUNCLIST
-        const int key = cb->first;
-#endif
 
+        int key = cb->first;
+#endif
         /* IID.2021-03-03: Ignore function type specification flags */
 #if !NO_SO
         /* Thor.990220: dynamic load, with key | XO_DL */
@@ -1783,18 +1802,18 @@ xover_exec_cb_pos(
         if ((key & XO_FUNC_MASK) == cmd && (key & XO_DL))
   #endif
         {
-#if defined HAVE_HASH_KEYFUNCLIST && !defined DL_HOTSWAP
-            const int key = cb->first;
-#endif
             cbfunc.func = (int (*)(XO *xo)) DL_GET(cb->second.dlfunc);
             if (cbfunc.func)
             {
-  #ifndef DL_HOTSWAP
-    #ifdef HAVE_HASH_KEYFUNCLIST
+  #ifdef HAVE_HASH_KEYFUNCLIST
+    #ifndef DL_HOTSWAP
                 xcmd->erase(key);
                 cb = xcmd->insert({key & ~XO_DL, cbfunc}).first;
-    #else
-                *cb = LISTLIT(KeyFunc){key & ~XO_DL, cbfunc};
+    #endif
+  #else
+    #ifndef DL_HOTSWAP
+                cb->second = cbfunc;
+                cb->first = key & ~XO_DL;
     #endif
   #endif
             }
@@ -1819,9 +1838,6 @@ xover_exec_cb_pos(
         if ((key & XO_FUNC_MASK) == cmd)
 #endif
         {
-#ifdef HAVE_HASH_KEYFUNCLIST
-            const int key = cb->first;
-#endif
             if (!cbfunc.func)
                 cbfunc = cb->second;
 
@@ -1843,7 +1859,11 @@ xover_exec_cb_pos(
         {
             return XO_NONE;
         }
+
+#ifndef HAVE_HASH_KEYFUNCLIST  /* Continue callback function fetching loop */
+        cb++;
     }
+#endif
     /* return cmd; */ /* Unreachable */
 }
 
@@ -2072,7 +2092,7 @@ xover_key(
 
         {
             int rs_cmd = xo_keymap(cmd);
-            if ((rs_cmd & XO_POS_MASK) <= XO_NONE && (rs_cmd & XO_MFLAG_MASK) == XO_RS)
+            if (rs_cmd >= 0)
             {
                 cmd = xo_thread(xo, pos, rs_cmd);
 
@@ -2207,7 +2227,7 @@ Every_Z_Favorite(void)
 static int
 Every_Z_Xover(const void *arg)
 {
-    xover(INT((intptr_t)arg));
+    xover((int)(unsigned int)(long)arg);
     return 0;
 }
 

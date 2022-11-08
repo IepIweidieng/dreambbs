@@ -154,7 +154,7 @@ bell(void)
 /* ----------------------------------------------------- */
 
 #ifndef M3_USE_PFTERM
-#define o_ansi(x)       output(x, STRLITLEN_INT(x))
+#define o_ansi(x)       output(x, STRLITLEN(x))
 
 #define o_clear()       o_ansi("\x1b[;H\x1b[2J")
 #define o_cleol()       o_ansi("\x1b[K")
@@ -888,7 +888,7 @@ new_line:
         }
     }
 
-    slp->len = BMAX(slp->len, (uint8_t)(pos + 1));
+    slp->len = BMAX(slp->len, pos + 1);
     cur_pos = ++pos;
     cx = ++cur_col;
 
@@ -934,7 +934,7 @@ gety_ref(
     int y_ref)
 {
     /* Substitute `T_LINES` with `t_lines` */
-    const int y_clipped = TCLAMP(y_ref, 0, (int)T_LINES_REF - 1);
+    const int y_clipped = TCLAMP(y_ref, 0, T_LINES_REF - 1);
     /* Calculate the multiplier/divisor (`n*`, `/n`) */
     const int y_segment = y_clipped / (2*T_LINES_OFF_MAX);
     /*    and then substitute the multiplicand/dividend with `t_lines` */
@@ -953,7 +953,7 @@ getx_ref(
 {
     /* Substitute `T_COLS` with `t_columns` */
     /* Do the same with `x` */
-    const int x_clipped = TCLAMP(x_ref, 0, (int)T_COLS_REF - 1);
+    const int x_clipped = TCLAMP(x_ref, 0, T_COLS_REF - 1);
     const int x_segment = x_clipped / (2*T_COLS_OFF_MAX);
     const int x_base = x_segment * t_columns / T_COLS_DIV_RES;
     const int x_compensate = (x_segment * t_columns % T_COLS_DIV_RES != 0);

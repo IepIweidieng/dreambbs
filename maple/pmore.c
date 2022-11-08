@@ -279,14 +279,10 @@
  # define PERM_BBSRUBY PERM_BASIC
  #endif  /* #if !defined(PERM_BBSRUBY) */
  // key mapping
- #if !defined(RELATE_NEXT)
- # define RELATE_PREV '['
- # define RELATE_NEXT ']'
- #endif  /* #if !defined(RELATE_NEXT) */
- #if !defined(READ_NEXT)
- # define READ_NEXT   'j'
- # define READ_PREV   'k'
- #endif  /* #if !defined(READ_NEXT) */
+ #define RELATE_PREV '['
+ #define RELATE_NEXT ']'
+ #define READ_NEXT   'j'
+ #define READ_PREV   'k'
  #if !defined(FULLUPDATE) && defined(XO_HEAD)
  # define FULLUPDATE XO_HEAD
  #endif  /* #if !defined(FULLUPDATE) && defined(XO_HEAD) */
@@ -1311,7 +1307,7 @@ mf_parseHeaders(void)
 
     for (i = 0; i < fh.lines; i++) {
         unsigned char *p = pmf, *pb = pmf;
-        ptrdiff_t l;
+        int l;
 
         /* first, go to line-end */
         while (pmf < mf.end && *pmf != '\n')
@@ -1329,7 +1325,7 @@ mf_parseHeaders(void)
         pmf ++; // move to next line.
 
         // p is pointing at a new line. (\n)
-        l = p - pb;
+        l = (int)(p - pb);
 #ifdef CRITICAL_MEMORY
         // kcwu: dirty hack, avoid 64byte slot. use 128byte slot instead.
         if (l<100) {
@@ -1360,7 +1356,7 @@ mf_parseHeaders(void)
             memmove(p, pb, ustrlen(pb)+1);
         }
 
-        // kill starting and trailing spaces
+        // kill staring and trailing spaces
         pmore_str_chomp(p);
 
         // special case, floats are in line[0].
@@ -1636,7 +1632,7 @@ mf_display(void)
              * This is buggy, however we can support this
              * by using wrapping features.
              * Anyway I(piaip) don't like this. And using wrap
-             * leads to slow display (we cannot speed it up with
+             * leads to slow display (we cannt speed it up with
              * optimized scrolling.
              */
             if (bpref.separator & MFDISP_SEP_WRAP)
@@ -2136,14 +2132,14 @@ mf_display_footer(
         /* in debug mode don't print ANSI codes
          * because themselves are buggy.
          */
-        prints("L#%ld(w%ld, lp%ld) Dsp:%p/%p/%p, "
-                "F:%p/%p(%ld) tScr(%dx%d)",
+        prints("L#%ld(w%ld, lp%ld) Dsp:%08X/%08X/%08X, "
+                "F:%08X/%08X(%d) tScr(%dx%d)",
                 mf.lineno, mf.wraplines, mf.lastpagelines,
-                (void *)mf.disps,
-                (void *)mf.maxdisps,
-                (void *)mf.dispe,
-                (void *)mf.start, (void *)mf.end,
-                mf.len,
+                (unsigned int)mf.disps,
+                (unsigned int)mf.maxdisps,
+                (unsigned int)mf.dispe,
+                (unsigned int)mf.start, (unsigned int)mf.end,
+                (int)mf.len,
                 t_columns,
                 t_lines
               );

@@ -77,19 +77,19 @@ static int point1_money(void)
         return 0;
     else
     {
-        double temp = num*4096;
+        double temp = num*4096 + acct.money;
 
-        if (temp + acct.money > INT_MAX)
+        if (temp > INT_MAX)
         {
             pmsg2("轉換後夢幣超過上限！");
             return 0;
         }
 
-        const int dmoney = (int)temp;
+        temp = (int)temp;
 
         if (acct_load(&acct, cuser.userid) >= 0)
         {
-            acct.money += dmoney;
+            acct.money = temp;
             acct.point1 -= num;
         }
 
@@ -99,7 +99,7 @@ static int point1_money(void)
         char c_time[25], c_buf[100]={0};
         now = time(0);
         str_scpy(c_time, ctime(&now), sizeof(c_time));
-        sprintf(c_buf, "%s %s 優良點數(%d)->夢幣(%+d)\n", c_time, cuser.userid, num, dmoney);
+        sprintf(c_buf, "%s %s 優良點數(%d)->夢幣(%d)\n", c_time, cuser.userid, num, (int)temp);
         f_cat(FN_BANK, c_buf);
 
     }
@@ -120,7 +120,7 @@ TransferAccount(void)
     char userid[IDLEN + 1];
     char str[128];
     int selfmoney GCC_UNUSED, pay;
-    int dmoney;
+    double temp;
 
 #ifdef M3_USE_PFTERM
     clrregion(0, 22);
@@ -163,28 +163,28 @@ TransferAccount(void)
     if (!vget(7, 0, "你要匯款多少夢幣：", buf, 10, DOECHO))
         return 0;
 
-    dmoney = atoi(buf);
+    temp = ((int)atoi(buf) + acct.money);
 
-    if (dmoney < 100)
+    if ((int)atoi(buf) < 100)
     {
         pmsg2("匯款金額不得低於 100 元");
         return 0;
     }
-    else if (dmoney > selfacct.money)
+    else if ((int)atoi(buf) > selfacct.money)
     {
         pmsg2("匯款金額超過能匯出的上限");
         return 0;
     }
-    else if ((double)dmoney + acct.money > INT_MAX)
+    else if (temp>INT_MAX)
     {
         pmsg2("匯款金額超過對方能接受的上限");
         return 0;
     }
 
-    pay = (int)(dmoney * 1.1);
+    pay = (int)(atoi(buf)*1.1);
 
     move(9, 0);
-    prints("欲轉 %d 元夢幣(稅前)，實際支付 %d 夢幣(稅後)", dmoney, pay);
+    prints("欲轉 %d 元夢幣(稅前)，實際支付 %d 夢幣(稅後)", (int)atoi(buf), pay);
 
     move(11, 0);
     clrtobot();
@@ -208,12 +208,12 @@ TransferAccount(void)
         fprintf(fp, "作者: %s (%s)\n", cuser.userid, cuser.username);
         fprintf(fp, "標題: 匯款通知\n");
         fprintf(fp, "時間: %s\n", date);
-        fprintf(fp, "\n\n%s 送給你 \x1b[1;31m%d\x1b[m 夢幣，請笑納~\n", cuser.userid, dmoney);
+        fprintf(fp, "\n\n%s 送給你 \x1b[1;31m%d\x1b[m 夢幣，請笑納~\n", cuser.userid, (int)atoi(buf));
         fprintf(fp, "\n\n匯款理由：%s\n", str);
         fclose(fp);
         rec_add(folder, &xhdr, sizeof(HDR));
 
-        acct.money += dmoney;
+        acct.money += (int)atoi(buf);
         selfacct.money -= pay;
         acct_save(&acct);
         acct_save(&selfacct);
@@ -222,7 +222,7 @@ TransferAccount(void)
         char c_time[25], c_buf[100]={0};
         now = time(0);
         str_scpy(c_time, ctime(&now), sizeof(c_time));
-        sprintf(c_buf, "%s %s 匯款(%d)-> %s (%+d)\n", c_time, cuser.userid, pay, userid, dmoney);
+        sprintf(c_buf, "%s %s 匯款(%d)-> %s (%d)\n", c_time, cuser.userid, pay, userid, (int)atoi(buf));
         f_cat(FN_BANK, c_buf);
 
     }

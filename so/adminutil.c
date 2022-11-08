@@ -822,7 +822,7 @@ const void *arg)
     DL_HOLD;
     time_t now;
     struct tm ntime, *xtime;
-    int select = INT((intptr_t)arg);
+    int select = (int)(unsigned int)(long)arg;
     now = time(NULL);
     xtime = localtime(&now);
     ntime = *xtime;

@@ -23,10 +23,10 @@
 # include __FILE__      /* Include the declarations */
 # define MAIN_C         /* Restore `MAIN_C` */
 # define VAR
-# define INI(...)       = __VA_ARGS__
+# define INI(x)         = x
 #else
 # define VAR            extern
-# define INI(...)
+# define INI(x)
 #endif
 
 /* ----------------------------------------------------- */
@@ -138,7 +138,7 @@ VAR const char build_compiler[]   INI(
         "GCC-" VER_PATCH_STR(__GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__))
 );
 VAR const char build_lang[]       INI(IF_EXPANDS(__cplusplus, "GNU-C++", "GNU-C"));
-VAR const int build_langver       INI(IF_EXPANDS(__cplusplus, INT(__cplusplus), INT(__STDC_VERSION__)));
+VAR const int build_langver       INI(IF_EXPANDS(__cplusplus, (int)__cplusplus, (int)__STDC_VERSION__));
 
 #undef __cplusplus_TEST_EXPANDS
 #undef __clang___TEST_EXPANDS

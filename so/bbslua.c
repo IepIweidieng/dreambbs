@@ -1637,9 +1637,9 @@ bl_clock(lua_State *L)
     syncnow();
     // XXX the may be some latency between our GetSystemTime and syncnow.
     // So build again the "second" part.
-    d = (long)((now / 60) * 60);
+    d = (int)((now / 60) * 60);
 #else
-    d = (long)((time(NULL) / 60) * 60);
+    d = (int)((time(NULL) / 60) * 60);
 #endif
     d += st.wSecond;
     d += (st.wMilliseconds / 1000.0f);
@@ -2789,8 +2789,8 @@ bbslua(const char *fpath)
         walltime = bl_tv2double(&lua_endtime) - bl_tv2double(&lua_begintime);
         load = cputime / walltime;
         log_filef("log/bbslua.log", LOG_CREAT,
-                "maxalloc=%ld leak=%ld op=%d cpu=%.3f Mop/s=%.1f load=%f file=%s\n",
-                ad.max_alloc_size, ad.alloc_size,
+                "maxalloc=%d leak=%d op=%d cpu=%.3f Mop/s=%.1f load=%f file=%s\n",
+                (int)ad.max_alloc_size, (int)ad.alloc_size,
                 bbslua_count, cputime, bbslua_count / cputime / 1000000.0, load * 100,
                 fpath);
     }

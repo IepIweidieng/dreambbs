@@ -337,7 +337,7 @@ outs_footer(
     /* prints(FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, ((foff - fimage) * 100) / fsize); */
 
     /* itoc.010821: 為了和 FOOTER 對齊 */
-    sprintf(buf, FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, INT((foff - fimage) * 100 / fsize));
+    sprintf(buf, FOOTER_MORE, (lino - 2) / PAGE_SCROLL + 1, (int)(unsigned)((foff - fimage) * 100) / fsize);
     outs(buf);
 
     for (i = b_cols + sizeof(COLOR1) + sizeof(COLOR2) - strlen(buf); i > 3; i--)
@@ -775,7 +775,7 @@ re_key:
                     }
 
                     /* 先位移到上一個 block 的尾端 */
-                    i = BMIN((totallino - b_lines) >> 5, (int)MAXBLOCK - 1);
+                    i = BMIN((totallino - b_lines) >> 5, MAXBLOCK - 1);
                     foff = fimage + block[i];
                     i = i * 32;
 
@@ -809,7 +809,7 @@ re_key:
                 */
 
                 /* 先位移到上一個 block 的尾端 */
-                i = BMIN((lino - b_lines) >> 5, (int)MAXBLOCK - 1);
+                i = BMIN((lino - b_lines) >> 5, MAXBLOCK - 1);
                 foff = fimage + block[i];
                 i = i * 32;
 
