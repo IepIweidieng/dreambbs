@@ -358,7 +358,7 @@ int pmsg2(const char *msg);
 void brd2myfavorite(const BRD *brd, HDR *gem);
 int MyFavorite(void);
 int myfavorite_find_chn(const char *brdname);
-void myfavorite_parse(char *fpath);
+void myfavorite_parse(const char *fname);
 void myfavorite_main(void);
 int class_add(XO *xo, int pos);
 

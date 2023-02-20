@@ -14,7 +14,6 @@
 
 static void XoFavorite(const char *folder, const char *title, int level);
 static int myfavorite_add(XO *xo);
-static char currdir[64];
 
 void
 brd2myfavorite(
@@ -253,7 +252,7 @@ myfavorite_add(
             return XO_HEAD;
         }
         brd2myfavorite(brd, &hdr);
-        if (myfavorite_find_same(brd, currdir) >= 0)
+        if (myfavorite_find_same(brd, xo->dir) >= 0)
         {
             vmsg("已有此看板!");
             return XO_FOOT;
@@ -267,7 +266,18 @@ myfavorite_add(
         if (!vget(B_LINES_REF, 0, "請輸入標題: ", title, sizeof(title), DOECHO))
             return XO_NONE;
 
-        hdr_stamp(currdir, ans|HDR_LINK, &hdr, fpath);
+        const int fd = hdr_stamp(xo->dir, ans, &hdr, fpath);
+        if (fd >= 0)
+        {
+            close(fd);
+        }
+        else
+        {
+            char msg[80];
+            sprintf(msg, "建檔失敗！：%s", strerror(errno));
+            vmsg(msg);
+            vmsg(fpath);
+        }
         hdr.xmode = GEM_FOLDER;
         sprintf(hdr.title, "◆ %s", title);
     }
@@ -301,9 +311,9 @@ myfavorite_add(
     }
 
     if (ans == 'i' || ans == 'n')
-        rec_ins(currdir, &hdr, sizeof(HDR), xo->pos[xo->cur_idx] + (ans == 'n'), 1);
+        rec_ins(xo->dir, &hdr, sizeof(HDR), xo->pos[xo->cur_idx] + (ans == 'n'), 1);
     else
-        rec_add(currdir, &hdr, sizeof(HDR));
+        rec_add(xo->dir, &hdr, sizeof(HDR));
 
     logitfile(FN_FAVORITE_LOG, "< ADD >", hdr.xname);
 
@@ -355,7 +365,7 @@ myfavorite_delete(
             remove_dir(fpath);
         }
 
-        if (!rec_del(currdir, sizeof(HDR), pos, NULL, NULL))
+        if (!rec_del(xo->dir, sizeof(HDR), pos, NULL, NULL))
         {
             logitfile(FN_FAVORITE_LOG, "< DEL >", hdr_orig.xname);
             return XO_LOAD;
@@ -386,9 +396,9 @@ myfavorite_mov(
     if (newOrder != pos)
     {
         const HDR ghdr_orig = *ghdr;
-        if (!rec_del(currdir, sizeof(HDR), pos, NULL, NULL))
+        if (!rec_del(xo->dir, sizeof(HDR), pos, NULL, NULL))
         {
-            rec_ins(currdir, &ghdr_orig, sizeof(HDR), newOrder, 1);
+            rec_ins(xo->dir, &ghdr_orig, sizeof(HDR), newOrder, 1);
             xo->pos[xo->cur_idx] = newOrder;
             logitfile(FN_FAVORITE_LOG, "< MOV >", ghdr_orig.xname);
             return XO_LOAD;
@@ -426,7 +436,7 @@ myfavorite_edit(
     {
         if (!vget(B_LINES_REF, 0, "請輸入標題: ", hdr->title, 64, GCARRY))
             return XO_FOOT;
-        rec_put(currdir, hdr, sizeof(HDR), pos);
+        rec_put(xo->dir, hdr, sizeof(HDR), pos);
         return XO_LOAD;
     }
     return XO_NONE;
@@ -530,13 +540,8 @@ XoFavorite(
     int level)
 {
     XO *xo, *last;
-    char old[64];
 
     last = xz[XZ_MYFAVORITE - XO_ZONE].xo;     /* record */
-
-    strcpy(old, currdir);
-
-    strcpy(currdir, folder);
 
     xz[XZ_MYFAVORITE - XO_ZONE].xo = xo = xo_new(folder);
     xo->cb = myfavorite_cb;
@@ -548,8 +553,6 @@ XoFavorite(
     xover(XZ_MYFAVORITE);
 
     free(xo);
-
-    strcpy(currdir, old);
 
     xz[XZ_MYFAVORITE - XO_ZONE].xo = last;     /* restore */
 }
@@ -609,13 +612,14 @@ myfavorite_find_chn(
 
 void
 myfavorite_parse(
-    char *fpath)
+    const char *fname)
 {
     int i, max;
     char buf[20];
+    char fpath[80];
     HDR hdr;
 
-    sprintf(buf, "MF/%s", fpath);
+    sprintf(buf, "MF/%s", fname);
 
     usr_fpath(fpath, cuser.userid, buf);
     max = rec_num(fpath, sizeof(HDR));
@@ -644,6 +648,7 @@ myfavorite_main(void)
     char fpath[80];
     HDR hdr;
 
+    // usr/i/id/favorite -> usr/i/id/MF/favorite
     usr_fpath(fpath, cuser.userid, "MF");
     if (!mkdir(fpath, 0700))
     {
@@ -652,23 +657,19 @@ myfavorite_main(void)
         usr_fpath(new_, cuser.userid, FN_MYFAVORITE);
         f_cp(old, new_, 0600);
     }
-
-    usr_fpath(fpath, cuser.userid, FN_MYFAVORITE);
-    max = rec_num(fpath, sizeof(HDR));
-
-    for (i=0; i<max; i++)
+    else
     {
-        rec_get(fpath, &hdr, sizeof(HDR), i);
-        if (hdr.xmode & GEM_BOARD)
+        char old[80];
+        usr_fpath(old, cuser.userid, "MF/" FN_FAVORITE);
+        usr_fpath(fpath, cuser.userid, FN_MYFAVORITE);
+        // If the new one exists, do nothing; else rename the old one
+        if (!f_ln(old, fpath))
         {
-            hdr.recommend = myfavorite_find_chn(hdr.xname);
-            rec_put(fpath, &hdr, sizeof(HDR), i);
-        }
-        else if (hdr.xmode & GEM_FOLDER)
-        {
-            myfavorite_parse(hdr.xname);
+            unlink(old);
         }
     }
+
+    myfavorite_parse(FN_DIR);
 }
 
 int

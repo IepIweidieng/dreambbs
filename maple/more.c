@@ -20,6 +20,7 @@
 
 #ifndef M3_USE_PMORE
 static int more_width;  /* more screen 的寬度 */
+static int more_height; /* more screen 的高度 */
 #endif
 
 static char more_pool[MORE_BUFSIZE];
@@ -407,6 +408,42 @@ more_slideshow(void)
 #define HUNT_START      0x004   /* 按 / 開始搜尋，且尚未找到 match 的字串 */
 
 #define MAXBLOCK        256U    /* 記錄幾個 block 的 offset。可加速 MAXBLOCK*32 列以內的長文在上捲/翻時的速度 */
+
+/* rewind `foff` for making the next call to `more_line()` return the line numbered `lino_top`
+    * `block`: Cached line offsets for rewinding `foff`
+    * `lino_top`: One-pass-the-end destination for advancing `foff` by invoking `more_line()`
+    * `shift`: Desired line amount of vertical screen scrolling
+        * if `shift` < 0, scroll up (backward) the screen and clear the upper screen;
+          the cursor will be placed at the top-left
+          for further redrawing the lines starting at `line_top` to the upper screen.
+        * Otherwise no screen changes; the cursor remains in place.
+*/
+static
+void more_rewind(char *buf, const off_t *block, int lino_top, int shift)
+{
+    /* itoc.041114.註解: 目標是秀出 lino-b_lines+1 ~ lino 列的內容：
+      1. 先從頭位移到 lino-b_lines+1 列
+      2. 其中有 b_lines+shift 列是不變的內容，用 rscroll 達成
+      3. 在前面的 outs_line() 的地方印出 -shift 列
+      4. 最後再位移剛才 rscroll 的列數
+    */
+    /* IID.2022-08-13: use more_height as cached b_lines */
+
+    /* 先位移到上一個 block 的尾端 */
+    int i_block = TCLAMP(lino_top >> 5, 0, (int)MAXBLOCK - 1);
+    foff = fimage + block[i_block];
+
+    /* 再從上一個 block 的尾端位移到 lino-more_height+1 列 */
+    for (int i = 32 * i_block; i < lino_top; ++i)
+        more_line(buf);
+
+    for (int i = shift; i < 0; i++)
+    {
+        rscroll();
+        move(0, 0);
+        clrtoeol();
+    }
+}
 #endif  /* #ifndef M3_USE_PMORE */
 
 #ifdef M3_USE_PMORE
@@ -414,6 +451,9 @@ static int
 pmore_key_handler(int key, void *ctx)
 {
     switch (key) {
+    case I_RESIZETERM:
+        return -2;
+
     /* pmore help */
     case 'h': case 'H': case '?':
 #ifdef KEY_F1
@@ -518,6 +558,7 @@ more(
     /* more_width = b_cols - 1; */      /* itoc.070517.註解: 若用這個，每列最大字數會和 header 及 footer 對齊 (即會有留白二格) */
     /* more_width = b_cols + 1; */      /* itoc.070517.註解: 若用這個，每列最大字數與螢幕同寬 */
     more_width = b_cols;  /* IID.20191223: Leave one space */
+    more_height = b_lines;
 
     /* 找檔頭結束的地方 */
     for (i = 0; i < LINE_HEADER; i++)
@@ -556,7 +597,7 @@ more(
     }
     else
     {
-        shift = b_lines;
+        shift = more_height;
     }
 
     clear();
@@ -586,7 +627,7 @@ more(
 
         if (shift > 0)          /* 還要下移 shift 列 */
         {
-            if (lino >= b_lines)        /* 只有在剛進 more，第一次印第一頁時才可能 lino <= b_lines */
+            if (lino >= more_height)        /* 只有在剛進 more，第一次印第一頁時才可能 lino <= more_height */
                 scroll();
 
             lino++;
@@ -613,7 +654,7 @@ more(
                        若在第一頁找到，必須等到讀完第一頁才能停止 */
                     if (shift & HUNT_START && str_casestr_dbcs(buf, hunt))
                         shift ^= HUNT_START | HUNT_FOUND;               /* 拿掉 HUNT_START 並加上 HUNT_FOUND */
-                    if (shift & HUNT_FOUND && lino >= b_lines)
+                    if (shift & HUNT_FOUND && lino >= more_height)
                         shift = 0;
                 }
             }
@@ -627,8 +668,8 @@ more(
                 move(b_lines, 0);
                 clrtoeol();
 
-                /* 剩下 b_lines+shift 列是 rscroll，offset 去正確位置；這裡的 i 是總共要 shift 的列數 */
-                for (i += b_lines; i > 0; i--)
+                /* 剩下 more_height+shift 列是 rscroll，offset 去正確位置；這裡的 i 是總共要 shift 的列數 */
+                for (i += more_height; i > 0; i--)
                     more_line(buf);
             }
         }
@@ -658,6 +699,22 @@ re_key:
 #else
         key = vkey();
 #endif
+
+        if (key == I_RESIZETERM || b_cols != more_width || b_lines != more_height)
+        {
+re_draw:
+            /* rewind `lino` first */
+            lino = BMAX(0, lino - more_height);
+            more_rewind(buf, block, lino, 0);
+            /* update screen dimensions */
+            more_width = b_cols;
+            more_height = b_lines;
+            /* force full redraw */
+            clear();
+            move(BMIN(lino, b_lines), 0);
+            shift = more_height;
+            continue;
+        }
 
         if (key == ' ' || key == KEY_PGDN || key == KEY_RIGHT || key == Ctrl('F'))
         {
@@ -769,8 +826,7 @@ re_key:
         )
         {
             film_out(FILM_MORE, -1);
-            shift = 0;
-            break;
+            goto re_draw;
         }
 /* BBS-Lua */
 #ifdef M3_USE_BBSLUA
@@ -870,31 +926,8 @@ re_key:
             if (shift >= -PAGE_SCROLL)  /* 上捲數列 */
             {
                 lino += shift;
-
-                /* itoc.041114.註解: 目標是秀出 lino-b_lines+1 ~ lino 列的內容：
-                  1. 先從頭位移到 lino-b_lines+1 列
-                  2. 其中有 b_lines+shift 列是不變的內容，用 rscroll 達成
-                  3. 在前面的 outs_line() 的地方印出 -shift 列
-                  4. 最後再位移剛才 rscroll 的列數
-                */
-
-                /* 先位移到上一個 block 的尾端 */
-                i = BMIN((lino - b_lines) >> 5, (int)MAXBLOCK - 1);
-                foff = fimage + block[i];
-                i = i * 32;
-
-                /* 再從上一個 block 的尾端位移到 lino-b_lines+1 列 */
-                for (i = lino - b_lines - i; i > 0; i--)
-                    more_line(buf);
-
-                for (i = shift; i < 0; i++)
-                {
-                    rscroll();
-                    move(0, 0);
-                    clrtoeol();
-                }
-
                 i = shift;
+                more_rewind(buf, block, lino - more_height, shift);
             }
             else                        /* Home */
             {
@@ -905,7 +938,7 @@ re_key:
 
                 foff = fimage;
                 lino = 0;
-                shift = b_lines;
+                shift = more_height;
             }
         }
         else                            /* 重繪 footer 並 re-key */
