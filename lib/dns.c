@@ -21,7 +21,7 @@ void dns_init(void)
     //  _res.options |= RES_USEVC;
 }
 
-/* IID(2023-02-21): Below is the data format of output parameter `ans` in pseudo code. See RFC 1035.
+/* IID.2023-02-21: Below is the data format of output parameter `ans` in pseudo code. See RFC 1035.
     struct DnsMessage {
         HEADER hdr; // defined in <arpa/nameser_compat.h>
         struct QSection question[];
