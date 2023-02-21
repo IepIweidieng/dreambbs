@@ -5,6 +5,7 @@ Get_Socket(  /* site for hostname, sock for port & socket */
     const char *site,
     int *sock)
 {
+    static const unsigned int sec_timeout = 5; /* IID.2023-02-21: TCP-based timeout for connect(). Unit: Seconds */
     struct addrinfo hints = {0};
     struct addrinfo *hosts;
     char port_str[12];
@@ -29,6 +30,8 @@ Get_Socket(  /* site for hostname, sock for port & socket */
 #ifdef  SET_ALARM
         signal(SIGALRM, timeout);
         alarm(SET_ALARM);
+#else
+        setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &TEMPLVAL(unsigned int, {1000 * sec_timeout}), sizeof(unsigned int));
 #endif
 
         /* perform connecting */
@@ -48,7 +51,10 @@ Get_Socket(  /* site for hostname, sock for port & socket */
 
 #ifdef  SET_ALARM
         init_alarm();
+#else
+        setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &TEMPLVAL(unsigned int, {0}), sizeof(unsigned int));
 #endif
+
 
         freeaddrinfo(hosts);
         return 0;
