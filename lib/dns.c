@@ -81,100 +81,154 @@ int dns_query(const char *name, /* domain name */
 /* get IP address by host name                           */
 /* ----------------------------------------------------- */
 
-ip_addr dns_addr(const char *name)
+/* Returns an `ipaddr` object if `name` consists of only digits/dots, unless it ends in a dot; returns `IPADDR_NONE` otherwise
+*/
+static ipaddr dns_iphost(const char *name)
 {
-    static const int qtypes[] = {ns_t_a, ns_t_aaaa};
     struct addrinfo hints = {0};
     struct addrinfo *hosts;
-    ip_addr addr = {0};
 
-    /* disallow names consisting only of digits/dots, unless they end in a dot. */
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST | AI_NUMERICSERV;
+    if (getaddrinfo(name, NULL, &hints, &hosts))
+        return IPADDR_NONE;
+
+    ipaddr addr = IPADDR_NONE;
+    switch (hosts->ai_family)
     {
-        int status = getaddrinfo(name, NULL, &hints, &hosts);
-        if (!status)
-        {
-            switch (addr.family = hosts->ai_family)
-            {
-            case AF_INET:
-                addr.v4 = *(const struct sockaddr_in *)hosts->ai_addr;
-                break;
-            case AF_INET6:
-                addr.v6 = *(const struct sockaddr_in6 *)hosts->ai_addr;
-                break;
-            default:;
-            }
-            freeaddrinfo(hosts);
-            return addr;
-        }
-        else if (status != EAI_NONAME)
-            return IPADDR_NONE;
+    case AF_INET:
+        addr.v4 = *(const struct sockaddr_in *)hosts->ai_addr;
+        break;
+    case AF_INET6:
+        addr.v6 = *(const struct sockaddr_in6 *)hosts->ai_addr;
+        break;
+    default:
+        ;
+    }
+    freeaddrinfo(hosts);
+    return addr;
+}
+
+typedef enum EDafRet { // Return values of dns_ans_foreach()
+    DAF_ERR = -3,
+    DAF_NOTFOUND = -2,
+    DAF_BREAK_ERR = -1,
+    DAF_OK = 0,
+    DAF_CONTINUE = 0,
+    DAF_BREAK_OK = 1,
+} EDafRet;
+
+/* Perform DNS query with host name `host` and then call `cb` on every record in the answer section of the query result
+ * Returns `-3` if an error is encountered.
+ * Returns `-2` if no matching answers are returned.
+ * Returns `-1` if `cb` once returns a negative number. All the remaining records are ignored.
+ * Returns `1` if `cb` once returns a positive number. All the remaining records are ignored.
+ * Returns `0` if every calls to `cb` return `0` and any matching answers are found.
+*/
+GCC_NONNULL(1, 3)
+static EDafRet dns_ans_foreach(
+    const querybuf *ans,
+    unsigned char *eom,
+    int qtype, // `ns_t_a`, `ns_t_aaaa`, ...
+    EDafRet (*cb)(int rtype, const unsigned char *data, int data_sz, const void *args_in, void *args_out),
+    const void *args_in,
+    void *args_out)
+{
+    const unsigned char *cp = ans.buf + sizeof(HEADER);
+
+    /* skip question section */
+    for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
+    {
+        int n = dn_skipname(cp, eom);
+        if (n < 0)
+            return DAF_ERR;
+        cp += n + NS_QFIXEDSZ;
     }
 
-    for (int i = 0; i < COUNTOF(qtypes); ++i)
+    EDafRet res = DAF_NOTFOUND;
+    for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
     {
-        querybuf ans;
-        unsigned char *cp, *eom;
+        const int n = dn_skipname(cp, eom);
+        if (n < 0)
+            return DAF_ERR;
+
+        cp += n;
+
+        const int type = getshort(cp);
+        const int data_sz = getshort(cp + 8);
+
+        cp += NS_RRFIXEDSZ;
+
+        const unsigned char *const data = cp;
+        if (type == qtype)
         {
-            int n = dns_query(name, qtypes[i], &ans);
-            if (n < 0)
-                return IPADDR_NONE;
-
-            /* find first satisfactory answer */
-
-            cp = ans.buf + sizeof(HEADER);
-            eom = ans.buf + n;
+            res = DAF_OK;
+            const int res_cb = cb(type, cp, n, args_in, args_out);
+            if (res_cb)
+                return (res_cb > 0) ? DAF_BREAK_OK : DAF_BREAK_ERR;
         }
 
-        /* skip question section */
-        for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
-        {
-            int n = dn_skipname(cp, eom);
-            if (n < 0)
-                return IPADDR_NONE;
-            cp += n + NS_QFIXEDSZ;
-        }
-
-        for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
-        {
-            char hostbuf[NS_MAXDNAME];
-            int type;
-            /* cp: domain_name */
-            int n = dn_expand(ans.buf, eom, cp, hostbuf, NS_MAXDNAME);
-            if (n < 0)
-                return IPADDR_NONE;
-
-            cp += n;
-
-            /* cp: type */
-            type = getshort(cp);
-            n = getshort(cp + 8); // resource_data_length
-            cp += 10;
-
-            /* cp: resource_data */
-            if (type == qtypes[i])
-            {
-                ip_addr addr = {0};
-                switch (type)
-                {
-                case ns_t_a:
-                    addr.family = AF_INET;
-                    addr.v4.sin_addr = *(struct in_addr *) cp;
-                    return addr;
-                case ns_t_aaaa:
-                    addr.family = AF_INET6;
-                    addr.v6.sin6_addr = *(struct in6_addr *) cp;
-                    return addr;
-                default:
-                    return IPADDR_NONE;
-                }
-            }
-
-            cp += n;
-        }
+        cp += data_sz;
     }
-    return IPADDR_NONE;
+    return res;
+}
+
+/* Convert the resource data from an answer record aquired from DNS query into an `ip_addr` object
+ * Returns `-1` for unknown `rtype` and `0` otherwise.
+*/
+GCC_NONNULLS
+static int data_to_addr(int rtype, unsigned char *data, int data_sz, ip_addr *addr_out)
+{
+    const int type = INT(args_in);
+    switch (type)
+    {
+    case ns_t_any:
+        if (data_sz >= sizeof(*addr_out))
+            *addr_out = *(ip_addr *)data;
+        break;
+    case ns_t_a:
+        addr_out->family = AF_INET;
+        addr_out->v4.sin_addr = *(struct in_addr *) cp;
+        break;
+    case ns_t_aaaa:
+        addr_out->family = AF_INET6;
+        addr_out->v6.sin6_addr = *(struct in6_addr *) cp;
+        break;
+    default: // Unhandled type
+        return -1;
+    }
+    return 0;
+}
+
+GCC_NONNULL(1, 4)
+static EDafRet daf_get_addr(int rtype, unsigned char *data, int data_sz, GCC_UNUSED const void *args_in, void *args_out)
+{
+    const int res = data_to_addr(rtype, data, data_sz, (ipaddr *)args_out);
+    /* find first satisfactory answer */
+    return (res == 0) ? DAF_BREAK_ERR : DAF_CONTINUE;
+}
+
+ip_addr dns_addr(const char *name)
+{
+    ip_addr res = dns_iphost(name);
+    if (res != IPADDR_NONE)
+        return res;
+
+    querybuf ans;
+    unsigned char *cp, *eom;
+    int n = dns_query(name, qtype, &ans);
+    if (n < 0)
+        return IPADDR_NONE;
+
+    unsigned char *eom = ans.buf + n;
+
+    if (dns_ans_forall(ans, eom, ns_t_a, daf_get_addr, NULL, &res) == DAF_NOTFOUND)
+    {
+        ip_addr res_v6 = IPADDR_NONE;
+        if (dns_ans_forall(ans, eom, ns_t_aaaa, daf_get_addr, NULL, &res_v6) == DAF_OK)
+            return res_v6;
+    }
+    return res;
 }
 
 /*-------------------------------------------------------*/
@@ -579,106 +633,29 @@ int dns_openip(const ip_addr *addr, int port)
     return sock;
 }
 
+GCC_NONNULLS
+static int daf_openip(int rtype, const unsigned char *data, int data_sz, const void *args_in, void *args_out)
+{
+    const int port = INT(args_in);
+    ipaddr addr = IPADDR_NONE;
+    if (data_to_addr(rtype, data, data_sz, &addr) < 0)
+        return DAF_CONTINUE;
+    const int fd = dns_openip(addr, port);
+    *(int *)args_out = fd;
+    return (fd >= 0) ? DAF_BREAK_OK : DAF_CONTINUE;
+}
+
 int dns_open(const char *host, int port)
 {
-    static const int qtypes[] = {ns_t_a, ns_t_aaaa};
-    querybuf ans;
-    unsigned char *cp, *eom;
-    char buf[NS_MAXDNAME];
+    const ip_addr addr = dns_iphost(name);
+    if (addr != IPADDR_NONE)
+        return dns_openip(addr, port);
 
-#if 1
-    /* Thor.980707: 因gem.c呼叫時可能將host用ip放入，故作特別處理 */
-    if (*host >= '0' && *host <= '9')
-    {
-        int n;
-        const unsigned char *ccp = (const unsigned char *)host;
-        for (n = 0; n < 4; n++, ccp++)
-        {
-            buf[n] = 0;
-            while (*ccp >= '0' && *ccp <= '9')
-            {
-                buf[n] *= 10;
-                buf[n] += *ccp++ - '0';
-            }
-            if (!*ccp)
-                break;
-        }
-        if (n == 3)
-        {
-            ip_addr addr = {0};
-            addr.family = AF_INET;
-            addr.v4.sin_addr = *(struct in_addr *)buf;
-            return dns_openip(&addr, port);
-        }
-    }
-    /* Thor.980707: 隨便寫寫，要講究完全match再說:p */
-#endif
-
-    for (int i = 0; i < COUNTOF(qtypes); ++i)
-    {
-        {
-            int n = dns_query(host, qtypes[i], &ans);
-            if (n < 0)
-                return n;
-
-            /* find first satisfactory answer */
-
-            cp = ans.buf + sizeof(HEADER);
-            eom = ans.buf + n;
-        }
-
-        /* skip question section */
-        for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
-        {
-            int n = dn_skipname(cp, eom);
-            if (n < 0)
-                return n;
-            cp += n + NS_QFIXEDSZ;
-        }
-
-        for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
-        {
-            int type;
-            /* cp: domain_name */
-            int n = dn_expand(ans.buf, eom, cp, buf, NS_MAXDNAME);
-            if (n < 0)
-                return -1;
-
-            cp += n;
-
-            /* cp: type */
-            type = getshort(cp);
-            n = getshort(cp + 8); // resource_data_length
-            cp += 10;
-
-            /* cp: resource_data */
-            if (type == qtypes[i])
-            {
-                ip_addr addr = {0};
-                int sock;
-                switch (type)
-                {
-                case ns_t_a:
-                    addr.family = AF_INET;
-                    addr.v4.sin_addr = *(struct in_addr *)cp;
-                    break;
-                case ns_t_aaaa:
-                    addr.family = AF_INET6;
-                    addr.v6.sin6_addr = *(struct in6_addr *)cp;
-                    break;
-                default:
-                    return -1;
-                }
-                sock = dns_openip(&addr, port);
-                if (sock >= 0)
-                    return sock;
-            }
-
-            cp += n;
-        }
-    }
-
-    return -1;
+    int res = -1;
+    if (dns_addr_base(host, ns_t_a, addr_openip, (const void *)port, &res) == DAF_BREAK_OK)
+        return res;
+    dns_addr_base(host, ns_t_aaaa, addr_openip, (const void *)port, &res);
+    return res;
 }
 
 /*-------------------------------------------------------*/
