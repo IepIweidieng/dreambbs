@@ -325,19 +325,24 @@ bsmtp(
         fr = fdopen(sock, "r");
         fw = fdopen(sock, "w");
 
-        fgets(buf, sizeof(buf), fr);
-        if (strncmp(buf, "220", 3))
+        if (!fgets(buf, sizeof(buf), fr)
+            || strncmp(buf, "220", 3)
+            )
             goto smtp_error;
         while (buf[3] == '-') /* maniac.bbs@WMStar.twbbs.org 2000.04.18 */
-            fgets(buf, sizeof(buf), fr);
+        {
+            if (!fgets(buf, sizeof(buf), fr))
+                goto smtp_error;
+        }
 
 #define SMTP_TRY_SENDF(expected, ...) do { \
     fprintf(fw, __VA_ARGS__); \
     fflush(fw); \
     do \
     { \
-        fgets(buf, sizeof(buf), fr); \
-        if (strncmp(buf, CPP_STR(expected), 3)) \
+        if (!fgets(buf, sizeof(buf), fr) \
+            || strncmp(buf, CPP_STR(expected), 3) \
+            ) \
             goto smtp_error; \
     } while (buf[3] == '-'); \
 } while (0)
@@ -424,8 +429,9 @@ bsmtp(
         fputs("\r\n.\r\n", fw);
         fflush(fw);
 
-        fgets(buf, sizeof(buf), fr);
-        if (strncmp(buf, "250", 3))
+        if (!fgets(buf, sizeof(buf), fr)
+            || strncmp(buf, "250", 3)
+            )
             goto smtp_error;
 
         fputs("QUIT\r\n", fw);
