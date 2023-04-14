@@ -25,14 +25,6 @@ static int mailgem_recycle(XO *xo);
 static void XoMailGem(const char *folder, const char *title);
 
 static int
-mailgem_foot(
-    XO *xo)
-{
-    outf(MSG_GEM);
-    return XO_NONE;
-}
-
-static int
 mailgem_item(
 XO *xo,
 int pos)
@@ -78,7 +70,7 @@ XO *xo)
         outs("\n《精華區》尚在吸取天地間的日精月華 :)\n");
         outs("\n  (^P)新增資料 (^G)海錨功\能 (W)資源回收筒\n");
         clrtobot();
-        return mailgem_foot(xo);
+        return gem_foot(xo);
     }
 
     num = xo->top;
@@ -92,7 +84,7 @@ XO *xo)
     while (num < max);
     clrtobot();
 
-    return mailgem_foot(xo);
+    return gem_foot(xo);
 }
 
 
@@ -998,7 +990,7 @@ static KeyFuncList mailgem_cb =
     {XO_LOAD, {mailgem_load}},
     {XO_HEAD, {mailgem_head}},
     {XO_BODY, {mailgem_body}},
-    {XO_FOOT, {mailgem_foot}},
+    {XO_FOOT, {gem_foot}},
     {XO_CUR | XO_POSF, {.posf = mailgem_cur}},
 
     {'r' | XO_POSF, {.posf = mailgem_browse}},
