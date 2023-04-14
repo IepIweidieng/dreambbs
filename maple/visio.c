@@ -2820,10 +2820,13 @@ vget_redraw:
             move(y, x + col);
 
         ch = vkey();
-        if (ch == I_RESIZETERM)
+        if (ch == I_RESIZETERM || ch == KEY_KONAMI)
         {
-            /* Screen size changed and redraw is needed */
+            /* Redraw is needed */
             /* clear */
+            if (ch != I_RESIZETERM)
+                xover_key(xo, 0, ch); // invoke only general key functions
+            ch = I_RESIZETERM;
             xover_resize(xo);
             move(y, x_prompt);
             clrtoeol();
