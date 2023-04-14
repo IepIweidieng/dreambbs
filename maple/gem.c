@@ -24,7 +24,7 @@
 #endif
 
 
-#define GEM_WAY         3
+#define GEM_WAY         2
 static int gem_way;
 
 static int GemBufferNum; /* Thor.990414: 提前宣告, 用於gem_head */
@@ -174,7 +174,7 @@ gem_toggle(
 {
     gem_way = (gem_way + 1) % GEM_WAY;
     if (!HAS_PERM(PERM_SYSOP) && (gem_way ==1))
-        gem_way = 2;
+        gem_way = (gem_way + 1) % GEM_WAY;
     return XO_BODY;
 }
 
