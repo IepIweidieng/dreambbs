@@ -162,6 +162,12 @@ xo_fpath(
     const char *dir,
     HDR *hdr)
 {
+<<<<<<< HEAD
+=======
+  if (hdr->xmode & HDR_URL)
+    url_fpath(fpath, dir, hdr);
+  else
+>>>>>>> parent of c97a28f6c... remove gopher related library and functions
     hdr_fpath(fpath, dir, hdr);
 }
 

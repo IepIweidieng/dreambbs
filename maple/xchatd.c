@@ -1937,6 +1937,7 @@ login_user(
 
     /* Xshadow: 取得 client 的來源 */
 
+<<<<<<< HEAD
     /* IID.2021-02-12: After `command_execute()` is done, `cu->ibuf` will be reset by setting `cu->isize` to `0`,
      *     so it can be used as a temporary buffer here without problems. */
 #ifdef NOIDENT
@@ -1949,6 +1950,17 @@ login_user(
     memcpy(cu->ibuf, cu->rhost, sizeof(ip_addr));
     getnameinfo((struct sockaddr *)cu->rhost, sizeof(cu->rhost), cu->ibuf, sizeof(ip_addr), NULL, NI_MAXSERV, 0);
   #endif
+=======
+  /* Xshadow: 取得 client 的來源 */
+
+  dns_name(cu->rhost, cu->ibuf);
+  str_ncpy(cu->rhost, cu->ibuf, sizeof(cu->rhost));
+#if 0
+  hp = gethostbyaddr(cu->rhost, sizeof(struct in_addr), AF_INET);
+  str_ncpy(cu->rhost,
+    hp ? hp->h_name : inet_ntoa((struct in_addr *) cu->rhost),
+    sizeof(cu->rhost) - 1);
+>>>>>>> parent of c97a28f6c... remove gopher related library and functions
 #endif
 
     cu->userno = utent;
@@ -2990,6 +3002,16 @@ servo_daemon(
 
 #ifndef NOIDENT
     dns_init();
+#endif
+
+  /* --------------------------------------------------- */
+  /* speed-hacking DNS resolve                           */
+  /* --------------------------------------------------- */
+
+  dns_init();
+#if 0
+  gethostname(buf, sizeof(buf));
+  gethostbyname(buf);
 #endif
 
 #ifdef RLIMIT
