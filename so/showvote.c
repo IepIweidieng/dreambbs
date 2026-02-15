@@ -59,8 +59,7 @@ XO *xo)
     do
     {
         show_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -99,7 +98,7 @@ show_edit(
 LOG *show,
 int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(show, 0, sizeof(LOG));
     if (vget(B_LINES_REF, 0, "E-mail¡G", show->email, sizeof(show->email), echo))
         return 1;
@@ -117,8 +116,7 @@ XO *xo)
     if (show_edit(&show, DOECHO))
     {
         rec_add(xo->dir, &show, sizeof(LOG));
-        xo->pos = XO_TAIL;
-        xo_load(xo, sizeof(LOG));
+        return XR_INIT + XO_MOVE + XO_TAIL;
     }
     return XO_HEAD;
 }
@@ -129,7 +127,7 @@ XO *xo,
 int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(LOG), pos, NULL, NULL))
         {
@@ -181,7 +179,7 @@ KeyFuncList show_cb =
     {'c' | XO_POSF, {.posf = show_change}},
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = show_delete}},
-    {'h', {show_help}}
+    {'h', {show_help}},
 };
 
 
@@ -209,7 +207,9 @@ int pos)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = show_cb;
     xo->recsiz = sizeof(LOG);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     free(xo);
 

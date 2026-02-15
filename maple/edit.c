@@ -1821,7 +1821,14 @@ vedit(
                 }
                 else
                 {
-                    prints("~%*s|", 77, "");
+                    const int pos_margin = (mode & VE_ANSI) ? 80 - 1 : 80 - 1 - margin;
+                    const int space = BMAX(0, pos_margin);
+                    const char *const mark_eof = (pos_margin > 0) ? "~" : "";
+                    const char mark_margin = (pos_margin < 0) ? '<' : '|';
+                    if (mode & VE_ANSI)
+                        prints("%-*s%c", space, mark_eof, mark_margin);
+                    else
+                        prints("\x1b[1;30m%-*s%c\x1b[m", space, mark_eof, mark_margin);
                 }
             }
 #ifdef EVERY_BIFF
@@ -1938,7 +1945,7 @@ ve_key:
                 vx_cur = tmp;
                 ve_col = (mode & VE_ANSI) ? ansi2n(tmp->len, tmp) : tmp->len;
                 if (vln == vx_top)
-                    vx_top = vln->next;
+                    vx_top = tmp;
                 join_up(tmp);
                 ve_mode = mode | VE_REDRAW;
                 break;
@@ -2247,7 +2254,7 @@ ve_key:
 //                      "Post   PO文次數(**p)",
                         "Time   現在時間(**t)",
                         "Quit   離開選單     ",
-                        NULL
+                        NULL,
                     };
 
                     const int ans = popupmenu_ans2(menu, "控制碼選擇", (B_LINES_REF >> 1) - 4, (D_COLS_REF >> 1) + 20);

@@ -23,8 +23,16 @@
 #define BOARDNAME       "夢之大地"                  /* 中文站名 */
 #endif
 
+#ifndef BOARDNAME_LIST
+#define BOARDNAME_LIST  {"夢之大地"}
+#endif
+
 #ifndef NICKNAME
 #define NICKNAME        "夢大"                      /* 中文簡稱 */
+#endif
+
+#ifndef NICKNAME_LIST
+#define NICKNAME_LIST   {"夢大"}                    /* should contains the same number of elements as BOARDNAME_LIST */
 #endif
 
 #ifndef OWNER
@@ -35,8 +43,8 @@
 #define MYHOSTNAME      "ccns.cc"                   /* 網路位址 */
 #endif
 
-#define BBSVERNAME      "DreamBBS-202X"             /* 版本名稱 */
-#define BBSVERSION      "v0-Azure"                  /* 版本編號, 最多 <= 14 字 */
+#define BBSVERNAME      "DreamBBS-202X"                  /* 版本名稱 */
+#define BBSVERSION      "v2-Shiyuu"                   /* 版本編號, 最多 <= 14 字 */
 #define BBSVER_SUFFIX   ""                          /* A version string for the path suffix */
 #define BINARY_SUFFIX   "bin" BBSVER_SUFFIX "/"     /* todo: move it to global.h, or merge global.h to here */
 

@@ -62,8 +62,7 @@ XO *xo)
     do
     {
         observe_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -165,7 +164,7 @@ int echo)
     ACCT acct;
     int userno;
 
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
     {
         memset(observe, 0, sizeof(OBSERVE));
         userno = acct_get(msg_uid, &acct);
@@ -194,7 +193,7 @@ XO *xo)
 {
     if (xo->max >= MAXOBSERVELIST)
     {
-        vmsg("您的好友名單太多，請善加整理");
+        vmsg_xo(xo, "您的好友名單太多，請善加整理");
         return XO_FOOT;
     }
     else
@@ -204,8 +203,7 @@ XO *xo)
         if (observe_edit(&observe, DOECHO))
         {
             rec_add(xo->dir, &observe, sizeof(OBSERVE));
-            xo->pos = XO_TAIL;
-            xo_load(xo, sizeof(OBSERVE));
+            return XR_INIT + XO_MOVE + XO_TAIL;
         }
     }
     return XO_HEAD;
@@ -217,7 +215,7 @@ XO *xo,
 int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(OBSERVE), pos, NULL, NULL))
         {
@@ -272,7 +270,7 @@ KeyFuncList observe_cb =
     {'c' | XO_POSF, {.posf = observe_change}},
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = observe_delete}},
-    {'h', {observe_help}}
+    {'h', {observe_help}},
 };
 
 
@@ -289,7 +287,9 @@ Observe_list(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = observe_cb;
     xo->recsiz = sizeof(OBSERVE);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     observeshm_load(oshm);
     free(xo);

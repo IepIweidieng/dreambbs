@@ -45,9 +45,11 @@ xo_new(
 
     xo = (XO *) malloc(SIZEOF_FLEX(XO, len));
 
+    xo->cur_idx = 0;
     memcpy(xo->dir, path, len);
     xo->cb = NULL;
     xo->recsiz = 0;
+    xo->xz_idx = -1;
 
     return (xo);
 }
@@ -70,7 +72,8 @@ xo_get(
     xo_root = xo;
     xo->xyz = NULL;
     xo->top = 0;                /* Initialize the list top position to a multiple of `XO_TALL` */
-    xo->pos = XO_TAIL;          /* 第一次進入時，將游標放在最後面 */
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = XO_TAIL;   /* 第一次進入時，將游標放在最後面 */
 
     return xo;
 }
@@ -121,19 +124,20 @@ xo_load(
         max = st.st_size / recsiz;
         if (max > 0)
         {
-            pos = xo->pos;
             top = xo->top;
-            if (pos <= 0)
+            for (int i = 0; i < COUNTOF(xo->pos); ++i)
             {
-                pos = top = 0;
+                const int posi = xo->pos[i];
+                if (posi <= 0)
+                    xo->pos[i] = top = 0;
+                else
+                    xo->pos[i] = BMIN(posi, max - 1);
             }
-            else
+            pos = xo->pos[xo->cur_idx];
             {
                 bool scrl_up = (pos < top);
-                pos = BMIN(pos, max - 1);
                 top = BMAX(top + ((pos - top + scrl_up) / XO_TALL - scrl_up) * XO_TALL, 0);
             }
-            xo->pos = pos;
             xo->top = top;
 
             xo_pool_size = st.st_size;
@@ -157,9 +161,12 @@ void
 xo_fpath(
     char *fpath,
     const char *dir,
-    HDR *hdr)
+    const HDR *hdr)
 {
-    hdr_fpath(fpath, dir, hdr);
+    if (hdr->xmode & HDR_URL)
+        url_fpath(fpath, dir, hdr);
+    else
+        hdr_fpath(fpath, dir, hdr);
 }
 
 
@@ -295,7 +302,7 @@ xo_delete(
     if ((bbsmode == M_READA) && !(bbstate & STAT_BOARD))
         return XO_NONE;
 
-    vget(B_LINES_REF, 0, "[設定刪除範圍] 起點：", buf, 6, DOECHO);
+    vget_xo(xo, B_LINES_REF, 0, "[設定刪除範圍] 起點：", buf, 6, DOECHO);
     head = atoi(buf);
     if (head <= 0)
     {
@@ -303,7 +310,7 @@ xo_delete(
         return XO_FOOT;
     }
 
-    vget(B_LINES_REF, 28, "終點：", buf, 6, DOECHO);
+    vget_xo(xo, B_LINES_REF, 28, "終點：", buf, 6, DOECHO);
     tail = atoi(buf);
     if (tail < head)
     {
@@ -312,7 +319,7 @@ xo_delete(
     }
 
 
-    if (vget(B_LINES_REF, 41, msg_sure_ny, buf, 3, LCECHO) == 'y')
+    if (vget_xo(xo, B_LINES_REF, 41, msg_sure_ny, buf, 3, LCECHO) == 'y')
     {
         if (bbsmode == M_READA)
             hdr_prune(xo->dir, head, tail, 0);
@@ -468,7 +475,7 @@ xo_tag(
     if (fimage == (char *) -1)
         return XO_NONE;
 
-    head = (const HDR *) xo_pool_base + xo->pos;
+    head = (const HDR *) xo_pool_base + xo->pos[xo->cur_idx];
     if (op == Ctrl('A') || op == Meta('A'))
     {
         token = head->owner;
@@ -511,7 +518,7 @@ xo_prune(
         return XO_NONE;
 
     sprintf(buf, "確定要刪除 %d 篇標籤嗎(y/N)？[N] ", num);
-    if (vans(buf) != 'y')
+    if (vans_xo(xo, buf) != 'y')
         return XO_FOOT;
 
 #if 1
@@ -573,7 +580,7 @@ xo_copy(
     if (tag)
         hdr = &xhdr;
     else
-        hdr = (HDR *) xo_pool_base + xo->pos;
+        hdr = (HDR *) xo_pool_base + xo->pos[xo->cur_idx];
 
     locus = 0;
     dir = xo->dir;
@@ -699,7 +706,7 @@ xo_forward(
 /*
     if ((hdr->xmode & POST_LOCK) && !HAS_PERM(PERM_SYSOP))
     {
-        vmsg("Access Deny!");
+        vmsg_xo(xo, "Access Deny!");
         return XO_FOOT;
     }
 */
@@ -711,7 +718,7 @@ xo_forward(
     if (!rcpt[0])
         strcpy(rcpt, cuser.email);
 
-    if (!vget(B_LINES_REF, 0, "目的地：", rcpt, sizeof(rcpt), GCARRY))
+    if (!vget_xo(xo, B_LINES_REF, 0, "目的地：", rcpt, sizeof(rcpt), GCARRY))
         return XO_FOOT;
 
     userid = cuser.userid;
@@ -749,7 +756,7 @@ xo_forward(
 
             if (mail_stat(CHK_MAIL_NOMSG))
             {
-                vmsg("你的信箱容量超過上限，無法使用本功\能！");
+                vmsg_xo(xo, "你的信箱容量超過上限，無法使用本功\能！");
                 chk_mailstat = 1;
                 return XO_FOOT;
             }
@@ -1099,7 +1106,7 @@ static const KeyMapList keymap =
 
     /* end of keymap */
 
-    {KEY_NONE, XO_NONE}
+    {KEY_NONE, XO_NONE},
 };
 
 
@@ -1192,7 +1199,7 @@ xo_thread(
         /* Thor.980909: 詢問 "首篇未讀" 或 "末篇已讀" */
         /* Thor.980911: 找到時, 則沒清XO_FOOT, 再看看怎麼改 */
         match |= XR_FOOT;  /* IID.20200204: Redraw footer */
-        if (!vget(B_LINES_REF, 0, "向前找尋 0)首篇未讀 1)末篇已讀 ", s_unread, sizeof(s_unread), GCARRY))
+        if (!vget_xo(xo, B_LINES_REF, 0, "向前找尋 0)首篇未讀 1)末篇已讀 ", s_unread, sizeof(s_unread), GCARRY))
             goto notfound;
 
         if (*s_unread == '0')
@@ -1227,7 +1234,7 @@ xo_thread(
             len = sizeof(s_author);
         }
         sprintf(buf, "搜尋%s(%s)：", title, (step > 0) ? "↓" : "↑");
-        if (!vget(B_LINES_REF, 0, buf, tag_query, len, GCARRY))
+        if (!vget_xo(xo, B_LINES_REF, 0, buf, tag_query, len, GCARRY))
             goto notfound;
 
         str_lower(buf, tag_query);
@@ -1356,9 +1363,9 @@ found:
         /* A thread article is found */
         int top = xo->top;
         bool scrl_up;
-        if (pos == xo->pos)
+        if (pos == xo->pos[xo->cur_idx])
             return match + XO_CUR; /* The matched article is under the cursor */
-        xo->pos = pos;
+        xo->pos[xo->cur_idx] = pos;
         scrl_up = (pos < top);
         top = BMAX(top + ((pos - top + scrl_up) / XO_TALL - scrl_up) * XO_TALL, 0);
         if (top != xo->top)
@@ -1478,7 +1485,10 @@ xover(
 {
     int redo_flags = 0;  /* Collected redraw/reloading flags */
     int zone_flags = 0;  /* Collected zone operation flags */
-    int pos_prev = -1;  /* Draw cursor on entry */
+    int pos_prev = -1;  /* For cursor redrawing
+                           - `-1`: redraw all without clearing
+                           - `-2`: redraw the current cursor only without clearning
+                           - `-3 - pos`: redraw `pos` and the current cursor without clearing */
     int top_prev = -1;  /* For showing the message for the last page which is full of items */
     int zone=-1;
     int sysmode=0;
@@ -1486,7 +1496,7 @@ xover(
 
     if (xo_user_level >= MAX_LEVEL)
     {
-        vmsg("已經超過最大層數，有問題請通知 root ！");
+        vmsg_xo(xo, "已經超過最大層數，有問題請通知 root ！");
         return;
     }
 
@@ -1521,7 +1531,7 @@ xover(
                     sysmode = xz[pos].mode;
 
                     TagNum = 0;             /* clear TagList */
-                    pos_prev = -1;  /* Redraw cursor */
+                    pos_prev = -1;  /* Redraw all cursors */
                     utmp_mode(sysmode);
                     cmd = XO_INIT;
 
@@ -1568,9 +1578,9 @@ xover(
             if (cmd >= XO_CUR_MIN && cmd <= XO_CUR_MAX)
             {
                 /* IID.2021-03-05: Make the destination cursor position accessible with `xo->pos` to the `XO_CUR` callback */
-                const int pos = xo->pos;
+                const int pos = xo->pos[xo->cur_idx];
                 cmd = XO_MOVE + XO_REL + cmd - XO_CUR;  /* Relative move before redraw */
-                pos_prev = -1;  /* Suppress cursor clearing; redraw cursor */
+                pos_prev = -3 - pos;  /* Suppress cursor cleaning; redraw the saved and destination cursor */
                 cmd = xover_cursor(xo, zone, cmd, &pos_prev);
                 /* Check whether the menu item under the saved cursor is visible after cursor movement */
                 if (pos >= xo->top && pos < xo->top + XO_TALL)
@@ -1622,11 +1632,35 @@ xover(
 
         if (xo->max > 0)                /* Thor:若是無東西就不show了 */
         {
-            int pos_disp = 3 + xo->pos - xo->top;
-            if (pos_disp != pos_prev)
+            int pos_curr = xo->pos[xo->cur_idx];
+            int pos_disp = 3 + xo->pos[xo->cur_idx] - xo->top;
+
+            if (pos_prev == -1)
             {
-                cursor_show(pos_disp, 0);
-                pos_prev = pos_disp;
+                /* `-1`: redraw all without clearing */
+                for (int i = 0; i < xo_ncur; ++i)
+                {
+                    if (i == xo->cur_idx)
+                        continue;
+                    const int posi = xo->pos[i];
+                    const int posi_disp = 3 + posi - xo->top;
+                    if (posi >= xo->top && posi < xo->top + XO_TALL)
+                        cursor_show_mark(xo, posi_disp, 0, xo->pos[i]);
+                }
+            }
+            else if (pos_prev <= -3)
+            {
+                /* `-3 - pos`: redraw `pos` and the current cursor without clearing */
+                const int posp = -3 - pos_prev;
+                const int posp_disp = 3 + posp - xo->top;
+                if (posp >= xo->top && posp < xo->top + XO_TALL)
+                    cursor_clear_mark(xo, posp_disp, 0, posp);
+            }
+
+            if (pos_curr != pos_prev)
+            {
+                cursor_show(xo, pos_disp, 0, pos_curr);
+                pos_prev = pos_curr;
             }
 
             if (xo->top != top_prev)
@@ -1649,6 +1683,8 @@ xover(
 
 static int xover_cursor(XO *xo, int zone, int cmd, int *pos_prev)
 {
+    if (xo)
+        xo->cur_idx %= xo_ncur + 1;
     if ((cmd & XO_POS_MASK) > XO_NONE)
     {
         /* --------------------------------------------- */
@@ -1672,7 +1708,7 @@ static int xover_cursor(XO *xo, int zone, int cmd, int *pos_prev)
         /* fix cursor's range */
 
         max = ((zone_op) ? XZ_COUNT : xo->max) - 1;
-        cur = (zone_op) ? zone : (scrl) ? xo->top : xo->pos;
+        cur = (zone_op) ? zone : (scrl) ? xo->top : xo->pos[xo->cur_idx];
 
         if (rel)
             pos += cur;
@@ -1714,10 +1750,10 @@ static int xover_cursor(XO *xo, int zone, int cmd, int *pos_prev)
             {
                 xo->top = pos;
                 max = xo->top;
-                xo->pos = TCLAMP(xo->pos, max, max + XO_TALL - 1);
+                xo->pos[xo->cur_idx] = TCLAMP(xo->pos[xo->cur_idx], max, max + XO_TALL - 1);
                 return XR_BODY | cmd; /* IID.20200103: Redraw list; do not reload. */
             }
-            xo->pos = pos;
+            xo->pos[xo->cur_idx] = pos;
             max = xo->top;
             if ((pos < max) || (pos >= max + XO_TALL))
             {
@@ -1725,10 +1761,12 @@ static int xover_cursor(XO *xo, int zone, int cmd, int *pos_prev)
                 xo->top = BMAX(max + ((pos - max + scrl_up) / XO_TALL - scrl_up) * XO_TALL, 0);
                 cmd |= XR_BODY;     /* IID.20200103: Redraw list; do not reload. */
             }
-            else if (*pos_prev != -1)
+            else if (*pos_prev >= 0)
             {
-                cursor_clear(3 + cur - max, 0);
-                *pos_prev = -1;  /* Redraw cursor */
+                const int cur_disp = 3 + cur - max;
+                if (cur >= xo->top && cur < xo->top + XO_TALL)
+                cursor_clear(xo, cur_disp, 0, xo->pos[xo->cur_idx], *pos_prev);
+                *pos_prev = -2;  /* Redraw the current cursor without clearing */
             }
             return cmd;
         }
@@ -1739,7 +1777,7 @@ static int xover_cursor(XO *xo, int zone, int cmd, int *pos_prev)
 
 int xover_exec_cb(XO *xo, int cmd)
 {
-    return xover_exec_cb_pos(xo, cmd, (xo) ? xo->pos : 0);
+    return xover_exec_cb_pos(xo, cmd, (xo) ? xo->pos[xo->cur_idx] : 0);
 }
 
 int
@@ -1847,19 +1885,49 @@ xover_exec_cb_pos(
     /* return cmd; */ /* Unreachable */
 }
 
+/* Used for redrawing a child Xover list on I_RESIZETERM */
+int xover_resize(XO *xo)
+{
+    if (!xo)
+        return XO_NONE;
+    int cmd = XO_NONE;
+    /* TODO(IID.2021-02-27): Refine Xover system to make cursor redraw logic customizable */
+    if (xo->cb == domenu_cb)
+    {
+        const int level = xo_stack_level;
+        /* XXX(IID.2021-02-27): Workaround for correcty detecting nested main menu */
+        if (xo_stack_level > 0)
+            --xo_stack_level;
+        cmd = xover_exec_cb(xo, XO_HEAD);
+        domenu_cursor_show(xo);
+        xo_stack_level = level;
+    }
+    else
+    {
+        /* IID.2021-02-27: Keep the cursor on screen when the screen is shrunk */
+        if (xo->pos[xo->cur_idx] > xo->top + XO_TALL - 1)
+            xo->top += xo->pos[xo->cur_idx] - (xo->top + XO_TALL - 1);
+        cmd = xover_exec_cb(xo, XO_HEAD);
+        if (xo->max > 0) {
+            cursor_show(xo, 3 + xo->pos[xo->cur_idx] - xo->top, 0, xo->pos[xo->cur_idx]);
+        }
+    }
+    return cmd;
+}
+
 int
 xover_key(
     XO *xo,
     int zone,
     int cmd)
 {
-    const int pos = (xo) ? xo->pos : -1;
+    const int pos = (xo) ? xo->pos[xo->cur_idx] : -1;
     int wrap_flag;
 
     if (!xo)
         return XO_NONE;
 
-    if (cmd == I_RESIZETERM)
+    if (cmd == I_RESIZETERM || cmd == KEY_SHIYUU)
     {
         /* IID.2021-02-26: Keep the cursor on screen when the screen is shrunk */
         if (pos > xo->top + XO_TALL - 1)
@@ -1909,7 +1977,7 @@ xover_key(
             if ((deltotal = mbox_check()))
             {
                 sprintf(fpath, "有 %d 封信件將要刪除，確定嗎？ [y/N]", deltotal);
-                if (vans(fpath) == 'y')
+                if (vans_xo(xo, fpath) == 'y')
                 {
                     usr_fpath(fpath, cuser.userid, FN_DIR);
                     hdr_prune(fpath, 0, 0, 3);
@@ -1918,7 +1986,7 @@ xover_key(
 #endif
             if (mail_stat(CHK_MAIL_VALID))
             {
-                vmsg("你的信箱容量超過上限，請整理！");
+                vmsg_xo(xo, "你的信箱容量超過上限，請整理！");
                 chk_mailstat = 1;
                 return XO_FOOT;
             }
@@ -1931,6 +1999,38 @@ xover_key(
     {
         return cmd;
     }
+    if (cmd == ' ' || cmd == KEY_KONAMI)
+    {
+        switch (cmd)
+        {
+        case KEY_KONAMI:
+            for (int i = xo_ncur; i < XO_NCUR; ++i)
+                xo->pos[i] = xo->pos[xo_ncur - 1];
+            xo_ncur = xo_ncur % XO_NCUR + 1;
+            xo->cur_idx %= xo_ncur;
+            break;
+        default:
+        case ' ':
+            xo->cur_idx = (xo->cur_idx + 1) % xo_ncur;
+        }
+        const int pos_next = xo->pos[xo->cur_idx];
+        /* Keep both cursors inside the screen if possible */
+        if (pos_next >= xo->top + XO_TALL && pos_next < pos + XO_TALL)
+        {
+            xo->top = BMIN(pos, pos_next - XO_TALL + 1);
+            return XR_BODY + XO_MOVE + pos_next;
+        }
+        if (pos_next < xo->top && pos < pos_next + XO_TALL)
+        {
+            xo->top = BMAX(pos_next, pos - XO_TALL + 1);
+            return XR_BODY + XO_MOVE + pos_next;
+        }
+        if (cmd == KEY_KONAMI) // Cursor count changed; redraw
+            return XR_BODY + XO_MOVE + pos_next;
+        /* Otherwise re-placing the cursor to redraw the cursors */
+        xo->pos[xo->cur_idx] = pos;
+        return XO_MOVE + pos_next;
+    }
     if (cmd == KEY_UP || cmd == 'p' || cmd == 'k')
     {
         return XO_MOVE + wrap_flag + XO_REL - 1;
@@ -1939,7 +2039,7 @@ xover_key(
     {
         return XO_MOVE + wrap_flag + XO_REL + 1;
     }
-    if (cmd == ' ' || cmd == KEY_PGDN || cmd == 'N'  /*|| cmd == Ctrl('F') */)
+    if (cmd == KEY_PGDN || cmd == 'N'  /*|| cmd == Ctrl('F') */)
     {                                   /* lkchu.990428: 給「暫時更改來源」用 */
         if (pos == xo->max - 1)
         {
@@ -2054,7 +2154,7 @@ xover_key(
                 mgp = DL_NAME_GET("mailgem.so", mailgem_gather);
                 if (!mgp)
                 {
-                    vmsg("動態連結失敗，請聯絡系統管理員！");
+                    vmsg_xo(xo, "動態連結失敗，請聯絡系統管理員！");
                     return XO_FOOT;
                 }
             }
@@ -2094,7 +2194,7 @@ xover_key(
                 {
                     /* A thread article is found on the same page as the current article */
                     /* Clear the previous cursor on the screen */
-                    cursor_clear(3 + pos - xo->top, 0);
+                    cursor_clear(xo, 3 + pos - xo->top, 0, xo->pos[xo->cur_idx], pos);
                     cmd = (cmd & ~XO_MOVE_MASK) + XO_CUR;  /* Redraw cursor */
                 }
             }
@@ -2269,7 +2369,7 @@ static MENU menu_everyz[] =
     "Quit     離開"},
 
     {{.title = "快速選單"}, 'U', POPUP_MENUTITLE | M_DOINSTANT,
-    "快速選單切換"}
+    "快速選單切換"},
 };
 
 void
@@ -2284,7 +2384,7 @@ every_Z(XO *xo)
  {
     if (mail_stat(CHK_MAIL_VALID))
     {
-        vmsg("您的信箱已超出容量，無法使用本功\能，請清理您的信箱！");
+        vmsg_xo(xo, "您的信箱已超出容量，無法使用本功\能，請清理您的信箱！");
         return;
     }
     else
@@ -2299,7 +2399,7 @@ every_Z(XO *xo)
     if (xo_stack_level < XO_STACK) {
         xo_stack_level++;
     } else {
-        vmsg("已達到堆疊空間上限！");
+        vmsg_xo(xo, "已達到堆疊空間上限！");
         return;
     }
 

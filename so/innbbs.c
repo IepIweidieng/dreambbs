@@ -641,7 +641,7 @@ innbbs_del(
     int pos)
 {
     InnbbsXyz *xyz = (InnbbsXyz *)xo->xyz;
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         rec_del(xo->dir, xo->recsiz, pos, NULL, NULL);
         xyz->dirty = true;
@@ -673,7 +673,7 @@ innbbs_search(
     char buf[40];
     int i, num = xo->max;
 
-    if (vget(B_LINES_REF, 0, "√ˆ¡‰¶r°G", buf, sizeof(buf), DOECHO))
+    if (vget_xo(xo, B_LINES_REF, 0, "√ˆ¡‰¶r°G", buf, sizeof(buf), DOECHO))
     {
         str_lower(buf, buf);
         for (i = pos + 1; i <= num; i++)
@@ -714,7 +714,7 @@ static KeyFuncList innbbs_cb =
 
     {'/' | XO_POSF, {.posf = innbbs_search}},
 
-    {'h', {innbbs_help}}
+    {'h', {innbbs_help}},
 };
 
 int
@@ -789,8 +789,10 @@ a_innbbs(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = innbbs_cb;
     xo->recsiz = recsiz;
+    xo->xz_idx = XZ_INDEX_OTHER;
     xo->xyz = &xyz;
-    xo->pos = 0;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
 
     xyz.dirty = false;
 

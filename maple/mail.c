@@ -331,23 +331,23 @@ bsmtp(
         while (buf[3] == '-') /* maniac.bbs@WMStar.twbbs.org 2000.04.18 */
             fgets(buf, sizeof(buf), fr);
 
-#define SMTP_TRY_SENDF(...) do { \
+#define SMTP_TRY_SENDF(expected, ...) do { \
     fprintf(fw, __VA_ARGS__); \
     fflush(fw); \
     do \
     { \
         fgets(buf, sizeof(buf), fr); \
-        if (strncmp(buf, "250", 3)) \
+        if (strncmp(buf, CPP_STR(expected), 3)) \
             goto smtp_error; \
     } while (buf[3] == '-'); \
 } while (0)
 
         /* Thor.990125: MYHOSTNAME統一放入 str_host */
-        SMTP_TRY_SENDF("HELO %s\r\n", str_host);
-        SMTP_TRY_SENDF("MAIL FROM:<%s>\r\n", from);
-        SMTP_TRY_SENDF("RCPT TO:<%s>\r\n", rcpt);
-/*      SMTP_TRY_SENDF("DATA\r\n", rcpt);*/ /* statue.000713 */
-        SMTP_TRY_SENDF("DATA\r\n");
+        SMTP_TRY_SENDF(250, "HELO %s\r\n", str_host);
+        SMTP_TRY_SENDF(250, "MAIL FROM:<%s>\r\n", from);
+        SMTP_TRY_SENDF(250, "RCPT TO:<%s>\r\n", rcpt);
+/*      SMTP_TRY_SENDF(354, "DATA\r\n", rcpt);*/ /* statue.000713 */
+        SMTP_TRY_SENDF(354, "DATA\r\n");
 
 #undef SMTP_TRY_SENDF
 
@@ -924,7 +924,7 @@ m_zip(void)                     /* itoc.010228: 打包資料 */
     sprintf(buf, "確定要打包 %s %s嗎(y/N)？[N] ", name, item);
     if (vans(buf) == 'y')
     {
-        sprintf(buf, "【" BOARDNAME "】%s %s", name, item);
+        sprintf(buf, "【%s】%s %s", str_site, name, item);
         do_forward(buf, ans);
     }
 
@@ -2100,7 +2100,7 @@ mbox_delete(
         return XO_NONE; /* Thor.980901: mark後若被'D'起來, 則一樣可以delete,
                                         只有 MARK & no delete才會無效 */
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         dir = xo->dir;
         currchrono = hdr->chrono;
@@ -2214,14 +2214,6 @@ mbox_browse(
     {
         *fpath = '\0';
         return XO_INIT;
-    }
-    else if (mode == -2)
-    {
-        mhdr->xmode |= MAIL_READ;
-        rec_put(dir, mhdr, sizeof(HDR), pos);
-        *fpath = '\0';
-        return XO_INIT;
-        /*nmode = vkey();*/
     }
     else if (mode > 0)
         nmode = mode;
@@ -2477,13 +2469,13 @@ mbox_title(
     hdr = (HDR *) xo_pool_base + pos;
     mhdr = *hdr;
 
-    vget(B_LINES_REF, 0, "標題：", mhdr.title, sizeof(mhdr.title), GCARRY);
-    vget(B_LINES_REF, 0, "作者：", mhdr.owner, 74, GCARRY);
-    vget(B_LINES_REF, 0, "日期：", mhdr.date, sizeof(mhdr.date), GCARRY);
-    vget(B_LINES_REF, 0, "檔名：", mhdr.xname, sizeof(mhdr.date), GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "標題：", mhdr.title, sizeof(mhdr.title), GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "作者：", mhdr.owner, 74, GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "日期：", mhdr.date, sizeof(mhdr.date), GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "檔名：", mhdr.xname, sizeof(mhdr.date), GCARRY);
     if (mhdr.xid > 1000)
         mhdr.xid = 0;
-    if (vans(msg_sure_ny) == 'y' &&
+    if (vans_xo(xo, msg_sure_ny) == 'y' &&
         memcmp(hdr, &mhdr, sizeof(HDR)))
     {
         *hdr = mhdr;
@@ -2518,7 +2510,7 @@ static int
 mbox_clean(
     XO *xo)
 {
-    if (vans("\x1b[1;5;41;33m警告：\x1b[m清除之後不能救回。確定要清除嗎？(y/N)") == 'y')
+    if (vans_xo(xo, "\x1b[1;5;41;33m警告：\x1b[m清除之後不能救回。確定要清除嗎？(y/N)") == 'y')
     {
         hdr_prune(xo->dir, 0, 0, 3);
         return XO_INIT;
@@ -2612,7 +2604,7 @@ static KeyFuncList mbox_cb =
     {'X' | XO_POSF, {.posf = xo_usetup}},
     {'x' | XO_POSF, {.posf = post_cross}},
 
-    {'h', {mbox_help}}
+    {'h', {mbox_help}},
 };
 
 
@@ -2630,7 +2622,9 @@ mbox_sysop(
         xz[XZ_MBOX - XO_ZONE].xo = xx = xo_new("usr/s/sysop/.DIR");
         xx->cb = mbox_cb;
         xx->recsiz = sizeof(HDR);
-        xx->pos = 0;
+        xx->xz_idx = XZ_INDEX_MBOX;
+        for (int i = 0; i < COUNTOF(xx->pos); ++i)
+            xx->pos[i] = 0;
         xover(XZ_MBOX);
         free(xx);
 
@@ -2667,7 +2661,9 @@ mbox_other(
         xz[XZ_MBOX - XO_ZONE].xo = xx = xo_new(path);
         xx->cb = mbox_cb;
         xx->recsiz = sizeof(HDR);
-        xx->pos = 0;
+        xx->xz_idx = XZ_INDEX_MBOX;
+        for (int i = 0; i < COUNTOF(xx->pos); ++i)
+            xx->pos[i] = 0;
         xover(XZ_MBOX);
         free(xx);
 
@@ -2683,10 +2679,13 @@ mbox_other(
 void
 mbox_main(void)
 {
-    cmbox->pos = XO_TAIL;
+    for (int i = 0; i < COUNTOF(cmbox->pos); ++i)
+        cmbox->pos[i] = XO_TAIL;
+    cmbox->cur_idx = 0;
     usr_fpath(cmbox->dir, cuser.userid, fn_dir);
     xz[XZ_MBOX - XO_ZONE].xo = cmbox;
     cmbox->cb = mbox_cb;
     cmbox->recsiz = sizeof(HDR);
+    cmbox->xz_idx = XZ_INDEX_MBOX;
 }
 

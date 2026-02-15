@@ -35,7 +35,7 @@ if [ -z "${build_remote}" ]; then
     build_remote="$(git config --get "branch.${build_branch}.remote" 2>/dev/null)"
 fi
 # `<remote>/<branch.<name>.merge>` > `<remote>/<branch>` > `<remote>/master` > `origin/master`
-build_branch_remote="${build_remote}/$(git config --get "branch.${build_branch}.merge" 2>/dev/null | sed 's/^.*\///g')"
+build_branch_remote="${build_remote}/$(git config --get "branch.${build_branch}.merge" 2>/dev/null | sed 's/^.*\/\(heads\|tags\)\///g')"
 if ! git rev-parse -q --verify "${build_branch_remote}" >/dev/null; then
     build_branch_remote="${build_remote}/${build_branch}"
 fi
@@ -46,8 +46,8 @@ if ! git rev-parse -q --verify "${build_branch_remote}" >/dev/null; then
     build_branch_remote="origin/master"
 fi
 build_head_remote="$(format_commit ${build_branch_remote})"
-build_remote="${build_branch_remote%/*}"
-build_branch_remote="${build_branch_remote##*/}"
+build_remote="${build_branch_remote%%/*}"
+build_branch_remote="${build_branch_remote#*/}"
 
 build_remote_url="$(format_url "$(git config --get "remote.${build_remote}.url" 2>/dev/null)")"
 
@@ -68,6 +68,7 @@ iconv -t big5 -o "${export_file}" <<EOF
 #define BUILD_DATE "${build_date}"
 #define BUILD_TIME ${build_time}L
 EOF
+touch -d "@0" "${export_file}"
 printf "\033[1;33m"
 iconv -f big5 "${export_file}"
 printf "\033[0m"

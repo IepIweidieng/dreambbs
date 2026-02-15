@@ -144,21 +144,20 @@ int pos)
 {
     const HDR *const ghdr = (const HDR *) xo_pool_base + pos;
     const int num = pos + 1;
-    int xmode, gtype;
+    int xmode;
+    const char *gtype;
 
     xmode = ghdr->xmode;
-    gtype = (char) 0xba;
-    if (xmode & GEM_FOLDER)
-        gtype += 1;
+    gtype = ((xmode & GEM_FOLDER) ? "◆" : "◇");
     if (xmode & GEM_GOPHER)
-        gtype += 2;
-    prints("%6d%c \241%c ", num, (xmode & GEM_RESTRICT) ? ')' : (xmode & GEM_LOCK) ? 'L' :  ' ', gtype);
+        gtype = ((xmode & GEM_FOLDER) ? "■" : "□");
+    prints("%6d%c %s ", num, (xmode & GEM_RESTRICT) ? ')' : (xmode & GEM_LOCK) ? 'L' :  ' ', gtype);
 
-    gtype = 0;
+    const int gway = 0;
 
     if (!HAS_PERM(PERM_SYSOP) && (xmode & (GEM_RESTRICT | GEM_LOCK)))
         prints("\x1b[1;33m資料保密！\x1b[m\n");
-    else if ((gtype == 0) || (xmode & GEM_GOPHER))
+    else if ((gway == 0) || (xmode & GEM_GOPHER))
         prints("%-.*s\n", d_cols + 68, ghdr->title);
 
     return XO_NONE;
@@ -197,8 +196,7 @@ XO *xo)
     do
     {
         song_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
     clrtobot();
 
     return song_foot(xo);
@@ -282,7 +280,7 @@ int pos)
         /* browse article */
 
         /* Thor.990204: 為考慮more 傳回值 */
-        if ((xmode = more(fpath, MSG_GEM)) == -2)
+        if ((xmode = more(fpath, MSG_GEM)) == XO_HEAD)
             return XO_INIT;
         if (xmode == -1)
             break;
@@ -290,9 +288,8 @@ int pos)
         op = GEM_READ | GEM_FILE;
 
         xmode = xo_getch(xo, pos, xmode);
-        pos = xo->pos;
-    }
-    while (xmode == XO_BODY);
+        pos = xo->pos[xo->cur_idx];
+    } while (xmode == XO_BODY);
 
     if (op != GEM_READ)
         return XO_HEAD;
@@ -324,22 +321,22 @@ int pos)
         return XO_NONE;
     if (acct.request < 1)
     {
-        vmsg("點歌次數已用完！");
+        vmsg_xo(xo, "點歌次數已用完！");
         return XO_FOOT;
     }
 
 
-    if (!vget(B_LINES_REF, 0, "點歌給誰：", idwho, sizeof(idwho), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "點歌給誰：", idwho, sizeof(idwho), DOECHO))
         strcpy(idwho, "大家");
-    if (!vget(B_LINES_REF, 0, "想說的話：", want_say, sizeof(want_say), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "想說的話：", want_say, sizeof(want_say), DOECHO))
         strcpy(want_say, ".........");
 
-    if (vans("要匿名嗎 [y/N]：") == 'y')
+    if (vans_xo(xo, "要匿名嗎 [y/N]：") == 'y')
         flag = 1;
     else
         flag = 0;
 
-    if (vans("確定點歌嗎 [y/N]：") != 'y')
+    if (vans_xo(xo, "確定點歌嗎 [y/N]：") != 'y')
         return XO_HEAD;
 
     strcpy(xboard, BRD_ORDERSONGS);
@@ -382,9 +379,12 @@ int pos)
         if (strstr(tmp, SONG_END))
             break;
 
-        while (song_swap(tmp, SONG_SRC, flag ? "某人" : cuser.userid));
-        while (song_swap(tmp, SONG_DES, idwho));
-        while (song_swap(tmp, SONG_SAY, want_say));
+        while (song_swap(tmp, SONG_SRC, flag ? "某人" : cuser.userid))
+            ;
+        while (song_swap(tmp, SONG_DES, idwho))
+            ;
+        while (song_swap(tmp, SONG_SAY, want_say))
+            ;
 
         fputs(tmp, xfp);
     }
@@ -399,7 +399,7 @@ int pos)
     acct.request -= 1;
     cuser.request = acct.request;
     sprintf(buf, "剩餘點歌次數：%d 次", acct.request);
-    vmsg(buf);
+    vmsg_xo(xo, buf);
     acct_save(&acct);
 
     rec_add(xfolder, &xpost, sizeof(xpost));
@@ -414,7 +414,7 @@ XO *xo)
     char buf[80];
 
     sprintf(buf, "剩餘點歌次數：%d", cuser.request);
-    vmsg(buf);
+    vmsg_xo(xo, buf);
     return XO_HEAD;
 }
 
@@ -445,7 +445,7 @@ int pos)
 
     if (cacct.request < 1)
     {
-        vmsg("點歌次數已用完！");
+        vmsg_xo(xo, "點歌次數已用完！");
         return XO_FOOT;
     }
     method = 0;
@@ -468,7 +468,7 @@ int pos)
     sprintf(tmp, "%s 點歌給 %s", cuser.userid, acct.userid);
     log_song(tmp);
 
-    if (!vget(B_LINES_REF, 0, "想說的話：", want_say, sizeof(want_say), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "想說的話：", want_say, sizeof(want_say), DOECHO))
         strcpy(want_say, ".........");
 
     fp = fopen(fpath, "r+");
@@ -478,9 +478,12 @@ int pos)
         if (strstr(tmp, SONG_END))
             break;
 
-        while (song_swap(tmp, SONG_SRC, cuser.userid));
-        while (song_swap(tmp, SONG_DES, acct.userid));
-        while (song_swap(tmp, SONG_SAY, want_say));
+        while (song_swap(tmp, SONG_SRC, cuser.userid))
+            ;
+        while (song_swap(tmp, SONG_DES, acct.userid))
+            ;
+        while (song_swap(tmp, SONG_SAY, want_say))
+            ;
 
         fputs(tmp, xfp);
     }
@@ -495,10 +498,11 @@ int pos)
 
     fclose(xfp);
     cacct.request -= 1;
-    if (cacct.request <= 0) cacct.request = 0;
+    if (cacct.request <= 0)
+        cacct.request = 0;
     cuser.request = cacct.request;
     sprintf(buf, "剩餘點歌次數：%d 次", cacct.request);
-    vmsg(buf);
+    vmsg_xo(xo, buf);
     acct_save(&cacct);
     m_biff(acct.userno);
     return XO_INIT;
@@ -514,7 +518,7 @@ int pos)
 
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
 
@@ -542,17 +546,17 @@ int pos)
         return XO_NONE;
 
     xhdr = *ghdr;
-    vget(B_LINES_REF, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY);
 
     dir = xo->dir;
     if (HAS_PERM(PERM_SYSOP | PERM_KTV))
     {
-        vget(B_LINES_REF, 0, "編者：", xhdr.owner, IDLEN + 1, GCARRY);
-        vget(B_LINES_REF, 0, "時間：", xhdr.date, 9, GCARRY);
+        vget_xo(xo, B_LINES_REF, 0, "編者：", xhdr.owner, IDLEN + 1, GCARRY);
+        vget_xo(xo, B_LINES_REF, 0, "時間：", xhdr.date, 9, GCARRY);
     }
 
     if (memcmp(ghdr, &xhdr, sizeof(HDR)) &&
-        vans("確定要修改嗎(y/N)？[N]") == 'y')
+        vans_xo(xo, "確定要修改嗎(y/N)？[N]") == 'y')
     {
         *ghdr = xhdr;
         num = pos;
@@ -586,7 +590,7 @@ static KeyFuncList song_cb =
     {'T' | XO_POSF, {.posf = song_title}},
     {'q', {song_query}},
     {'m' | XO_POSF, {.posf = song_send}},
-    {'h', {song_help}}
+    {'h', {song_help}},
 };
 
 
@@ -604,7 +608,9 @@ int level)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(folder);
     xo->cb = song_cb;
     xo->recsiz = sizeof(HDR);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xo->key = XZ_OTHER;
     xo->xyz = (void *) "點歌系統";
     str = "系統管理者";

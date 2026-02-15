@@ -81,7 +81,7 @@ XO *xo)
     /* Thor.990204: 為考慮more 傳回值 */
     if (more(fpath, NULL) == -1)
     {
-        vmsg("目前沒有任何開票的結果");
+        vmsg_xo(xo, "目前沒有任何開票的結果");
         return DL_RELEASE(XO_FOOT);
     }
 
@@ -137,8 +137,7 @@ XO *xo)
     do
     {
         vote_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
     clrtobot();
 
     return XO_NONE;
@@ -418,8 +417,23 @@ vitem_t vlist[])
         for (;;)
         {
             buf[0] = radix32[item];
+            /* filter out on-state texts */
+            char *const delim = memchr(vlist[item], '\n', sizeof(vitem_t));
+            if (delim) {
+                *delim = '\0';
+            }
+            /* default text */
             if (!vget((item % 16U) + 3, (item / 16) * 40,
-                      buf, vlist[item], sizeof(vitem_t), GCARRY) || (++item >= MAX_CHOICES))
+                      buf, vlist[item], sizeof(vitem_t), GCARRY))
+                break;
+            /* on-state text (SysOp-only) */
+            const size_t len = strlen(vlist[item]) + 1;
+            if (HAS_PERM(PERM_SYSOP) && sizeof(vitem_t) - len > 0)
+                if (vget((item % 16U) + 3, strlen(buf) - 1 + (item / 16) * 40 + len,
+                  ">", vlist[item] + len, sizeof(vitem_t) - len, DOECHO))
+                    vlist[item][len - 1] = '\n';
+
+            if (++item >= MAX_CHOICES)
                 break;
         }
         if (vans("是否重新輸入選項(y/N)[N] ") != 'y')
@@ -441,7 +455,7 @@ XO *xo)
 
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
 
@@ -449,30 +463,30 @@ XO *xo)
     if (!(bbstate & STAT_BOARD))
         return XO_NONE;
 
-    if (vans("投票方式：1)一般投票 2)學生投票系統 ：") == '2')
+    if (vans_xo(xo, "投票方式：1)一般投票 2)學生投票系統 ：") == '2')
     {
         check = 1;
     }
 
-    if (!vget(B_LINES_REF, 0, "投票主題：", buf, sizeof(buf), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "投票主題：", buf, sizeof(buf), DOECHO))
         return XO_INIT;
 
     dir = xo->dir;
     fd = hdr_stamp(dir, 0, (HDR *) & vch, fpath);
     if (fd < 0)
     {
-        vmsg("無法建立投票說明檔");
+        vmsg_xo(xo, "無法建立投票說明檔");
         blog("VOTE", fpath);
         return XO_INIT;
     }
 
     close(fd);
-    vmsg("開始編輯 [投票說明]");
+    vmsg_xo(xo, "開始編輯 [投票說明]");
     fd = vedit(fpath, 0); /* Thor.981020: 注意被talk的問題 */
     if (fd)
     {
         unlink(fpath);
-        vmsg("取消投票");
+        vmsg_xo(xo, "取消投票");
         return XO_HEAD;
     }
 
@@ -487,7 +501,7 @@ XO *xo)
         *str = 'S';
         if (vlist_student(fpath) == 0)
         {
-            vmsg("取消投票");
+            vmsg_xo(xo, "取消投票");
             return XO_INIT;
         }
     }
@@ -499,7 +513,7 @@ XO *xo)
     fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (fd < 0)
     {
-        vmsg("無法建立投票選項檔");
+        vmsg_xo(xo, "無法建立投票選項檔");
         blog("VOTE", fpath);
         return XO_INIT;
     }
@@ -507,7 +521,7 @@ XO *xo)
     close(fd);
 
     sprintf(buf + 3, "請問每人最多可投幾票？([1]～%d): ", item);
-    vget(20, 0, buf + 3, buf, 3, DOECHO);
+    vget_xo(xo, 20, 0, buf + 3, buf, 3, DOECHO);
     fd = atoi(buf);
     if (fd < 1)
         fd = 1;
@@ -527,7 +541,7 @@ XO *xo)
 
     rec_add(dir, &vch, sizeof(vch));
 
-    vmsg("開始投票了！");
+    vmsg_xo(xo, "開始投票了！");
     return XO_INIT;
 }
 
@@ -547,7 +561,7 @@ int pos)
 
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
 
@@ -561,14 +575,14 @@ int pos)
     /* Thor: 修改投票主題 */
     vxx = *vch;
 
-    if (vans("投票方式：1)一般投票 2)學生投票系統 ：") == '2')
+    if (vans_xo(xo, "投票方式：1)一般投票 2)學生投票系統 ：") == '2')
     {
         check = 1;
         vxx.check = 1;
     }
 
 
-    if (!vget(B_LINES_REF, 0, "投票主題：", vxx.title, TTLEN + 1 - 5 /* sizeof(vxx.title) Thor.981020: 怕超過螢幕 */, GCARRY))
+    if (!vget_xo(xo, B_LINES_REF, 0, "投票主題：", vxx.title, TTLEN + 1 - 5 /* sizeof(vxx.title) Thor.981020: 怕超過螢幕 */, GCARRY))
         return XO_FOOT;
 
     hdr_fpath(fpath, dir, (HDR *) vch);
@@ -585,7 +599,7 @@ int pos)
         *fname = 'S';
         if (vlist_student(fpath) == 0)
         {
-            vmsg("取消投票");
+            vmsg_xo(xo, "取消投票");
             return XO_HEAD;
         }
     }
@@ -604,7 +618,7 @@ int pos)
     fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     if (fd < 0)
     {
-        vmsg("無法建立投票選項檔");
+        vmsg_xo(xo, "無法建立投票選項檔");
         blog("VOTE", fpath);
         return XO_HEAD;
     }
@@ -615,7 +629,7 @@ int pos)
 
     sprintf(buf + 3, "請問每人最多可投幾票？([1]～%d): ", item);
     sprintf(buf, "%d", vxx.maxblt);
-    vget(20, 0, buf + 3, buf, 3, GCARRY);
+    vget_xo(xo, 20, 0, buf + 3, buf, 3, GCARRY);
     fd = atoi(buf);
     if (fd < 1)
         fd = 1;
@@ -626,7 +640,7 @@ int pos)
     vch_edit(&vxx);
     if (memcmp(&vxx, vch, sizeof(VCH)))
     {
-        if (vans("確定要修改這項投票嗎？(y/N)[N]") == 'y')
+        if (vans_xo(xo, "確定要修改這項投票嗎？(y/N)[N]") == 'y')
         {
             *vch = vxx;
             rec_put(dir, vch, sizeof(VCH), pos);
@@ -714,8 +728,7 @@ int pos)
                 bollt++;
             }
         }
-    }
-    while (head < tail);
+    } while (head < tail);
 
     free(list);
 
@@ -748,12 +761,16 @@ int pos)
     for (num = 0; num < items; num++)
     {
         ticket = choice[num].count;
+        const char *item_off = choice[num].vitem;
+        const char *item = str_chr_next_or(item_off, '\n', item_off);
+        int space = 42;
+        space -= fprintf(fp, "\t%.*s", INT(strcspn(item, "\n")), item);
+        if (item != item_off)
+            space -= fprintf(fp, " \x1b[30m(%.*s)\x1b[m", INT(strcspn(item_off, "\n")), item_off) - 8;
+        fprintf(fp, "%*s%3d 票", BMAX(0, space), "", ticket);
         if (fd)
-            fprintf(fp, "\t%-42s%3d 票 (%4.1f%%)\n",
-                    choice[num].vitem, ticket, 100.0 * ticket / fd);
-        else
-            fprintf(fp, "\t%-42s%3d 票\n",
-                    choice[num].vitem, ticket);
+            fprintf(fp, " (%4.1f%%)", 100.0 * ticket / fd);
+        fprintf(fp, "\n");
     }
 
     /* other opinions */
@@ -792,7 +809,7 @@ int pos)
     *fname = 'V';
     sprintf(buf, "共有 %d 人參加投票，A)改期 B)取消 C)提前開票 Q>uit？ ", /* Thor:怕誤會 */
             rec_num(fpath, sizeof(int)));
-    cc = vans(buf);
+    cc = vans_xo(xo, buf);
 
     if (cc == 'c')
     {
@@ -802,7 +819,7 @@ int pos)
     }
     else if (cc == 'a')
     {
-        vget(B_LINES_REF, 0, "請更改開票時間(-提前/+延後/0不改)：", buf, 3, DOECHO);
+        vget_xo(xo, B_LINES_REF, 0, "請更改開票時間(-提前/+延後/0不改)：", buf, 3, DOECHO);
         if ((cc = atoi(buf)))
         {
             vch->vclose = vch->vclose + cc * 86400;
@@ -812,7 +829,7 @@ int pos)
     }
     else if (cc == 'b')
     {
-        if (vans("確定要取消這項投票嗎？") == 'y')
+        if (vans_xo(xo, "確定要取消這項投票嗎？") == 'y')
         {
             const char *list = "@IOVSE";
 
@@ -931,7 +948,7 @@ int pos)
     vch = (VCH *) xo_pool_base + pos;
     if (time(0) > vch->vclose)
     {
-        vmsg("投票已經截止了，請靜候開票");
+        vmsg_xo(xo, "投票已經截止了，請靜候開票");
         return XO_FOOT;
     }
 
@@ -957,7 +974,7 @@ int pos)
             f_unlock(fv);
 
             close(fv);
-            vmsg("你已經投過票了！");
+            vmsg_xo(xo, "你已經投過票了！");
             return XO_FOOT;
         }
     }
@@ -980,7 +997,7 @@ int pos)
     {
         f_unlock(fv);
         close(fv);
-        vmsg("你已經投過票了！");
+        vmsg_xo(xo, "你已經投過票了！");
         return XO_INIT;
     }
 
@@ -989,27 +1006,27 @@ int pos)
         *fname = 'S';
         show_stud(fpath);
         account[0] = '\0';
-        if (vget(B_LINES_REF - 4, 0, "請輸入你的學號：", account, 10/*7*/, GCARRY))
+        if (vget_xo(xo, B_LINES_REF - 4, 0, "請輸入你的學號：", account, 10/*7*/, GCARRY))
         {
             if (strlen(account) < 9/*6*/)
             {
                 f_unlock(fv);
                 close(fv);
-                vmsg("你的學號錯誤！");
+                vmsg_xo(xo, "你的學號錯誤！");
                 return XO_HEAD;
             }
             if (!check_stud(account, fpath))
             {
                 f_unlock(fv);
                 close(fv);
-                vmsg("你不在名冊裡！");
+                vmsg_xo(xo, "你不在名冊裡！");
                 return XO_HEAD;
             }
             if (!check_mail(account))
             {
                 f_unlock(fv);
                 close(fv);
-                vmsg("你的密碼不正確！");
+                vmsg_xo(xo, "你的密碼不正確！");
                 return XO_HEAD;
             }
         }
@@ -1017,7 +1034,7 @@ int pos)
         {
             f_unlock(fv);
             close(fv);
-            vmsg("你不在名冊裡！");
+            vmsg_xo(xo, "你不在名冊裡！");
             return XO_HEAD;
         }
     }
@@ -1044,8 +1061,8 @@ int pos)
     for (;;)
     {
         choice = bitset(choice, count, vch->maxblt, vch->title, slist);
-        vget(B_LINES_REF - 1, 0, "我有話要說：", buf, 60, GCARRY);
-        fd = vans("投票 (Y)確定 (N)重來 (Q)取消？[N] ");
+        vget_xo(xo, B_LINES_REF - 1, 0, "我有話要說：", buf, 60, GCARRY);
+        fd = vans_xo(xo, "投票 (Y)確定 (N)重來 (Q)取消？[N] ");
         if (fd == 'y' || fd == 'Y' || fd == 'q' || fd == 'Q')
             break;
     }
@@ -1078,7 +1095,7 @@ int pos)
             }
 
             write(fv, vch, FV_SZ);
-            vmsg("投票完成！");
+            vmsg_xo(xo, "投票完成！");
         }
         *fname = 'E';
         fd = open(fpath, O_WRONLY | O_CREAT | O_APPEND, 0600);
@@ -1127,7 +1144,7 @@ static KeyFuncList vote_cb =
     {Ctrl('P'), {vote_add}},
     {Ctrl('Q') | XO_POSF, {.posf = vote_query}},
 
-    {'h', {vote_help}}
+    {'h', {vote_help}},
 };
 
 
@@ -1140,14 +1157,19 @@ XO *xo)
     char fpath[32];
 
     /* 有 post 權利的才能參加投票 */
+    /* IID.2024-04-02: allow all non-guest to vote in BRD_ANNOUNCE */
 
-    if (!(bbstate & STAT_POST) || !cuser.userlevel)
+    if (!(
+            (bbstate & STAT_POST)
+            || (bbsmode == M_READA && strcmp(currboard, BRD_ANNOUNCE) == 0)
+        ) || !cuser.userlevel
+        )
         return DL_RELEASE(XO_NONE);
 
     setdirpath(fpath, xo->dir, FN_VCH);
     if (!(bbstate & STAT_BOARD) && !rec_num(fpath, sizeof(VCH)))
     {
-        vmsg("目前沒有投票舉行");
+        vmsg_xo(xo, "目前沒有投票舉行");
         return DL_RELEASE(XO_FOOT);
     }
 
@@ -1156,7 +1178,9 @@ XO *xo)
     xz[XZ_VOTE - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = vote_cb;
     xo->recsiz = sizeof(VCH);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_VOTE;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_VOTE);
     free(xo);
 
@@ -1187,7 +1211,9 @@ SystemVote(void)
     xz[XZ_VOTE - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = vote_cb;
     xo->recsiz = sizeof(VCH);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_VOTE;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_VOTE);
     free(xo);
 

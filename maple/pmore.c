@@ -160,6 +160,7 @@
 /*#define PMORE_MSG_WARN_FAKEUSERINFO \
     " ▲此頁內容會依閱\讀者不同，原文未必有您的資料 "  //r2.170810: keep the traditional trick XD
 */
+#define PMORE_MSG_WARN_FAKEUSERINFO NULL
 #define PMORE_MSG_WARN_MOVECMD \
     " ▲此頁內容含移位碼，可能會顯示偽造的系統訊息 "
 #define PMORE_MSG_SEARCH_KEYWORD \
@@ -558,7 +559,7 @@ typedef struct
 MmappedFile mf = {
     0, 0, 0, 0, 0, 0L,
     0, -1L, 0, 0, -1L, -1L, -1L, -1L,
-    NULL // detachHandler
+    NULL, // detachHandler
 };      // current file
 
 /* mf_* navigation commands return value meanings */
@@ -1844,8 +1845,8 @@ mf_display(void)
 
                             if (expand_esc_star(buf, esbuf, sizeof(buf)) > 1)
                             {
-//                                override_attr = ANSI_COLOR(1;37;41);
-//                                override_msg  = PMORE_MSG_WARN_FAKEUSERINFO;  /*r2.170810: keep the traditional trick XD */
+                                override_attr = ANSI_COLOR(1;37;41);
+                                override_msg  = PMORE_MSG_WARN_FAKEUSERINFO;
                             }
                         }
                         i = strlen(buf);
@@ -2381,7 +2382,7 @@ pmore2_inmemory(
 {
     struct SimpleBuffer buf = {
         .data = content,
-        .len = size
+        .len = size,
     };
 
     return _pmore2(promptend, ctx,
@@ -2617,6 +2618,11 @@ _pmore2(
             int r = key_handler(ch, ctx);
             switch (r)
             {
+                case -2:
+                    // Special return value for indicating 'something is displayed on the screen'
+                    MFDISP_DIRTY();
+                    continue;
+
                 case -1:
                     // common return value of 'file not exist',
                     // meaning 'bypassing this key' here.
@@ -2634,12 +2640,6 @@ _pmore2(
                     continue;
             }
         }
-
-#ifndef PMORE_IGNORE_UNKNOWN_NAVKEYS
-#define HANDLE_UNKNOWN_NAVKEY() return ch
-#else
-#define HANDLE_UNKNOWN_NAVKEY() break
-#endif // PMORE_IGNORE_UNKNOWN_NAVKEYS
 
         // built-in navigation keys
         switch (ch) {
@@ -2868,56 +2868,15 @@ _pmore2(
                 break;
 
             /* internal help */
+#ifdef PMORE_USE_INTERNAL_HELP
             case 'h': case 'H': case '?':
 #ifdef KEY_F1
             case KEY_F1:
 #endif
-#ifdef PMORE_USE_INTERNAL_HELP
                 pmore_Help(ctx, help_handler);
-#else     /* r2.170810: For Our BBS system data... (not new patch) */
-                // help
-                film_out(FILM_MORE, -1);
+                MFDISP_DIRTY();
+                break;
 #endif // PMORE_USE_INTERNAL_HELP
-                MFDISP_DIRTY();
-                break;
-
-            /* BBS-Lua */
-#ifdef USE_BBSLUA
-            case 'l': case 'L':
-                if (!HasUserPerm(PERM_BBSLUA))
-                    HANDLE_UNKNOWN_NAVKEY();
-                {
-                    DL_HOTSWAP_SCOPE int (*func)(const char *) = NULL;
-                    if (!func)
-                    {
-                        func = DL_NAME_GET("bbslua.so", bbslua);
-                        if (!func)
-                            HANDLE_UNKNOWN_NAVKEY();
-                    }
-                    func(* (char **)ahctx);
-                }
-                MFDISP_DIRTY();
-                break;
-#endif // USE_BBSLUA
-
-            /* BBS-Ruby */
-#ifdef USE_BBSRUBY
-            case '!':
-                if (!HasUserPerm(PERM_BBSRUBY))
-                    HANDLE_UNKNOWN_NAVKEY();
-                {
-                    DL_HOTSWAP_SCOPE void (*func)(const char *) = NULL;
-                    if (!func)
-                    {
-                        func = DL_NAME_GET("bbsruby.so", run_ruby);
-                        if (!func)
-                            HANDLE_UNKNOWN_NAVKEY();
-                    }
-                    func(* (char **)ahctx);
-                }
-                MFDISP_DIRTY();
-                break;
-#endif // USE_BBSRUBY
 
             /* debug system */
 #ifdef DEBUG
@@ -2983,8 +2942,10 @@ _pmore2(
                 break;
 #endif  /* #ifdef PMORE_USE_INTERNAL_HELP */
 
+#ifndef PMORE_IGNORE_UNKNOWN_NAVKEYS
             default:
-                HANDLE_UNKNOWN_NAVKEY();
+                return ch;
+#endif // PMORE_IGNORE_UNKNOWN_NAVKEYS
         }
         /* DO NOT DO ANYTHING HERE. NOT SAFE RIGHT NOW. */
     }

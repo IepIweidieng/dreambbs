@@ -69,8 +69,7 @@ static int banmail_body(XO * xo)
     do
     {
         banmail_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
     clrtobot();
 
     return XO_NONE;
@@ -148,7 +147,7 @@ static int banmail_edit(BANMAIL * banmail, int echo)
     int change = 0;
     char modes[8], buf[64];
 
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(banmail, 0, sizeof(BANMAIL));
 
     sprintf(modes, "%c%c%c%c%c%c", (banmail->mode & FW_OWNER) ? '1' : '0',
@@ -189,8 +188,7 @@ static int banmail_add(XO * xo)
     {
         banmail.time = time(0);
         rec_add(xo->dir, &banmail, sizeof(BANMAIL));
-        xo->pos = XO_TAIL /* xo->max */ ;
-        xo_load(xo, sizeof(BANMAIL));
+        return XR_INIT + XO_MOVE + XO_TAIL /* xo->max */ ;
     }
     return XO_HEAD;
 }
@@ -198,7 +196,7 @@ static int banmail_add(XO * xo)
 static int banmail_delete(XO * xo, int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(BANMAIL), pos, NULL, NULL))
         {
@@ -247,7 +245,7 @@ KeyFuncList banmail_cb = {
     {'c' | XO_POSF, {.posf = banmail_change}},
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = banmail_delete}},
-    {'h', {banmail_help}}
+    {'h', {banmail_help}},
 };
 
 
@@ -263,7 +261,9 @@ int BanMail(void)
     xz[XZ_BANMAIL - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = banmail_cb;
     xo->recsiz = sizeof(BANMAIL);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_BANMAIL;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_BANMAIL);
     fwshm_load(fwshm);
     free(xo);
@@ -285,7 +285,9 @@ void post_mail(void)
     xz[XZ_BANMAIL - XO_ZONE].xo = xx = xo_new(fpath);
     xx->cb = banmail_cb;
     xx->recsiz = sizeof(BANMAIL);
-    xx->pos = 0;
+    xx->xz_idx = XZ_INDEX_BANMAIL;
+    for (int i = 0; i < COUNTOF(xx->pos); ++i)
+        xx->pos[i] = 0;
     xover(XZ_BANMAIL);
     free(xx);
 

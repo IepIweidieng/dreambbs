@@ -60,8 +60,7 @@ XO *xo)
     do
     {
         chat_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -120,7 +119,7 @@ chat_edit(
 ChatAction *chat,
 int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(chat, 0, sizeof(ChatAction));
     if (vget(B_LINES_REF, 0, "動詞：", chat->verb, sizeof(chat->verb), echo)
         && vget(B_LINES_REF, 0, "中文解釋：", chat->brief_desc, sizeof(chat->brief_desc), echo))
@@ -143,8 +142,7 @@ XO *xo)
     if (chat_edit(&chat, DOECHO))
     {
         rec_add(xo->dir, &chat, sizeof(ChatAction));
-        xo->pos = XO_TAIL;
-        xo_load(xo, sizeof(ChatAction));
+        return XR_INIT + XO_MOVE + XO_TAIL;
     }
     return XO_HEAD;
 }
@@ -155,7 +153,7 @@ XO *xo,
 int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(ChatAction), pos, NULL, NULL))
         {
@@ -213,7 +211,7 @@ int pos)
     ghdr = (const ChatAction *) xo_pool_base + pos;
 
     sprintf(buf + 5, "請輸入第 %d 選項的新位置：", pos + 1);
-    if (!vget(B_LINES_REF, 0, buf + 5, buf, 5, DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, buf + 5, buf, 5, DOECHO))
         return XO_FOOT;
 
     newOrder = TCLAMP(atoi(buf) - 1, 0, xo->max - 1);
@@ -224,8 +222,7 @@ int pos)
         if (!rec_del(dir, sizeof(ChatAction), pos, NULL, NULL))
         {
             rec_ins(dir, &ghdr_orig, sizeof(ChatAction), newOrder, 1);
-            xo->pos = newOrder;
-            return XO_LOAD;
+            return XR_LOAD + XO_MOVE + newOrder;
         }
     }
     return XO_FOOT;
@@ -278,7 +275,7 @@ KeyFuncList chat_cb =
     {'M' | XO_POSF, {.posf = chat_move}},
     {KEY_TAB, {chat_kind}},
     {'d' | XO_POSF, {.posf = chat_delete}},
-    {'h', {chat_help}}
+    {'h', {chat_help}},
 };
 
 
@@ -289,7 +286,8 @@ XO *xo)
     char fpath[80];
 
     kind++;
-    if (kind > 4) kind = 0;
+    if (kind > 4)
+        kind = 0;
     switch (kind)
     {
     case 0:
@@ -312,7 +310,9 @@ XO *xo)
     xz[XZ_OTHER - XO_ZONE].xo = xo_new(fpath);
     xz[XZ_OTHER - XO_ZONE].xo->cb = chat_cb;
     xz[XZ_OTHER - XO_ZONE].xo->recsiz = sizeof(ChatAction);
-    xz[XZ_OTHER - XO_ZONE].xo->pos = 0;
+    xz[XZ_OTHER - XO_ZONE].xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xz[XZ_OTHER - XO_ZONE].xo->pos); ++i)
+        xz[XZ_OTHER - XO_ZONE].xo->pos[i] = 0;
     return XO_INIT;
 }
 
@@ -331,7 +331,9 @@ Chatmenu(void)
     xz[XZ_OTHER - XO_ZONE].xo = xx = xo_new(fpath);
     xx->cb = chat_cb;
     xx->recsiz = sizeof(ChatAction);
-    xx->pos = 0;
+    xx->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xx->pos); ++i)
+        xx->pos[i] = 0;
     xover(XZ_OTHER);
     free(xx);
 

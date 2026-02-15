@@ -97,8 +97,7 @@ XO *xo)
     do
     {
         aloha_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -140,9 +139,9 @@ XO *xo)
     BMW bmw;
     PAL pal;
     ALOHA aloha;
-    pos = xo->pos;
+    pos = xo->pos[xo->cur_idx];
     max = xo->max;
-    if (vans("要引入好友名單嗎(y/N)？[N] ") == 'y')
+    if (vans_xo(xo, "要引入好友名單嗎(y/N)？[N] ") == 'y')
     {
         usr_fpath(fpath, cuser.userid, FN_PAL);
         for (i = 0; max < MAX_ALOHA; i++)
@@ -158,7 +157,8 @@ XO *xo)
                     usr_fpath(path, aloha.userid, FN_FRIEND_BENZ);
                     rec_add(path, &bmw, sizeof(BMW));
                     rec_add(xo->dir, &aloha, sizeof(ALOHA));
-                    xo->pos = XO_TAIL;
+                    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+                        xo->pos[i] = XO_TAIL;
                     max++;
                 }
             }
@@ -183,12 +183,12 @@ XO *xo)
 
     if (aloha.userno == cuser.userno)
     {
-        vmsg("自己不須加入上站通知名單中");
+        vmsg_xo(xo, "自己不須加入上站通知名單中");
         return XO_HEAD;
     }
     if (xo->max >= MAX_ALOHA)
     {
-        vmsg("已超過最大上限嘍 !!");
+        vmsg_xo(xo, "已超過最大上限嘍 !!");
         return XO_HEAD;
     }
 
@@ -200,10 +200,7 @@ XO *xo)
         rec_add(path, &bmw, sizeof(BMW));
         rec_add(xo->dir, &aloha, sizeof(ALOHA));
     }
-    xo->pos = XO_TAIL /* xo->max */ ;
-    xo_load(xo, sizeof(ALOHA));
-
-    return XO_HEAD;
+    return XR_HEAD + XO_MOVE + XO_TAIL /* xo->max */ ;
 }
 
 static int
@@ -213,7 +210,7 @@ XO *xo)
     char buf[8];
     int head, tail, fd;
 
-    vget(B_LINES_REF, 0, "[設定刪除範圍] 起點：", buf, 6, DOECHO);
+    vget_xo(xo, B_LINES_REF, 0, "[設定刪除範圍] 起點：", buf, 6, DOECHO);
     head = atoi(buf);
     if (head <= 0)
     {
@@ -221,7 +218,7 @@ XO *xo)
         return XO_FOOT;
     }
 
-    vget(B_LINES_REF, 28, "終點：", buf, 6, DOECHO);
+    vget_xo(xo, B_LINES_REF, 28, "終點：", buf, 6, DOECHO);
     tail = atoi(buf);
     if (tail < head)
     {
@@ -232,7 +229,7 @@ XO *xo)
         tail = xo->max;
 
 
-    if (vget(B_LINES_REF, 41, msg_sure_ny, buf, 3, LCECHO) == 'y')
+    if (vget_xo(xo, B_LINES_REF, 41, msg_sure_ny, buf, 3, LCECHO) == 'y')
     {
         char fpath[64];
         int size;
@@ -267,7 +264,7 @@ aloha_delete(
 XO *xo,
 int pos)
 {
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         char fpath[64];
         const ALOHA *aloha;
@@ -308,7 +305,7 @@ KeyFuncList aloha_cb =
 #endif
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = aloha_delete}},
-    {'h', {aloha_help}}
+    {'h', {aloha_help}},
 };
 
 
@@ -326,7 +323,9 @@ t_aloha(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = aloha_cb;
     xo->recsiz = sizeof(ALOHA);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     free(xo);
 

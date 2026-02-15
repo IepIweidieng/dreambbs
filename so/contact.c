@@ -56,8 +56,7 @@ XO *xo)
     do
     {
         contact_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -96,7 +95,7 @@ contact_edit(
 CONTACT *contact,
 int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(contact, 0, sizeof(CONTACT));
     if (vget(B_LINES_REF, 0, "名稱：", contact->name, sizeof(contact->name), echo)
         && vget(B_LINES_REF, 0, "e-mail address：", contact->email, sizeof(contact->email), echo))
@@ -112,12 +111,11 @@ XO *xo)
 {
     CONTACT contact;
     if (xo->max >= MAX_CONTACT)
-        vmsg("你的聯絡名單已到達上限!!");
+        vmsg_xo(xo, "你的聯絡名單已到達上限!!");
     else if (contact_edit(&contact, DOECHO))
     {
         rec_add(xo->dir, &contact, sizeof(CONTACT));
-        xo->pos = XO_TAIL /* xo->max */ ;
-        return XO_INIT;
+        return XR_INIT + XO_MOVE + XO_TAIL /* xo->max */ ;
     }
     return XO_HEAD;
 }
@@ -128,7 +126,7 @@ XO *xo,
 int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(CONTACT), pos, NULL, NULL))
         {
@@ -234,7 +232,7 @@ KeyFuncList contact_cb =
     {'c' | XO_POSF, {.posf = contact_change}},
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = contact_delete}},
-    {'h', {contact_help}}
+    {'h', {contact_help}},
 };
 
 int
@@ -251,7 +249,9 @@ Contact(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = contact_cb;
     xo->recsiz = sizeof(CONTACT);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     free(xo);
 

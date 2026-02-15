@@ -46,8 +46,7 @@ pressanykey(const char *fmt, ...)
     do
     {
         ch = vkey();
-    }
-    while ((ch != ' ') && (ch != KEY_LEFT) && (ch != '\r') && (ch != '\n'));
+    } while ((ch != ' ') && (ch != KEY_LEFT) && (ch != '\r') && (ch != '\n'));
 
     move(b_lines, 0);
     clrtoeol();
@@ -68,8 +67,12 @@ game_log(int file, const char *fmt, ...)
 
     switch (file)
     {
-    case 1: strcpy(ff, FN_MINE_LOG); break;
-    case 2: strcpy(ff, "run/bj.log"); break;
+    case 1:
+        strcpy(ff, FN_MINE_LOG);
+        break;
+    case 2:
+        strcpy(ff, "run/bj.log");
+        break;
     }
     fs = fopen(ff, "a+");
     now = time(0);

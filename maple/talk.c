@@ -12,6 +12,7 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 
 #undef  APRIL_FIRST
@@ -548,7 +549,8 @@ aloha_sync(void)
                     continue;
                 }
                 ptail--;
-                if (phead >= ptail) break;
+                if (phead >= ptail)
+                    break;
                 memcpy(phead, ptail, sizeof(BMW));
             }
 
@@ -735,7 +737,7 @@ pal_edit(
     PAL *pal,
     int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(pal, 0, sizeof(PAL));
     vget(B_LINES_REF, 0, "友誼：", pal->ship, sizeof(pal->ship), echo);
     pal->ftype = vans("損友(y/N)？[N] ") == 'y' ? PAL_BAD : 0;
@@ -754,7 +756,7 @@ pal_search(
     PAL *phead;
     char *fimage = NULL, fpath[64];
 
-    if (vget(B_LINES_REF, 0, msg_uid, buf, IDLEN + 1, GCARRY))
+    if (vget_xo(xo, B_LINES_REF, 0, msg_uid, buf, IDLEN + 1, GCARRY))
     {
         GCC_UNUSED int buflen;
         char bufl[IDLEN + 1];
@@ -817,7 +819,7 @@ pal_add(
 
     if (xo->max >= PAL_MAX)
     {
-        vmsg("您的好友名單太多，請善加整理");
+        vmsg_xo(xo, "您的好友名單太多，請善加整理");
         return XO_FOOT;
     }
 
@@ -830,12 +832,12 @@ pal_add(
     if ((xo->dir[0] == 'u') && (is_pal(userno) || is_bad(userno)))
                 /* lkchu.981201: 只有在 moderator board 才可重覆加入 */
     {
-        vmsg("名單中已有此好友");
+        vmsg_xo(xo, "名單中已有此好友");
         return XO_FOOT;
     }
     else if (userno == cuser.userno)      /* lkchu.981201: 好友名單不可加自己 */
     {
-        vmsg("自己不須加入好友名單中");
+        vmsg_xo(xo, "自己不須加入好友名單中");
         return XO_FOOT;
     }
 #endif
@@ -848,15 +850,14 @@ pal_add(
         strcpy(pal.userid, acct.userid);
         pal.userno = userno;
         rec_add(xo->dir, &pal, sizeof(PAL));
-        xo->pos = XO_TAIL /* xo->max */ ;
-        xo_load(xo, sizeof(PAL));
     }
 
 #if 1                           /* Thor.0709: 好友名單同步 */
     pal_cache();
 #endif
 
-    return XO_HEAD;
+    return (userno > 0) ? XR_INIT + XO_MOVE + XO_TAIL /* xo->max */
+        : XO_HEAD;
 }
 
 
@@ -868,7 +869,7 @@ pal_delete(
     XO *xo,
     int pos)
 {
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(PAL), pos, NULL, NULL))
         {
@@ -976,7 +977,7 @@ KeyFuncList pal_cb =
     {'s', {pal_sort}},
     {'/' | XO_POSF, {.posf = pal_search_forward}},
     {'?' | XO_POSF, {.posf = pal_search_backward}},
-    {'h', {pal_help}}
+    {'h', {pal_help}},
 };
 
 
@@ -992,7 +993,9 @@ t_pal(void)
     xz[XZ_PAL - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = pal_cb;
     xo->recsiz = sizeof(PAL);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_PAL;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_PAL);
     pal_cache();
     free(xo);
@@ -1146,7 +1149,7 @@ bmw_delete(
     XO *xo,
     int pos)
 {
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
         if (!rec_del(xo->dir, sizeof(BMW), pos, NULL, NULL))
             return XO_LOAD;
 
@@ -1221,7 +1224,7 @@ bmw_write(
 #ifdef  HAVE_SHOWNUMMSG
                 if (up->num_msg > 9 && (up->ufo & UFO_MAXMSG) && !HAS_PERM(PERM_SYSOP))
                 {
-                    vmsg("對方已經被水球灌爆了!!");
+                    vmsg_xo(xo, "對方已經被水球灌爆了!!");
                     return XO_INIT;
                 }
 #endif
@@ -1232,7 +1235,7 @@ bmw_write(
 #ifdef  HAVE_BANMSG
         else if (up && !(up->ufo & UFO_MESSAGE) && can_banmsg(up))
         {
-            vmsg("對方不想聽到您的聲音!!");
+            vmsg_xo(xo, "對方不想聽到您的聲音!!");
             return XO_INIT;
         }
 #endif
@@ -1273,7 +1276,7 @@ KeyFuncList bmw_cb =
     {Ctrl('Q') | XO_POSF, {.posf = bmw_query}},
     {'s', {xo_cb_init}},
     {KEY_TAB, {bmw_mode}},
-    {'h', {bmw_help}}
+    {'h', {bmw_help}},
 };
 
 
@@ -1442,7 +1445,9 @@ XoBM(
         xz[XZ_PAL - XO_ZONE].xo = xt = xo_new(fpath);
         xt->cb = pal_cb;
         xt->recsiz = sizeof(PAL);
-        xt->pos = 0;
+        xt->xz_idx = XZ_INDEX_PAL;
+        for (int i = 0; i < COUNTOF(xt->pos); ++i)
+            xt->pos[i] = 0;
         xover(XZ_PAL);          /* Thor: 進xover前, pal_xo 一定要 ready */
 
         /* build userno image to speed up, maybe upgrade to shm */
@@ -1746,7 +1751,7 @@ static void bmw_display(int max, int pos)
     clrtobot();
     i++;
     move(i, 0);
-    prints(" \x1b[1;36m╓──────╢\x1b[43;37m              夢大超炫水球回顧              \x1b[40;36m╟──────╖\x1b[m");
+    prints(" \x1b[1;36m╓──────╢\x1b[43;37m              %s超炫水球回顧              \x1b[40;36m╟──────╖\x1b[m", str_site_nick);
 
     i++;
     for (max=0; max<8; max++)
@@ -2118,7 +2123,7 @@ aloha(void)
         /* benz.sender = cuser.userno; */
         benz.sender = 0; /* Thor.980805: 系統協尋為單向 call in */
         strcpy(benz.userid, cuser.userid);
-        sprintf(benz.msg, "◎ 進 入 (%s) 囉!! ◎", BOARDNAME);
+        sprintf(benz.msg, "◎ 進 入 (%s) 囉!! ◎", str_site);
 
         ubase = ushm->uslot;
         uceil = ubase + ushm->ubackidx;
@@ -2211,7 +2216,7 @@ loginNotify(void)
         /* benz.sender = cuser.userno; */
         benz.sender = 0; /* Thor.980805: 系統協尋為單向 call in */
         strcpy(benz.userid, cuser.userid);
-        sprintf(benz.msg, "◎ 剛剛踏進%s的門 [系統協尋] ◎", BOARDNAME);
+        sprintf(benz.msg, "◎ 剛剛踏進%s的門 [系統協尋] ◎", str_site);
 
         ubase = ushm->uslot;
         uceil = ubase + ushm->ubackidx;
@@ -3386,8 +3391,11 @@ ulist_init(
 
     xo->max = max = pp - ulist_pool;
 
-    if (xo->pos >= max)
-        xo->pos = xo->top = 0;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+    {
+        if (xo->pos[i] >= max)
+            xo->pos[i] = xo->top = 0;
+    }
 
     if ((max > 1) && (pickup_way))
     {
@@ -3479,7 +3487,7 @@ ulist_search(
     PICKUP *pp;
     static char buf[IDLEN + 1];
 
-    if (vget(B_LINES_REF, 0, msg_uid, buf, IDLEN + 1, GCARRY))
+    if (vget_xo(xo, B_LINES_REF, 0, msg_uid, buf, IDLEN + 1, GCARRY))
     {
         GCC_UNUSED int buflen;
         char bufl[IDLEN + 1];
@@ -3554,7 +3562,7 @@ ulist_makepal(
 
             strcpy(buf, up->userid);
 
-            vget(B_LINES_REF, 0, "好友描述：", pal.ship, sizeof(pal.ship), DOECHO);
+            vget_xo(xo, B_LINES_REF, 0, "好友描述：", pal.ship, sizeof(pal.ship), DOECHO);
             pal.ftype = 0;
             pal.userno = userno;
             strcpy(pal.userid, buf);
@@ -3567,7 +3575,7 @@ ulist_makepal(
             }
             else
             {
-                vmsg("您的好友名單太多，請善加整理");
+                vmsg_xo(xo, "您的好友名單太多，請善加整理");
             }
         }
     }
@@ -3595,7 +3603,7 @@ ulist_makebad(
 
             strcpy(buf, up->userid);
 
-            vget(B_LINES_REF, 0, "惡行惡狀：", pal.ship, sizeof(pal.ship), DOECHO);
+            vget_xo(xo, B_LINES_REF, 0, "惡行惡狀：", pal.ship, sizeof(pal.ship), DOECHO);
             pal.ftype = PAL_BAD;
             pal.userno = userno;
             strcpy(pal.userid, buf);
@@ -3607,7 +3615,7 @@ ulist_makebad(
                 return XO_INIT;
             }
             else
-                vmsg("您的好友名單太多，請善加整理");
+                vmsg_xo(xo, "您的好友名單太多，請善加整理");
         }
     }
     return XO_NONE;
@@ -3634,7 +3642,7 @@ ulist_mail(
         return XO_INIT;
     }
 
-    vmsg(MSG_USR_LEFT);
+    vmsg_xo(xo, MSG_USR_LEFT);
     return XO_FOOT;
 }
 
@@ -3678,9 +3686,9 @@ ulist_broadcast(
     admin = check_admin(cuser.userid);
     if (admin && !(cuser.ufo2 & UFO2_PAL))
     {
-        if ((ans = vans("◎ 使用 SYSOP 廣播嗎？ [y/N]")) != 'Y' && ans != 'y')
+        if ((ans = vans_xo(xo, "◎ 使用 SYSOP 廣播嗎？ [y/N]")) != 'Y' && ans != 'y')
             admin = 0;
-        if ((ans = vans("◎ 確定全站廣播嗎？ [y/N]")) != 'Y' && ans != 'y')
+        if ((ans = vans_xo(xo, "◎ 確定全站廣播嗎？ [y/N]")) != 'Y' && ans != 'y')
             return XO_INIT;
     }
     if (!(cuser.ufo2 & UFO2_PAL) && admin)
@@ -3741,7 +3749,7 @@ ulist_write(
 #ifdef  HAVE_SHOWNUMMSG
             if (up->num_msg > 9 && (up->ufo & UFO_MAXMSG) && !HAS_PERM(PERM_SYSOP))
             {
-                vmsg("對方已經被水球灌爆了!!");
+                vmsg_xo(xo, "對方已經被水球灌爆了!!");
                 return XO_INIT;
             }
 #endif
@@ -3752,7 +3760,7 @@ ulist_write(
 #ifdef  HAVE_BANMSG
         else if (!(up->ufo & UFO_MESSAGE) && can_banmsg(up))
         {
-            vmsg("對方不想聽到您的聲音!!");
+            vmsg_xo(xo, "對方不想聽到您的聲音!!");
         }
 #endif
         return XO_INIT;
@@ -3803,6 +3811,7 @@ ulist_su(
     xz[XZ_MBOX - XO_ZONE].xo =  xo_new(path);
     xz[XZ_MBOX - XO_ZONE].xo->cb = mbox_cb;
     xz[XZ_MBOX - XO_ZONE].xo->recsiz = sizeof(HDR);
+    xz[XZ_MBOX - XO_ZONE].xo->xz_idx = XZ_INDEX_MBOX;
     xz[XZ_MBOX - XO_ZONE].xo->pos = 0;
     free(tmp);
 */
@@ -3813,7 +3822,9 @@ ulist_su(
     xz[XZ_BMW - XO_ZONE].xo =  xo_new(path);
     xz[XZ_BMW - XO_ZONE].xo->cb = bmw_cb;
     xz[XZ_BMW - XO_ZONE].xo->recsiz = sizeof(BMW);
-    xz[XZ_BMW - XO_ZONE].xo->pos = 0;
+    xz[XZ_BMW - XO_ZONE].xo->xz_idx = XZ_INDEX_BMW;
+    for (int i = 0; i < COUNTOF(xz[XZ_BMW - XO_ZONE].xo->pos); ++i)
+        xz[XZ_BMW - XO_ZONE].xo->pos[i] = 0;
     free(tmp);
     pal_cache();
     return XO_INIT;
@@ -3836,7 +3847,7 @@ ulist_kick(
         up = ulist_pool[pos].utmp;
         if ((pid = up->pid))
         {
-            if (vans(msg_sure_ny) != 'y' || pid != up->pid)
+            if (vans_xo(xo, msg_sure_ny) != 'y' || pid != up->pid)
                 return XO_FOOT;
 
             sprintf(buf, "%s (%s)", up->userid, up->username);
@@ -3854,7 +3865,7 @@ ulist_kick(
         }
         else
         {
-            if (vans(msg_sure_ny) != 'y')
+            if (vans_xo(xo, msg_sure_ny) != 'y')
                 return XO_FOOT;
             memset(up, 0, sizeof(UTMP));
             return XO_INIT;
@@ -3876,7 +3887,7 @@ ulist_fromchange(
         return XO_NONE;
 
     str_scpy(buf, str, sizeof(buf));
-    vget(B_LINES_REF, 0, "請輸入新的故鄉：", buf, sizeof(buf), GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "請輸入新的故鄉：", buf, sizeof(buf), GCARRY);
     if (strcmp(buf, str))
     {
         str_scpy(cutmp->from, buf, sizeof(cutmp->from));
@@ -3900,7 +3911,7 @@ ulist_nickchange(
         return XO_NONE;
 
     str_scpy(buf, str, sizeof(buf));
-    vget(B_LINES_REF, 0, "請輸入新的暱稱：", buf, sizeof(buf), GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "請輸入新的暱稱：", buf, sizeof(buf), GCARRY);
 
     if (strcmp(buf, str) && str_len_nospace(buf) > 0)
     {
@@ -4023,7 +4034,7 @@ ulist_readmail(
     if (cuser.userlevel)
     {
         if (HAS_PERM(PERM_DENYMAIL))
-            vmsg("您的信箱被鎖了！");
+            vmsg_xo(xo, "您的信箱被鎖了！");
         else
             xover(XZ_MBOX);
         return XO_INIT;
@@ -4044,7 +4055,7 @@ ulist_del(
     char fpath[64];
     PAL *pal;
 
-    ans = vans("是否刪除(y/N)：");
+    ans = vans_xo(xo, "是否刪除(y/N)：");
     if (ans == 'y' || ans == 'Y')
     {
         up = ulist_pool[pos].utmp;
@@ -4095,7 +4106,7 @@ ulist_changeship(
     strcpy(buf, "");
     copyship(buf, userno);
 
-    if (vget(B_LINES_REF, 0, check == 1 ?"友誼：":"惡行惡狀：", buf, sizeof(buf), GCARRY))
+    if (vget_xo(xo, B_LINES_REF, 0, check == 1 ?"友誼：":"惡行惡狀：", buf, sizeof(buf), GCARRY))
     {
         usr_fpath(fpath, cuser.userid, FN_PAL);
         if ((fd = open(fpath, O_RDONLY)) >= 0)
@@ -4131,7 +4142,7 @@ ulist_state(
     if (!HAS_PERM(PERM_SYSOP))
         return XO_NONE;
     sprintf(buf, "PID : %d", ulist_pool[pos].utmp->pid);
-    vmsg(buf);
+    vmsg_xo(xo, buf);
     return XO_INIT;
 }
 #endif  /* #if 1 */
@@ -4146,7 +4157,7 @@ ulist_april1(
     sprintf(buf, "您是第 %d 個被騙的使用者 ^^y ", ushm->avgload);
     if (!aprilfirst)
         ushm->avgload++;
-    vmsg(buf);
+    vmsg_xo(xo, buf);
     aprilfirst = 1;
     return XO_INIT;
 }
@@ -4200,7 +4211,7 @@ KeyFuncList ulist_cb =
 
     {'M' | XO_POSF, {.posf = ulist_mail}},
     {KEY_TAB, {ulist_toggle}},
-    {'h', {ulist_help}}
+    {'h', {ulist_help}},
 };
 
 
@@ -4295,6 +4306,7 @@ t_query(void)
 void
 talk_rqst(void)
 {
+    static const unsigned int sec_timeout = 1; /* IID.2023-02-21: TCP-based timeout for connect(). Unit: Seconds */
     UTMP *up;
     int mode, sock, ans, len, port;
     char buf[80];
@@ -4430,8 +4442,12 @@ over_for:
         if (sock < 0)
             continue;
 
+        setsockopt(sock, IPPROTO_TCP, TCP_USER_TIMEOUT, &TEMPLVAL(unsigned int, {1000 * sec_timeout}), sizeof(unsigned int));
+
         if (!connect(sock, h->ai_addr, h->ai_addrlen))
         {
+            setsockopt(sock, IPPROTO_TCP, TCP_USER_TIMEOUT, &TEMPLVAL(unsigned int, {0}), sizeof(unsigned int));
+
             send(sock, buf, len, 0);
 
             if (ans == 'y')
@@ -4480,6 +4496,7 @@ talk_main(void)
     xz[XZ_ULIST - XO_ZONE].xo = &ulist_xo;
     ulist_xo.cb = ulist_cb;
     ulist_xo.recsiz = sizeof(UTMP);
+    ulist_xo.xz_idx = XZ_INDEX_ULIST;
 
     /* lkchu.981230: 利用 xover 整合 bmw */
     usr_fpath(fpath, cuser.userid, FN_BMW);
@@ -4487,7 +4504,9 @@ talk_main(void)
     xz[XZ_BMW - XO_ZONE].xo = xo_new(fpath);
     xz[XZ_BMW - XO_ZONE].xo->cb = bmw_cb;
     xz[XZ_BMW - XO_ZONE].xo->recsiz = sizeof(BMW);
-    xz[XZ_BMW - XO_ZONE].xo->pos = 0;
+    xz[XZ_BMW - XO_ZONE].xo->xz_idx = XZ_INDEX_BMW;
+    for (int i = 0; i < COUNTOF(xz[XZ_BMW - XO_ZONE].xo->pos); ++i)
+        xz[XZ_BMW - XO_ZONE].xo->pos[i] = 0;
 }
 
 int
@@ -4511,7 +4530,8 @@ check_personal_note(
         {
             if (newflag)
             {
-                if (myitem.mode == 0) total++;
+                if (myitem.mode == 0)
+                    total++;
             }
             else
                 total++;
@@ -4737,7 +4757,7 @@ banmsg_edit(
     BANMSG *banmsg,
     int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(banmsg, 0, sizeof(BANMSG));
     vget(B_LINES_REF, 0, "描述：", banmsg->ship, sizeof(banmsg->ship), echo);
 }
@@ -4752,7 +4772,7 @@ banmsg_add(
 
     if (xo->max >= BANMSG_MAX)
     {
-        vmsg("您的拒收訊息名單太多，請善加整理");
+        vmsg_xo(xo, "您的拒收訊息名單太多，請善加整理");
         return XO_FOOT;
     }
 
@@ -4761,12 +4781,12 @@ banmsg_add(
 #if 1                           /* Thor.0709: 不重覆加入 */
     if ((xo->dir[0] == 'u') && is_banmsg(userno))
     {
-        vmsg("名單中已有此人");
+        vmsg_xo(xo, "名單中已有此人");
         return XO_FOOT;
     }
     else if (userno == cuser.userno)
     {
-        vmsg("自己不須加入拒收訊息名單中");
+        vmsg_xo(xo, "自己不須加入拒收訊息名單中");
         return XO_FOOT;
     }
 #endif
@@ -4779,13 +4799,12 @@ banmsg_add(
         strcpy(banmsg.userid, acct.userid);
         banmsg.userno = userno;
         rec_add(xo->dir, &banmsg, sizeof(BANMSG));
-        xo->pos = XO_TAIL;
-        xo_load(xo, sizeof(BANMSG));
     }
 
     banmsg_cache();
 
-    return XO_HEAD;
+    return (userno > 0) ? XR_INIT + XO_MOVE + XO_TAIL /* xo->max */
+        : XO_HEAD;
 }
 
 
@@ -4794,7 +4813,7 @@ banmsg_delete(
     XO *xo,
     int pos)
 {
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
 
         if (!rec_del(xo->dir, sizeof(BANMSG), pos, NULL, NULL))
@@ -4896,7 +4915,7 @@ KeyFuncList banmsg_cb =
     {'m' | XO_POSF, {.posf = banmsg_mail}},
     {'q' | XO_POSF, {.posf = banmsg_query}},
     {'s', {banmsg_sort}},
-    {'h', {banmsg_help}}
+    {'h', {banmsg_help}},
 };
 
 
@@ -4912,7 +4931,9 @@ t_banmsg(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = banmsg_cb;
     xo->recsiz = sizeof(BANMSG);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     banmsg_cache();
     free(xo);

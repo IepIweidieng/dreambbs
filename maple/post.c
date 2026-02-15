@@ -990,7 +990,7 @@ post_visit(
     int ans, row, max;
     const HDR *fhdr;
 
-    ans = vans("設定所有文章 (U)未讀 (V)已讀 (Q)取消？ [Q] ");
+    ans = vans_xo(xo, "設定所有文章 (U)未讀 (V)已讀 (Q)取消？ [Q] ");
     if (ans == 'v' || ans == 'u')
     {
         brh_visit(ans = ans == 'u');
@@ -1073,14 +1073,14 @@ post_cross(
         return XO_NONE;
     if ((hdr->xmode & POST_LOCK) && !HAS_PERM(PERM_SYSOP))
     {
-        vmsg("Access Deny!");
+        vmsg_xo(xo, "Access Deny!");
         return XO_FOOT;
     }
 
     /* verit 021113 : 解決在 po 文章然後用 ctrl+u 然後換到看板去轉錄的重複標題問題 */
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
 
@@ -1102,13 +1102,13 @@ post_cross(
         /* lkchu.981201: 整批轉貼 */
         if (!tag && (hdr->xmode & POST_LOCK) && !HAS_PERM(PERM_SYSOP))
         {
-            vmsg("此文章禁止轉錄！");
+            vmsg_xo(xo, "此文章禁止轉錄！");
             return XO_HEAD;
         }
 
         method = 1;
         if ((HAS_PERM(PERM_ALLBOARD) || !strcmp(hdr->owner, cuser.userid)) &&
-                (vget(2, 0, "(1)原文轉載 (2)轉錄文章？[1] ", buf, 3, DOECHO) != '2'))
+                (vget_xo(xo, 2, 0, "(1)原文轉載 (2)轉錄文章？[1] ", buf, 3, DOECHO) != '2'))
         {
             method = 0;
         }
@@ -1120,11 +1120,11 @@ post_cross(
             else
                 strcpy(xtitle, hdr->title);
 
-            if (!vget(2, 0, "標題：", xtitle, TTLEN + 1, GCARRY))
+            if (!vget_xo(xo, 2, 0, "標題：", xtitle, TTLEN + 1, GCARRY))
                 return XO_HEAD;
         }
 
-        rc = vget(2, 0, "(S)存檔 (L)站內 (Q)取消？[Q] ", buf, 3, LCECHO);
+        rc = vget_xo(xo, 2, 0, "(S)存檔 (L)站內 (Q)取消？[Q] ", buf, 3, LCECHO);
         if (rc != 'l' && rc != 's')
             return XO_HEAD;
 
@@ -1250,14 +1250,14 @@ post_cross(
             ptime = localtime(&now);
             sprintf(tgt, "轉錄至 %s 看板", xboard);
             xfp = fopen(fpath, "a");
-            sprintf(add, "\x1b[1;33m→ %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, cuser.userid, tgt, Btime(&now)+3);
+            rmsg_sprint(add, 0, "→", cuser.userid, tgt, now);
             fprintf(xfp, "%s", add);
             fclose(xfp);
         }
 
         if (success_count == 0)
         {
-            vmsg("轉錄失敗。");
+            vmsg_xo(xo, "轉錄失敗。");
         }
         /* Thor.981205: check 被轉的版有沒有列入紀錄? */
         else if (battr & BRD_NOCOUNT)
@@ -1279,7 +1279,7 @@ post_cross(
             else
                 sprintf(buf, "轉錄 %d 篇成功\，%d 篇失敗，你的文章增為 %d 篇",
                     success_count, ((tag == 0) ? 1 : tag) - success_count, cuser.numposts);
-            vmsg(buf);
+            vmsg_xo(xo, buf);
         }
     }
     return XO_HEAD;
@@ -1319,11 +1319,11 @@ post_xcross(
 
         hdr = tag ? &xhdr : hdr;
 
-        vget(2, 0, "設定刪除嗎 ?? (Y)要 (N)不要？[Y] ", buf, 3, LCECHO);
+        vget_xo(xo, 2, 0, "設定刪除嗎 ?? (Y)要 (N)不要？[Y] ", buf, 3, LCECHO);
         if (*buf != 'n')
             do_expire = time(0) + 86400 * 7;
 
-        vget(2, 0, "(Y)確定 (Q)取消？[Q] ", buf, 3, LCECHO);
+        vget_xo(xo, 2, 0, "(Y)確定 (Q)取消？[Q] ", buf, 3, LCECHO);
         if (*buf != 'y')
             return XO_HEAD;
 
@@ -1493,7 +1493,7 @@ post_browse(
         {
             if (pid_find(hdr->xid))
             {
-                vmsg("此文章正在修改中!!");
+                vmsg_xo(xo, "此文章正在修改中!!");
                 break;
             }
             else
@@ -1534,10 +1534,10 @@ post_browse(
         if ((key = more(fpath, FOOTER_POST)) < 0)
             break;
 
-        if (key == -2)
+        if (key == 'q')
             return XO_INIT;
         key = xo_getch(xo, pos, key);
-        pos = xo->pos;
+        pos = xo->pos[xo->cur_idx];
         switch (key)
         {
             case XO_BODY:
@@ -1618,7 +1618,7 @@ post_memo(
     /* Thor.990204: 為考慮more 傳回值 */
     if (more(fpath, NULL) == -1)
     {
-        vmsg("本看板尚無「備忘錄」");
+        vmsg_xo(xo, "本看板尚無「備忘錄」");
         return XO_FOOT;
     }
 
@@ -1635,7 +1635,7 @@ post_post(
     if (!(bbstate & STAT_BOARD))
         return XO_NONE;
 
-    mode = vans("發文公告 (D)刪除 (E)修改 (Q)取消？[E] ");
+    mode = vans_xo(xo, "發文公告 (D)刪除 (E)修改 (Q)取消？[E] ");
     if (mode != 'q')
     {
         brd_fpath(fpath, currboard, "post");
@@ -1647,12 +1647,12 @@ post_post(
         {
             if (bbsothermode & OTHERSTAT_EDITING)
             {
-                vmsg("你還有檔案還沒編完哦！");
+                vmsg_xo(xo, "你還有檔案還沒編完哦！");
             }
             else
             {
                 if (vedit(fpath, false))
-                    vmsg(msg_cancel);
+                    vmsg_xo(xo, msg_cancel);
                 return XO_HEAD;
             }
         }
@@ -1670,7 +1670,7 @@ post_memo_edit(
     if (!(bbstate & STAT_BOARD))
         return XO_NONE;
 
-    mode = vans("備忘錄 (D)刪除 (E)修改 (Q)取消？[E] ");
+    mode = vans_xo(xo, "備忘錄 (D)刪除 (E)修改 (Q)取消？[E] ");
     if (mode != 'q')
     {
         brd_fpath(fpath, currboard, FN_NOTE);
@@ -1682,12 +1682,12 @@ post_memo_edit(
         {
             if (bbsothermode & OTHERSTAT_EDITING)
             {
-                vmsg("你還有檔案還沒編完哦！");
+                vmsg_xo(xo, "你還有檔案還沒編完哦！");
             }
             else
             {
                 if (vedit(fpath, false))
-                    vmsg(msg_cancel);
+                    vmsg_xo(xo, msg_cancel);
                 return XO_HEAD;
             }
         }
@@ -1714,7 +1714,7 @@ post_switch(
     }
     else
     {
-        vmsg(err_bid);
+        vmsg_xo(xo, err_bid);
     }
     return XO_HEAD;
 }
@@ -1818,7 +1818,7 @@ post_delete(
 
     if (HAS_PERM(PERM_DENYPOST))
     {
-        vmsg("你正被停權中，無法刪除任何文章！");
+        vmsg_xo(xo, "你正被停權中，無法刪除任何文章！");
         return XO_FOOT;
     }
 
@@ -1842,14 +1842,14 @@ post_delete(
         }
         else
         {
-            vmsg("其他使用者正在編輯推薦文章留言，請稍候。");
+            vmsg_xo(xo, "其他使用者正在編輯推薦文章留言，請稍候。");
             return XO_FOOT;
         }
     }
 
     if (phdr.xmode & POST_CURMODIFY)
     {
-        vmsg("文章正在被修改，請稍候。");
+        vmsg_xo(xo, "文章正在被修改，請稍候。");
         return XO_FOOT;
     }
 
@@ -1858,7 +1858,7 @@ post_delete(
         return XO_NONE;
 
     hdr_fpath(fpath, xo->dir, fhdr);
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         currchrono = fhdr->chrono;
 
@@ -1869,7 +1869,7 @@ post_delete(
         }
 
         if (by_BM/* && (bbstate & BRD_NOTRAN) && !(fhdr->xmode & POST_BOTTOM)*/)
-            vget(B_LINES_REF, 0, "請輸入刪除理由：", delete_reason, 29, DOECHO);
+            vget_xo(xo, B_LINES_REF, 0, "請輸入刪除理由：", delete_reason, 29, DOECHO);
         //    return 0;
         if (by_BM/* && bbstate & BRD_NOTRAN*/&& (bbstate & STAT_BOARD) && !strstr(fhdr->owner, ".") && !strstr(fhdr->lastrecommend, "$") && !(fhdr->xmode & POST_BOTTOM))
         {
@@ -1879,9 +1879,9 @@ post_delete(
             usr_fpath(folder, fhdr->owner, fn_dir);
             if (acct_load(&tmp, fhdr->owner) >= 0)
             {
-                if (vans("是否退回文章？[y/N]") == 'y')
+                if (vans_xo(xo, "是否退回文章？[y/N]") == 'y')
                 {
-                    if (vans("是否給予劣文？[y/N]") == 'y')
+                    if (vans_xo(xo, "是否給予劣文？[y/N]") == 'y')
                     {
                         addpoint2(1, fhdr->owner);
                         pmsg2("劣退完畢！");
@@ -1890,12 +1890,12 @@ post_delete(
                     FILE *fp;
                     time_t now = time(0);
                     HDR mhdr;
-                    hdr_stamp(folder, 0, &mhdr, buf);
+                    const int fd = hdr_stamp(folder, 0, &mhdr, buf);
                     strcpy(mhdr.owner, cuser.userid);
                     strcpy(mhdr.title, "文章退回通知");
                     rec_add(folder, &mhdr, sizeof(mhdr));
 
-                    fp = fopen(buf, "w");
+                    fp = fdopen(fd, "w");
                     fprintf(fp, "作者: %s (%s)\n", cuser.userid, cuser.username);
                     fprintf(fp, "標題: %s\n時間: %s\n", "文章退回通知", ctime(&now));
                     fprintf(fp, "\n\x1b[1;31m***** 本信件由系統自動產生，如要申訴請重新上站後轉寄給站務並保留此信件 *****\x1b[m\n\n");
@@ -1926,7 +1926,7 @@ post_delete(
                 if (cuser.numposts > 0)
                     cuser.numposts--;
                 sprintf(buf, "%s，您的文章減為 %d 篇", MSG_DEL_OK, cuser.numposts);
-                vmsg(buf);
+                vmsg_xo(xo, buf);
 #ifdef  HAVE_DETECT_CROSSPOST
                 checksum_find(fpath, 1, bbstate);
 #endif
@@ -1957,7 +1957,7 @@ post_clean_delete(
         return XO_NONE;
     }
 
-    if (vans("是否直接砍除文章？[y/N]") == 'y')
+    if (vans_xo(xo, "是否直接砍除文章？[y/N]") == 'y')
     {
         const HDR hdr_orig = *hdr;
         currchrono = hdr->chrono;
@@ -2053,7 +2053,7 @@ post_lock(
                 return XO_NONE;
 
             /* IID.2020-10-07: Prevent the user from accidentally locking their post */
-            if (vans("注意：非板主鎖文，不能自行解鎖。確定要鎖文嗎？[y/N] ") != 'y')
+            if (vans_xo(xo, "注意：非板主鎖文，不能自行解鎖。確定要鎖文嗎？[y/N] ") != 'y')
                 return XO_FOOT;
             redraw_flags |= XR_FOOT;
         }
@@ -2062,7 +2062,7 @@ post_lock(
         rec_put(xo->dir, hdr, sizeof(HDR), xo->key == XZ_POST ? pos : hdr->xid);
 
         if (redraw_flags)
-            vmsg("已鎖文。如欲解鎖，請洽板主。");
+            vmsg_xo(xo, "已鎖文。如欲解鎖，請洽板主。");
         return redraw_flags | XO_CUR;
     }
     return XO_NONE;
@@ -2131,7 +2131,7 @@ post_state(
     }
     else if (!(cuser.userlevel))
     {
-        vmsg("您的權限不足");
+        vmsg_xo(xo, "您的權限不足");
         return XO_HEAD;
     }
     else
@@ -2165,7 +2165,7 @@ post_state(
 
     }
 
-    vmsg(NULL);
+    vmsg_xo(xo, NULL);
 
     return XO_HEAD;
 }
@@ -2203,7 +2203,7 @@ post_state(
     prints("Modify : %d times\n", hdr->modifytimes);
     prints("Chrono : %lld Pushtime : %d\n", (long long)hdr->chrono, hdr->pushtime);
 
-    vmsg(NULL);
+    vmsg_xo(xo, NULL);
 
     return XO_BODY;
 }
@@ -2267,7 +2267,7 @@ post_undelete(
             /*
             cuser.numposts++;
             sprintf(buf, "復原刪除，您的文章增為 %d 篇", cuser.numposts);
-            vmsg(buf);*/  /* 20000724 visor: 有文章篇數的 bug */
+            vmsg_xo(xo, buf);*/  /* 20000724 visor: 有文章篇數的 bug */
 #ifdef  HAVE_DETECT_CROSSPOST
             checksum_find(fpath, 0, bbstate);
 #endif
@@ -2376,7 +2376,7 @@ post_edit(
 
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
     hdr = (HDR *) xo_pool_base + pos;
@@ -2404,7 +2404,7 @@ post_edit(
                 hdr->xmode &= ~POST_RECOMMEND;
             else
             {
-                vmsg("有人在推薦您的文章，請稍候。");
+                vmsg_xo(xo, "有人在推薦您的文章，請稍候。");
                 return XO_FOOT;
             }
         }
@@ -2536,25 +2536,25 @@ post_edit(
 
             rec_put(xo->dir, hdr, sizeof(HDR), pos);
             if (temp < 0)
-                vmsg("取消修改");
+                vmsg_xo(xo, "取消修改");
             else
             {
                 brd->blast = hdr->pushtime;
-                vmsg("修改完成");
+                vmsg_xo(xo, "修改完成");
             }
             return XO_INIT;
         }
     }
     else if (brd->battr & BRD_MODIFY)
     {
-        vmsg("本板不能修改文章!!");
+        vmsg_xo(xo, "本板不能修改文章!!");
     }
     else
     {
         /* cache.090922: 檢查機制 */
         if (hdr->modifytimes < 0)
             hdr->modifytimes = 0;
-        vmsg("此文章不能被修改!!");
+        vmsg_xo(xo, "此文章不能被修改!!");
     }
 #endif  /* #ifdef  HAVE_USER_MODIFY */
     return XO_FOOT;
@@ -2582,7 +2582,7 @@ int post_edit(XO *xo, int pos)
 
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
     hdr = (HDR *) xo_pool_base + pos;
@@ -2669,7 +2669,7 @@ int post_edit(XO *xo, int pos)
                 phdr.xmode &= ~POST_CURMODIFY;
                 phdr.xid = 0;
                 rec_put(xo->dir, &phdr, sizeof(HDR), pos);
-                vmsg("取消修改");
+                vmsg_xo(xo, "取消修改");
             }
             else
             {
@@ -2702,13 +2702,13 @@ int post_edit(XO *xo, int pos)
                     else
                         hdr->modifytimes += 1;
                  */
-                vmsg("修改完成");
+                vmsg_xo(xo, "修改完成");
             }
             return XO_INIT;
         }
         else if (!(brd->battr & BRD_MODIFY))
         {
-            vmsg("本看板不能修改文章!!");
+            vmsg_xo(xo, "本看板不能修改文章!!");
             return XO_FOOT;
         }
         else
@@ -2717,7 +2717,7 @@ int post_edit(XO *xo, int pos)
             if (hdr->modifytimes < 0)
                 hdr->modifytimes = 0;
 
-            vmsg("此文章不能被修改!!");
+            vmsg_xo(xo, "此文章不能被修改!!");
             return XO_FOOT;
         }
 #endif  /* #ifdef  HAVE_USER_MODIFY */
@@ -2787,17 +2787,17 @@ post_title(
     if (!(bbstate & STAT_BOARD))
         return XO_NONE;
 
-    vget(B_LINES_REF, 0, "標題：", mhdr.title, sizeof(mhdr.title), GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "標題：", mhdr.title, sizeof(mhdr.title), GCARRY);
 
     if (HAS_PERM(PERM_ALLBOARD))  /* 0911105.cache: 非看板總管只能改標題 */
     {
-        vget(B_LINES_REF, 0, "作者：", mhdr.owner, BMIN(80UL - 6, sizeof(mhdr.owner)), GCARRY);
+        vget_xo(xo, B_LINES_REF, 0, "作者：", mhdr.owner, BMIN(80UL - 6, sizeof(mhdr.owner)), GCARRY);
         /* Thor.980727:lkchu patch: sizeof(mhdr.owner) = 80會超過一行 */
         /* IID.2021-02-22: `sizeof(mhdr.owner)` has become 47; simply hardcoded size cannot be used */
-        vget(B_LINES_REF, 0, "日期：", mhdr.date, sizeof(mhdr.date), GCARRY);
+        vget_xo(xo, B_LINES_REF, 0, "日期：", mhdr.date, sizeof(mhdr.date), GCARRY);
     }
 
-    if (vans(msg_sure_ny) == 'y' &&
+    if (vans_xo(xo, msg_sure_ny) == 'y' &&
             memcmp(fhdr, &mhdr, sizeof(HDR)))
     {
         *fhdr = mhdr;
@@ -2830,7 +2830,7 @@ post_cross_terminator(  /* Thor.0521: 終極文章大法 */
     if (!HAS_PERM(PERM_ALLBOARD))
         return XO_NONE;
 
-    mode = vans("《拂花落楓斬》： 1)砍標題 2)砍使用者 3)其他 [1]：") - '1';
+    mode = vans_xo(xo, "《拂花落楓斬》： 1)砍標題 2)砍使用者 3)其他 [1]：") - '1';
     if (mode > 2 || mode < 0)
         mode =0;
 
@@ -2840,7 +2840,7 @@ post_cross_terminator(  /* Thor.0521: 終極文章大法 */
         title = fhdr->owner;
     else if (mode == 2)
     {
-        if (!vget(B_LINES_REF, 0, "其他：", other, sizeof(other), DOECHO))
+        if (!vget_xo(xo, B_LINES_REF, 0, "其他：", other, sizeof(other), DOECHO))
             return XO_HEAD;
         title = other;
     }
@@ -2857,7 +2857,7 @@ post_cross_terminator(  /* Thor.0521: 終極文章大法 */
         sprintf(buf, "《拂花落楓斬》標題：%.40s，確定嗎？Y/[N]", title);
 
 
-    if (vans(buf) == 'y')
+    if (vans_xo(xo, buf) == 'y')
     {
         BRD *bhdr, *head, *tail;
 
@@ -2992,7 +2992,7 @@ post_ban_mail(
         func = DL_NAME_GET("banmail.so", post_mail);
         if (!func)
         {
-            vmsg("動態連結失敗，請聯絡系統管理員！");
+            vmsg_xo(xo, "動態連結失敗，請聯絡系統管理員！");
             return XO_FOOT;
         }
     }
@@ -3016,15 +3016,15 @@ post_brdtitle(
 
     memcpy(&newbrd, oldbrd, sizeof(BRD));
 
-    vget(23, 0, "看板名稱：", newbrd.title+3, BTLEN - 2, GCARRY);
+    vget_xo(xo, 23, 0, "看板名稱：", newbrd.title+3, BTLEN - 2, GCARRY);
 
-    if ((vans(msg_sure_ny) == 'y') &&
+    if ((vans_xo(xo, msg_sure_ny) == 'y') &&
             memcmp(&newbrd, oldbrd, sizeof(BRD)))
     {
         memcpy(oldbrd, &newbrd, sizeof(BRD));
         rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
     }
-    vmsg("設定完畢");
+    vmsg_xo(xo, "設定完畢");
 
     return XO_HEAD;
 }
@@ -3089,12 +3089,12 @@ post_resetscore(
 
         //if (!hdr->recommend)
         //{
-        //    vmsg("本篇文章沒有推文");
+        //    vmsg_xo(xo, "本篇文章沒有推文");
         //    return XO_FOOT;
         //}
         //else
         //{
-            switch (vans("◎評分設定 1)自訂 2)清除 [Q] "))
+            switch (vans_xo(xo, "◎評分設定 1)自訂 2)清除 [Q] "))
             {
                 case '1':
 
@@ -3104,11 +3104,11 @@ post_resetscore(
                         return XO_FOOT;
                     }
 
-                    if (!vget(B_LINES_REF, 0, "請輸入數字：", ans, 3, DOECHO))
+                    if (!vget_xo(xo, B_LINES_REF, 0, "請輸入數字：", ans, 3, DOECHO))
                         return XO_FOOT;
 
                     if ((brd->battr & BRD_PUSHSNEER) || (brd->battr & BRD_PUSHDEFINE))
-                        pm = vans("請選擇正負 1)正 2)負 [Q] ");
+                        pm = vans_xo(xo, "請選擇正負 1)正 2)負 [Q] ");
                     else
                         pm = '1';
 
@@ -3146,7 +3146,7 @@ post_resetscore(
     }
     else
     {
-        vmsg("您的權限不足！");
+        vmsg_xo(xo, "您的權限不足！");
         return XO_FOOT;
     }
 }
@@ -3158,10 +3158,10 @@ post_recommend(
     int pos)
 {
     HDR *hdr;
-    int cur, addscore, eof, point=0;
+    int cur, addscore, point=0;
     BRD *brd;
     char fpath[80], msg[53], add[128], lastrecommend[IDLEN+1], verb[3];
-    char ans, getans, pushverb GCC_UNUSED;
+    char ans;
 
     /* 081122.cache: 推文時間限制 */
     static time_t next = 0;
@@ -3185,7 +3185,7 @@ post_recommend(
             if ((ans = next - time(NULL)) > 0)
             {
                 sprintf(fpath, "還有 %d 秒才能推文喔", ans);
-                vmsg(fpath);
+                vmsg_xo(xo, fpath);
                 return XO_FOOT;
             }
         }
@@ -3220,90 +3220,75 @@ post_recommend(
 
         /* 081121.cache: 推噓文功能 */
         /* 081122.cache: 自訂推噓文動詞 */
-        if (brd->battr & BRD_PUSHSNEER)
+        if (brd->battr & (BRD_PUSHSNEER | BRD_PUSHDEFINE))
         {
-            //addscore = 0;
-            //switch (ans = vans("◎ 評論 1)推文 2)噓文 3)留言 ？[Q] "))
-            //考量夢大已經習慣推文是箭頭符號
-            switch (ans = vans("◎ 評論 1)推文 2)噓文 ？[Q] "))
-            {
-                case '1':
-                    getans = vget(B_LINES_REF, 0, "推文：", msg, 53, DOECHO);
-                    addscore = 1;
-                    break;
-                case '2':
-                    getans = vget(B_LINES_REF, 0, "噓文：", msg, 53, DOECHO);
-                    addscore = -1;
-                    break;
-                case '3':
-                    getans = vget(B_LINES_REF, 0, "留言：", msg, 53, DOECHO);
-                    addscore = 0;
-                    break;
-                default:
-                    getans = 0;
-                    break;
-            }
+            const char *const choices = (brd->battr & BRD_PUSHDEFINE) ?
+                "◎ 評論 1)推文 2)噓文 3)留言 4)自訂推文 5)自訂噓文 ？[Q] "
+                // : "◎ 評論 1)推文 2)噓文 3)留言 ？[Q] " // 考量夢大已經習慣推文是箭頭符號
+                : "◎ 評論 1)推文 2)噓文 ？[Q] ";
+            ans = vans_xo(xo, choices);
+            if (ans == 0 || (ans > '3' && !(brd->battr & BRD_PUSHDEFINE)))
+                ans = 'Q'; // Invalid choice
         }
-        else if (brd->battr & BRD_PUSHDEFINE)
+        else
         {
-            //addscore = 0;
-            switch (ans = vans("◎ 評論 1)推文 2)噓文 3)留言 4)自訂推文 5)自訂噓文 ？[Q] "))
-            {
-                case '1':
-                    getans = vget(B_LINES_REF, 0, "推文：", msg, 53, DOECHO);
-                    strcpy(verb, "推");
-                    addscore = 1;
-                    break;
-                case '2':
-                    getans = vget(B_LINES_REF, 0, "噓文：", msg, 53, DOECHO);
-                    strcpy(verb, "噓");
-                    addscore = -1;
-                    break;
-                case '3':
-                    getans = vget(B_LINES_REF, 0, "留言：", msg, 53, DOECHO);
-                    addscore = 0;
-                    break;
+            ans = 0;
+        }
 
+        {
+            const char *prompt = NULL;
+            switch (ans)
+            {
+                default:
+                case 'Q':
+                    break;
+                case '1':
                 case '4':
-                    pushverb = vget(B_LINES_REF, 0, "請輸入自訂的正面動詞：", verb, 3, DOECHO);
-                    eof = strlen(verb);
-                    if (eof<2)
+                    prompt = "推文：";
+                    if (ans == '1')
                     {
-                        zmsg("動詞須為一個中文字元或者兩個英文字元");
-                        return XO_FOOT;
+                        if (brd->battr & BRD_PUSHSNEER)
+                            strcpy(verb, "→");
+                        else
+                            strcpy(verb, "推");
                     }
-                    getans = vget(B_LINES_REF, 0, "推文：", msg, 53, DOECHO);
                     addscore = 1;
                     break;
-
+                case '2':
                 case '5':
-                    pushverb = vget(B_LINES_REF, 0, "請輸入自訂的負面動詞：", verb, 3, DOECHO);
-                    eof = strlen(verb);
-                    if (eof<2)
-                    {
-                        zmsg("動詞須為一個中文字元或者兩個英文字元");
-                        return XO_FOOT;
-                    }
-                    getans = vget(B_LINES_REF, 0, "噓文：", msg, 53, DOECHO);
+                    prompt = "噓文：";
+                    if (ans == '2')
+                        strcpy(verb, "噓");
                     addscore = -1;
                     break;
-
-                default:
-                    getans = 0;
-                    break;
+                case 0:
+                case '3':
+                    prompt = (ans == 0) ? "推文：" : "留言：";
+                    if (brd->battr & BRD_PUSHSNEER)
+                        strcpy(verb, "");
+                    else
+                        strcpy(verb, "→");
+                    addscore = 0;
             }
-        }
-        else
-        {
-            getans = vget(B_LINES_REF, 0, "推文：", msg, 53, DOECHO);
-            addscore = 0;
-        }
+            if (ans == '4' || ans == '5')
+            {
+                const char *const prompt_verb = (ans == '4') ?
+                    "請輸入自訂的正面動詞："
+                    : "請輸入自訂的負面動詞：";
+                vget_xo(xo, B_LINES_REF, 0, prompt_verb, verb, 3, DOECHO);
+                if (strlen(verb) < 2)
+                {
+                    zmsg("動詞須為一個中文字元或者兩個英文字元");
+                    return XO_FOOT;
+                }
+            }
 
-        /* 081121.cache: 後悔的機會 */
-        if (getans)
-            ans = vans("請確定是否送出 ? [y/N]");
-        else
-            ans = 'n';
+            /* 081121.cache: 後悔的機會 */
+            if (prompt && vget_xo(xo, B_LINES_REF, 0, prompt, msg, 53, DOECHO))
+                ans = vans_xo(xo, "請確定是否送出 ? [y/N]");
+            else
+                ans = 'n';
+        }
 
         //更新資料操硬碟
         pos = seek_rec(xo, pos, hdr);
@@ -3363,6 +3348,7 @@ post_recommend(
             }
             else //無噓文相容性
             {
+                addscore = 1;
                 if (hdr->recommend < 99)
                     hdr->recommend++;
             }
@@ -3374,26 +3360,7 @@ post_recommend(
 
             /* 081121.cache: 推噓文和普通推薦有不同的outs */
             /* 081122.cache: 自訂推噓文動詞 */
-            if (brd->battr & BRD_PUSHSNEER)
-            {
-                if (addscore == 1)
-                    sprintf(add, "\x1b[1;33m→ %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
-                else if (addscore == -1)
-                    sprintf(add, "\x1b[1;31m噓\x1b[m \x1b[1;33m%*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
-                else
-                    sprintf(add, "\x1b[m\x1b[1;33m   %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
-            }
-            else if (brd->battr & BRD_PUSHDEFINE)
-            {
-                if (addscore == 1)
-                    sprintf(add, "\x1b[1;33m%2.2s %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", verb, IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
-                else if (addscore == -1)
-                    sprintf(add, "\x1b[1;31m%2.2s\x1b[m \x1b[1;33m%*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", verb, IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
-                else
-                    sprintf(add, "\x1b[1;33m→\x1b[m \x1b[1;33m%*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
-            }
-            else
-                sprintf(add, "\x1b[1;33m→ %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, cuser.userid, msg, Btime_any(&hdr->pushtime)+3);
+            rmsg_sprint(add, addscore, verb, cuser.userid, msg, hdr->pushtime);
             /*
             if (dashf(fpath))
                 f_cat(fpath, add);
@@ -3520,7 +3487,7 @@ post_showBRD_setting(
     else
         prints("\n\n您目前 沒有 此看板的管理權限");
 
-    vmsg(NULL);
+    vmsg_xo(xo, NULL);
 
     return XO_HEAD;
 }
@@ -3541,17 +3508,17 @@ post_FriendSet(
     oldbrd = bshm->bcache + bno;
     memcpy(&newbrd, oldbrd, sizeof(BRD));
 
-    if (vans("確定要變更看板權限？[y/N] ") != 'y')
+    if (vans_xo(xo, "確定要變更看板權限？[y/N] ") != 'y')
         return XO_HEAD;
 
     //更改旗標
     if (newbrd.readlevel & PERM_SYSOP) {
         newbrd.readlevel = 0;
-        vmsg("目前為公開看板");
+        vmsg_xo(xo, "目前為公開看板");
     }
     else {
         newbrd.readlevel = PERM_SYSOP;
-        vmsg("目前為好友看板");
+        vmsg_xo(xo, "目前為好友看板");
     }
 
     memcpy(oldbrd, &newbrd, sizeof(BRD));
@@ -3578,15 +3545,15 @@ post_battr_score(
     oldbrd = bshm->bcache + bno;
     memcpy(&newbrd, oldbrd, sizeof(BRD));
 
-    switch (vans("◎推文設定 1)推文功\能 2)噓文 3)自訂動詞 4)同ID限制 5)時間限制 [Q] "))
+    switch (vans_xo(xo, "◎推文設定 1)推文功\能 2)噓文 3)自訂動詞 4)同ID限制 5)時間限制 [Q] "))
     {
         case '1':
-            if (vans("確定要變更推文設定？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更推文設定？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_PRH) {
                 newbrd.battr &= ~BRD_PRH;
-                vmsg("允許\推文");
+                vmsg_xo(xo, "允許\推文");
             }
             else {
                 newbrd.battr |= BRD_PRH;
@@ -3594,73 +3561,73 @@ post_battr_score(
                 newbrd.battr &= ~BRD_PUSHTIME;
                 newbrd.battr &= ~BRD_PUSHSNEER;
                 newbrd.battr &= ~BRD_PUSHDEFINE;
-                vmsg("禁止推文");
+                vmsg_xo(xo, "禁止推文");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '2':
-            if (vans("確定要變更噓文模式？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更噓文模式？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_PUSHSNEER) {
                 newbrd.battr &= ~BRD_PUSHSNEER;
-                vmsg("關閉噓文模式");
+                vmsg_xo(xo, "關閉噓文模式");
             }
             else {
                 newbrd.battr |= BRD_PUSHSNEER;
                 newbrd.battr &= ~BRD_PUSHDEFINE;
-                vmsg("開啟噓文模式");
+                vmsg_xo(xo, "開啟噓文模式");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '3':
-            if (vans("確定要變更自訂推文動詞模式？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更自訂推文動詞模式？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_PUSHDEFINE) {
                 newbrd.battr &= ~BRD_PUSHDEFINE;
-                vmsg("關閉自訂推文動詞");
+                vmsg_xo(xo, "關閉自訂推文動詞");
             }
             else {
                 newbrd.battr |= BRD_PUSHDEFINE;
                 newbrd.battr &= ~BRD_PUSHSNEER;
-                vmsg("開啟自訂推文動詞");
+                vmsg_xo(xo, "開啟自訂推文動詞");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '4':
-            if (vans("確定要變更ID連推限制？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更ID連推限制？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_PUSHDISCON) {
                 newbrd.battr &= ~BRD_PUSHDISCON;
-                vmsg("同ID允許\連推");
+                vmsg_xo(xo, "同ID允許\連推");
             }
             else {
                 newbrd.battr |= BRD_PUSHDISCON;
-                vmsg("同ID禁止連推");
+                vmsg_xo(xo, "同ID禁止連推");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '5':
-            if (vans("確定要變更時間連推限制？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更時間連推限制？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_PUSHTIME) {
                 newbrd.battr &= ~BRD_PUSHTIME;
-                vmsg("允許\快速連推");
+                vmsg_xo(xo, "允許\快速連推");
             }
             else {
                 newbrd.battr |= BRD_PUSHTIME;
-                vmsg("禁止快速連推");
+                vmsg_xo(xo, "禁止快速連推");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
@@ -3690,15 +3657,15 @@ post_rule(
     oldbrd = bshm->bcache + bno;
     memcpy(&newbrd, oldbrd, sizeof(BRD));
 
-    switch (vans("◎看板設定 1)關板唯讀 2)作者修文 3)轉錄文章 4)禁注音文 5)RSS功\能 [Q] "))
+    switch (vans_xo(xo, "◎看板設定 1)關板唯讀 2)作者修文 3)轉錄文章 4)禁注音文 5)RSS功\能 [Q] "))
     {
         case '1':
-            if (vans("確定要變更看板唯讀設定？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更看板唯讀設定？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_NOREPLY) {
                 newbrd.battr &= ~BRD_NOREPLY;
-                vmsg("取消唯讀");
+                vmsg_xo(xo, "取消唯讀");
             }
             else {
                 newbrd.battr |= BRD_NOREPLY;
@@ -3707,71 +3674,71 @@ post_rule(
                 newbrd.battr &= ~BRD_PUSHTIME;
                 newbrd.battr &= ~BRD_PUSHSNEER;
                 newbrd.battr &= ~BRD_PUSHDEFINE;
-                vmsg("看板唯讀 - 禁止發文回文及推文");
+                vmsg_xo(xo, "看板唯讀 - 禁止發文回文及推文");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '2':
-            if (vans("確定要變更作者修文設定？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更作者修文設定？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_MODIFY) {
                 newbrd.battr &= ~BRD_MODIFY;
-                vmsg("允許\作者修文");
+                vmsg_xo(xo, "允許\作者修文");
             }
             else {
                 newbrd.battr |= BRD_MODIFY;
-                vmsg("禁止作者修文");
+                vmsg_xo(xo, "禁止作者修文");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '3':
-            if (vans("確定要變更轉錄文章設定？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更轉錄文章設定？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_NOFORWARD) {
                 newbrd.battr &= ~BRD_NOFORWARD;
-                vmsg("允許\轉錄文章");
+                vmsg_xo(xo, "允許\轉錄文章");
             }
             else {
                 newbrd.battr |= BRD_NOFORWARD;
-                vmsg("禁止轉錄文章");
+                vmsg_xo(xo, "禁止轉錄文章");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '4':
-            if (vans("確定要變更注音文限制設定？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更注音文限制設定？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_NOPHONETIC) {
                 newbrd.battr &= ~BRD_NOPHONETIC;
-                vmsg("允許\注音文");
+                vmsg_xo(xo, "允許\注音文");
             }
             else {
                 newbrd.battr |= BRD_NOPHONETIC;
-                vmsg("禁止注音文");
+                vmsg_xo(xo, "禁止注音文");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
             return XO_HEAD;
 
         case '5':
-            if (vans("確定要變更看板RSS設定？[y/N] ") != 'y')
+            if (vans_xo(xo, "確定要變更看板RSS設定？[y/N] ") != 'y')
                 return XO_HEAD;
             //更改旗標
             if (newbrd.battr & BRD_RSS) {
                 newbrd.battr &= ~BRD_RSS;
-                vmsg("關閉RSS功\能");
+                vmsg_xo(xo, "關閉RSS功\能");
             }
             else {
                 newbrd.battr |= BRD_RSS;
-                vmsg("開啟RSS功\能");
+                vmsg_xo(xo, "開啟RSS功\能");
             }
             memcpy(oldbrd, &newbrd, sizeof(BRD));
             rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
@@ -3799,7 +3766,7 @@ post_battr_threshold(
 
     brd_fpath(fpath, newbrd.brdname, FN_THRESHOLD);
 
-    switch (ans = vans("◎ 發文門檻限制 1)不限制門檻 2)限制門檻 [Q] "))
+    switch (ans = vans_xo(xo, "◎ 發文門檻限制 1)不限制門檻 2)限制門檻 [Q] "))
     {
         case '1':
             newbrd.battr &= ~BRD_THRESHOLD;
@@ -3812,7 +3779,7 @@ post_battr_threshold(
 
             if (echo & GCARRY)
                 sprintf(buf, "%d", th.age);
-            if (!vget(B_LINES_REF, 0, "請輸入發文門檻－註冊幾天以上？", buf, 4, echo))
+            if (!vget_xo(xo, B_LINES_REF, 0, "請輸入發文門檻－註冊幾天以上？", buf, 4, echo))
                 return XO_HEAD;
             if ((num = atoi(buf)) < 0)
                 return XO_HEAD;
@@ -3820,7 +3787,7 @@ post_battr_threshold(
 
             if (echo & GCARRY)
                 sprintf(buf, "%d", th.numlogins);
-            if (!vget(B_LINES_REF, 0, "請輸入發文門檻－登入幾次以上？", buf, 4, echo))
+            if (!vget_xo(xo, B_LINES_REF, 0, "請輸入發文門檻－登入幾次以上？", buf, 4, echo))
                 return XO_HEAD;
             if ((num = atoi(buf)) < 0)
                 return XO_HEAD;
@@ -3828,7 +3795,7 @@ post_battr_threshold(
 
             if (echo & GCARRY)
                 sprintf(buf, "%d", th.numposts);
-            if (!vget(B_LINES_REF, 0, "請輸入發文門檻－發文幾篇以上？", buf, 4, echo))
+            if (!vget_xo(xo, B_LINES_REF, 0, "請輸入發文門檻－發文幾篇以上？", buf, 4, echo))
                 return XO_HEAD;
             if ((num = atoi(buf)) < 0)
                 return XO_HEAD;
@@ -3836,7 +3803,7 @@ post_battr_threshold(
 
             if (echo & GCARRY)
                 sprintf(buf, "%d", th.point2);
-            if (!vget(B_LINES_REF, 0, "請輸入發文門檻－劣文幾篇以下？", buf, 4, echo))
+            if (!vget_xo(xo, B_LINES_REF, 0, "請輸入發文門檻－劣文幾篇以下？", buf, 4, echo))
                 return XO_HEAD;
             if ((num = atoi(buf)) < 0)
                 return XO_HEAD;
@@ -3852,7 +3819,7 @@ post_battr_threshold(
     }
 
     if ((memcmp(&newbrd, oldbrd, sizeof(BRD)) || (ans == '2')) &&
-            vans(msg_sure_ny) == 'y')
+            vans_xo(xo, msg_sure_ny) == 'y')
     {
         memcpy(oldbrd, &newbrd, sizeof(BRD));
         rec_put(FN_BRD, &newbrd, sizeof(BRD), bno);
@@ -3876,7 +3843,7 @@ post_usies_BMlog(
     {
         brd_fpath(fpath, currboard, "usies");
         if (more(fpath, (char *) -1) >= 0 &&
-                vans("請問是否刪除這些看板閱\讀記錄(y/N)？[N] ") == 'y')
+                vans_xo(xo, "請問是否刪除這些看板閱\讀記錄(y/N)？[N] ") == 'y')
             unlink(fpath);
     }
     else
@@ -3910,12 +3877,12 @@ post_manage(
         "ZLevel  發文門檻設定",
         "Usies   看板閱\讀記錄",
         "Quit    離開選單",
-        NULL
+        NULL,
     };
 
     if (!(bbstate & STAT_BOARD))
     {
-        vmsg(NULL);
+        vmsg_xo(xo, NULL);
         return XO_HEAD;
     }
 
@@ -3982,14 +3949,14 @@ post_aid(
         return XO_FOOT;
 
     /* 請求使用者輸入文章代碼(AID) */
-    if (!vget(B_LINES_REF, 0, "請輸入文章代碼(AID)： #", aid, sizeof(aid), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "請輸入文章代碼(AID)： #", aid, sizeof(aid), DOECHO))
         return XO_FOOT;
     query = aid;
 
     for (pos = 0; pos < max; pos++)
     {
         const char *tag;
-        xo->pos = pos;
+        xo->pos[xo->cur_idx] = pos;
         xo_load(xo, sizeof(HDR));
         /* 設定HDR資訊 */
         hdr = (const HDR *) xo_pool_base + pos;
@@ -4006,7 +3973,7 @@ post_aid(
     if (!match)
     {
         zmsg("找不到文章，是不是找錯看板了呢？");
-        xo->pos = currpos;  /* 恢復xo->pos紀錄 */
+        xo->pos[xo->cur_idx] = currpos;  /* 恢復xo->pos紀錄 */
     }
 
     return XO_LOAD;
@@ -4066,7 +4033,7 @@ post_spam(
     sprintf(msg, "%s\n", fpath);
     f_cat(FN_SPAMPATH_LOG, msg);
 
-    vmsg(fpath);
+    vmsg_xo(xo, fpath);
 
     return XO_FOOT;
 }
@@ -4152,7 +4119,7 @@ KeyFuncList post_cb =
     {'_' | XO_POSF, {.posf = post_bottom}},
 #endif
 
-    {'h', {post_help}}
+    {'h', {post_help}},
 };
 
 
@@ -4222,7 +4189,7 @@ static int *xypostI;
 
 /* Thor: first ypost pos in ypost_xo.key */
 
-static int comebackPos;
+static int comebackPos[XO_NCUR];
 
 /* Thor: first xpost pos in xpost_xo.key */
 
@@ -4240,7 +4207,7 @@ xpost_body(
 #if 0
     if (max <= 0)
     { /* Thor.980911: 註解: 以防萬一用 */
-        vmsg(MSG_XY_NONE);
+        vmsg_xo(xo, MSG_XY_NONE);
         return XO_QUIT;
     }
 #endif
@@ -4292,7 +4259,7 @@ xypost_pick(
 
     xyp = xypostI;
 
-    pos = xo->pos;
+    pos = xo->pos[xo->cur_idx];
     top = xo->top;
     scrl_up = (pos < top);
     xo->top = BMAX(top + ((pos - top + scrl_up) / XO_TALL - scrl_up) * XO_TALL, 0);
@@ -4374,7 +4341,7 @@ xpost_browse(
 #ifdef  HAVE_USER_MODIFY
         if (xmode & POST_CURMODIFY)
         {
-            vmsg("此文章正在修改中!!");
+            vmsg_xo(xo, "此文章正在修改中!!");
             break;
         }
 #endif
@@ -4396,7 +4363,7 @@ xpost_browse(
         //    if ((key = more(fpath, MSG_POST)) == -1)
         //      break;
 
-        comebackPos = hdr->xid;
+        comebackPos[xo->cur_idx] = hdr->xid;
         /* Thor.980911: 從串接模式回來時要回到看過的那篇文章位置 */
 
         cmd = XO_HEAD;
@@ -4452,7 +4419,7 @@ xpost_browse(
             case 'F':/*float.101109: 修正鎖文可轉寄*/
                 if ((hdr->xmode & POST_LOCK) && !HAS_PREM(PERM_SYSOP))
                 {
-                    vmsg("鎖定文章不能轉寄");
+                    vmsg_xo(xo, "鎖定文章不能轉寄");
                     return XO_NONE;
                 }
                 else
@@ -4473,7 +4440,7 @@ xpost_browse(
                     if (pos >= xo->max)
                         return cmd;
 
-                    xo->pos = pos;
+                    xo->pos[xo->cur_idx] = pos;
 
                     if (pos >= xo->top + XO_TALL)
                         xo->top = BMAX(top + ((pos - top) / XO_TALL) * XO_TALL, 0);
@@ -4539,7 +4506,7 @@ static KeyFuncList xpost_cb =
 #endif
     {'x' | XO_POSF, {.posf = post_cross}},
 
-    {'h', {xpost_help}}
+    {'h', {xpost_help}},
 };
 #endif  /* #ifdef XZ_XPOST */
 
@@ -4564,24 +4531,24 @@ XoXpost(                        /* Thor: call from post_cb */
 
     if (xz[XZ_XPOST - XO_ZONE].xo)
     {
-        vmsg("你已經使用了串接模式");
+        vmsg_xo(xo, "你已經使用了串接模式");
         return XO_FOOT;
     }
 
     /* input condition */
     /* 090928.cache: 直接進入串接模式 */
-    //  mode = vans("◎ 0)串接 1)新文章 2)LocalPost [0]：") - '0';
+    //  mode = vans_xo(xo, "◎ 0)串接 1)新文章 2)LocalPost [0]：") - '0';
     //  if (mode > 2 || mode < 0)
     mode = 0;
 
     if (!mode)
     {
         key = xypostKeyword;
-        filter_title = vget(B_LINES_REF, 0, MSG_XYPOST, key, sizeof(xypostKeyword), GCARRY);
+        filter_title = vget_xo(xo, B_LINES_REF, 0, MSG_XYPOST, key, sizeof(xypostKeyword), GCARRY);
         str_lower(buf, key);
         key = buf;
 
-        if ((filter_author = vget(B_LINES_REF, 0, "[串接模式]作者：", author, 30, DOECHO)))
+        if ((filter_author = vget_xo(xo, B_LINES_REF, 0, "[串接模式]作者：", author, 30, DOECHO)))
         {
             filter_author = strlen(author);
             str_lower(author, author);
@@ -4597,7 +4564,7 @@ XoXpost(                        /* Thor: call from post_cb */
 
     if (fimage == (char *) -1)
     {
-        vmsg("目前無法開啟索引檔");
+        vmsg_xo(xo, "目前無法開啟索引檔");
         return XO_FOOT;
     }
 
@@ -4703,7 +4670,7 @@ XoXpost(                        /* Thor: call from post_cb */
     {
         free(chain);
         free(plist);
-        vmsg(MSG_XY_NONE);
+        vmsg_xo(xo, MSG_XY_NONE);
         return XO_FOOT;
     }
 
@@ -4732,11 +4699,13 @@ XoXpost(                        /* Thor: call from post_cb */
 
     free(xz[XZ_XPOST - XO_ZONE].xo);
 
-    comebackPos = pos;      /* Thor: record pos, future use */
+    memcpy(comebackPos, xo->pos, sizeof(xo->pos)); /* Thor: record pos, future use */
     xz[XZ_XPOST - XO_ZONE].xo = xt = xo_new(xo->dir);
     xt->cb = xpost_cb;
     xt->recsiz = sizeof(HDR);
-    xt->pos = 0;
+    xt->xz_idx = XZ_INDEX_XPOST;
+    for (int i = 0; i < COUNTOF(xt->pos); ++i)
+        xt->pos[i] = 0;
     xt->max = sum;
     xt->xyz = xo->xyz;
     xt->key = XZ_XPOST;
@@ -4745,7 +4714,7 @@ XoXpost(                        /* Thor: call from post_cb */
 
     /* set xo->pos for new location */
 
-    xo->pos = comebackPos;
+    memcpy(xo->pos, comebackPos, sizeof(xo->pos));
 
     /* free xpost_xo */
 

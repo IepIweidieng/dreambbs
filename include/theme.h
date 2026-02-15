@@ -62,7 +62,7 @@
 /* 訊息字串：*_neck() 時的 necker 都抓出來定義在這       */
 /* ----------------------------------------------------- */
 
-#define NECKBOARD  "  [←]主選單 [→]閱\讀 [↑↓]選擇 [c]篇數 [y]載入 [/]搜尋 [s]看板 [h]說明\n" \
+#define NECKBOARD  "  [←]主選單 [→]閱\讀 [↑↓]選擇 [c]篇數 [y]列zap [/]搜尋 [s]看板 [h]說明\n" \
             COLOR3 "  %-7s看  板            %-*s人氣 板    主      \x1b[m"
 
 /*#define NECKGEM1 \
@@ -73,7 +73,13 @@
                    "  [←]離開 [→]瀏覽 [f]模式 [C]暫存 [h]說明 "
                    /*r2.20170802: disable some tips in case of confusion*/
 
-#define NECKGEM2 \
+#define NECKGEM2_WAY0 \
+            COLOR0 "  編號     主              題%*s                                                  \x1b[m"
+
+#define NECKGEM2_WAY1 \
+            COLOR0 "  編號     主              題%*s                             [檔      名] [日  期]\x1b[m"
+
+#define NECKGEM2_WAY2 \
             COLOR0 "  編號     主              題%*s                             [編      選] [日  期]\x1b[m"
 
 #define NECKPOST \
@@ -156,16 +162,6 @@
 #define NECK_LISTUSR \
                    "  [←]離開 a)新增 d)刪除 s)重整 TAB)切換名單 T)更改群組名稱 /)搜尋\n" \
             COLOR3 "  編號     使用者 ID%*s                                                           \x1b[m"
-
-/*#define NECK_MAILGEM1 \
-                   "  [←]離開 [→]瀏覽 [f]模式 [C]暫存 [F]轉寄 [Z]下載 [h]說明 "
-*/
-#define NECK_MAILGEM1 \
-                   "  [←]離開 [→]瀏覽 [f]模式 [C]暫存 [h]說明 "
-                   /*r2.20170802: disable "Z" option in case of confusion*/
-
-#define NECK_MAILGEM2 \
-            COLOR0 "  編號     主              題%*s                             [編      選] [日  期]\x1b[m"
 
 #define NECK_MEMORANDUM \
                    "  [←]離開 ^P)新增 c)修改 d)刪除 s)重整 [h]elp\n" \
@@ -267,7 +263,7 @@
 #define ORIGIN_TAG_PIC \
     "\x1b[1;44;32m  ◢\x1b[0;32;44m◣   \x1b[1;37m︵︵     \x1b[30m█▔◣ █▔█ █▔▔ █▔█ █▆▉ █   █▔█ █◣█ █▔\x1b[31m● \x1b[m\n" \
     "\x1b[1;32;44m◢\x1b[42m◤\x1b[0;44;32m█◣\x1b[1m◢\x1b[0;32;44m◣ \x1b[1;37m︵︵ \x1b[0;37;44m█  █ █▁◤ █▁▁ █▁█ ▉▉▉ █   █▁█ █◥█ █  █ \x1b[m\n" \
-    "\x1b[1;36;42m夢之大地 逼逼ㄟ四 \x1b[37m█▁◤ █  █ █▁▁ █  █ ▉▉▉ █▁ █  █ █  █ █▁◤ \x1b[m\n"
+    "\x1b[1;36;42m" BOARDNAME " 逼逼ㄟ四 \x1b[37m█▁◤ █  █ █▁▁ █  █ ▉▉▉ █▁ █  █ █  █ █▁◤ \x1b[m\n"
 #endif
 
 /* `ORIGIN_TAG_SITENAME` should start and end with a space after excluding ANSI escapes */
@@ -300,9 +296,5 @@ CPP_PRAGMA(GCC error "Customizing `ORIGIN_TAG` by defining it elsewhere is no lo
 /* ----------------------------------------------------- */
 /* 其他訊息字串                                          */
 /* ----------------------------------------------------- */
-
-//for M3_USE_PFTERM
-#define FILEDFG            0
-#define FILEDBG            7
 
 #endif                          /* THEME_H */

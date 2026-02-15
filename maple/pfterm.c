@@ -261,10 +261,17 @@ static int vkey_is_typeahead(void)
 #define FTSZ_MIN_COL     80
 #define FTSZ_MAX_COL     320
 
+#define FTTHEME_DARK     0
+#define FTTHEME_BRIGHT   1
+
+#define FTATTR_DEFAULT        0x07
+#define FTATTR_DEFAULT_DARK   0x07
+#define FTATTR_DEFAULT_BRIGHT 0x70
+#define FTATTR_DEFAULT_THEME  (ftattr)((ft.theme == FTTHEME_BRIGHT) ? FTATTR_DEFAULT_BRIGHT : FTATTR_DEFAULT_DARK)
 #define FTCHAR_ERASE     ' '
-#define FTATTR_ERASE     0x07
+#define FTATTR_ERASE          FTATTR_DEFAULT
+#define FTATTR_ERASE_THEME    FTATTR_DEFAULT_THEME
 #define FTCHAR_BLANK     ' '
-#define FTATTR_DEFAULT   FTATTR_ERASE
 #define FTCHAR_INVALID_DBCS '?'
 // #define FTATTR_TRANSPARENT 0x80
 #define FTCATTR_DEFAULT  0x00
@@ -296,6 +303,7 @@ static int vkey_is_typeahead(void)
 typedef unsigned char ftchar;   // primitive character type
 typedef unsigned char ftattr;   // primitive attribute type
 typedef unsigned char ftcattr;  // primitive type for cursor attributes
+typedef unsigned char fttheme;  // primitive type for dark/bright mode
 
 //////////////////////////////////////////////////////////////////////////
 // Flat Terminal Structure
@@ -307,13 +315,14 @@ typedef struct
     ftattr  **amap[2];      // attribute map
     ftchar  *dmap;          // dirty map
     ftchar  *dcmap;         // processed display map
+    fttheme theme;          // dark/bright mode
     ftattr  attr;
     int     rows, cols;
     int     y, x;
     int     sy, sx;   // stored cursor
     int     mi;       // map index, mi = current map and (1-mi) = old map
     int     dirty;
-    int     scroll;
+    int     scroll;   // Positive: Scrolling up (forward)
 
     // memory allocation
     int     mrows, mcols;
@@ -359,6 +368,8 @@ static FlatTerm ft;
 #define FTATTR_BLINK    0x80
 #define FTATTR_DEFAULT_FG   (FTATTR_GETFG(FTATTR_DEFAULT))
 #define FTATTR_DEFAULT_BG   (FTATTR_GETBG(FTATTR_DEFAULT))
+#define FTATTR_DEFAULT_FG_THEME (FTATTR_GETFG(FTATTR_DEFAULT_THEME))
+#define FTATTR_DEFAULT_BG_THEME (FTATTR_GETBG(FTATTR_DEFAULT_THEME))
 #define FTATTR_MAKE(f, b)   (((f)<<FTATTR_FGSHIFT)|((b)<<FTATTR_BGSHIFT))
 #define FTCHAR_ISBLANK(x)   ((x) == (FTCHAR_BLANK))
 
@@ -438,12 +449,16 @@ void    attrset     (ftattr attr);
 void    attrsetfg   (ftattr attr);
 void    attrsetbg   (ftattr attr);
 
+// theme
+fttheme themeget    (void);
+bool    themeset    (fttheme);
+
 // cursor
 void    getyx       (int *y, int *x);
 void    getmaxyx    (int *y, int *x);
 void    move        (int y, int x);
 
-// clear
+// clear (filled with theme default colors)
 void    clear       (void); // clrscr + move(0, 0)
 void    clrtoeol    (void); // end of line
 void    clrtobot    (void);
@@ -453,6 +468,7 @@ void    clrcurln    (void); // whole line
 void    clrtobeg    (void); // begin of line
 void    clrtohome   (void);
 void    clrscr      (void); // clear and keep cursor untouched
+void    clrscrraw   (void); // fill with terminal default colors
 void    clrregion   (int r1, int r2); // clear [r1, r2], bi-directional.
 
 // window control
@@ -465,8 +481,8 @@ void    redrawwin   (void); // invalidate whole screen
 int     typeahead   (int fd);// prevent refresh if input queue is not empty
 
 // scrolling
-void    scroll      (void);     // scroll up
-void    rscroll     (void);     // scroll down
+void    scroll      (void);     // scroll up (forward)
+void    rscroll     (void);     // scroll down (backward)
 void    scrl        (int rows);
 
 // output (ncurses flavor)
@@ -557,8 +573,8 @@ initscr(void)
     resizeterm(FTSZ_DEFAULT_ROW, FTSZ_DEFAULT_COL);
 
     // clear both pages
-    ft.mi = 0; clrscr();
-    ft.mi = 1; clrscr();
+    ft.mi = 0; clrscrraw();
+    ft.mi = 1; clrscrraw();
     ft.mi = 0;
 
     // typeahead
@@ -566,6 +582,9 @@ initscr(void)
 
     fterm_rawclear();
     move(0, 0);
+
+    if (FTATTR_DEFAULT_THEME != FTATTR_DEFAULT)
+        redrawwin();
 }
 
 int
@@ -656,8 +675,10 @@ resizeterm(int rows, int cols)
         }
 
         // do mrows/mcols assignment here, because we had 2 maps running loop above.
-        if (cols > ft.mcols) ft.mcols = cols;
-        if (rows > ft.mrows) ft.mrows = rows;
+        if (cols > ft.mcols)
+            ft.mcols = cols;
+        if (rows > ft.mrows)
+            ft.mrows = rows;
         dirty = 1;
     }
 
@@ -667,7 +688,7 @@ resizeterm(int rows, int cols)
     {
         memset(FTCMAP[i], FTCHAR_ERASE,
                 (cols) * sizeof(ftchar));
-        memset(FTAMAP[i], FTATTR_ERASE,
+        memset(FTAMAP[i], FTATTR_ERASE_THEME,
                 (cols) * sizeof(ftattr));
     }
     if (cols > ft.cols)
@@ -676,7 +697,7 @@ resizeterm(int rows, int cols)
         {
             memset(FTCMAP[i]+ft.cols, FTCHAR_ERASE,
                     (cols-ft.cols) * sizeof(ftchar));
-            memset(FTAMAP[i]+ft.cols, FTATTR_ERASE,
+            memset(FTAMAP[i]+ft.cols, FTATTR_ERASE_THEME,
                     (cols-ft.cols) * sizeof(ftattr));
         }
     }
@@ -746,17 +767,45 @@ attrsetbg(ftattr attr)
     ft.attr |= ((attr << FTATTR_BGSHIFT) & FTATTR_BGMASK);
 }
 
+// theme
+fttheme themeget(void)
+{
+    return ft.theme;
+}
+
+bool themeset(fttheme theme)
+{
+    if (!(theme >= FTTHEME_DARK && theme <= FTTHEME_BRIGHT))
+        return false;
+    ft.theme = theme;
+
+    redrawwin();
+    return true;
+}
+
 // clear
 
-void
-clrscr(void)
+static void
+clrscr_with_attr(ftattr attr)
 {
     int r;
     for (r = 0; r < ft.rows; r++)
         memset(FTCMAP[r], FTCHAR_ERASE, ft.cols * sizeof(ftchar));
     for (r = 0; r < ft.rows; r++)
-        memset(FTAMAP[r], FTATTR_ERASE, ft.cols * sizeof(ftattr));
+        memset(FTAMAP[r], attr, ft.cols * sizeof(ftattr));
     fterm_markdirty();
+}
+
+void
+clrscrraw(void)
+{
+    clrscr_with_attr(FTATTR_ERASE);
+}
+
+void
+clrscr(void)
+{
+    clrscr_with_attr(FTATTR_ERASE_THEME);
 }
 
 void
@@ -772,7 +821,7 @@ clrtoeol(void)
     ft.x = ranged(ft.x, 0, ft.cols-1);
     ft.y = ranged(ft.y, 0, ft.rows-1);
     memset(FTPC, FTCHAR_ERASE,  ft.cols - ft.x);
-    memset(FTPA, FTATTR_ERASE,  ft.cols - ft.x);
+    memset(FTPA, FTATTR_ERASE_THEME,  ft.cols - ft.x);
     fterm_markdirty();
 }
 
@@ -782,7 +831,7 @@ clrtobeg(void)
     ft.x = ranged(ft.x, 0, ft.cols-1);
     ft.y = ranged(ft.y, 0, ft.rows-1);
     memset(FTCROW, FTCHAR_ERASE, ft.x+1);
-    memset(FTAROW, FTATTR_ERASE, ft.x+1);
+    memset(FTAROW, FTATTR_ERASE_THEME, ft.x+1);
     fterm_markdirty();
 }
 
@@ -791,7 +840,7 @@ clrcurrline(void)
 {
     ft.y = ranged(ft.y, 0, ft.rows-1);
     memset(FTCROW, FTCHAR_ERASE, ft.cols);
-    memset(FTAROW, FTATTR_ERASE, ft.cols);
+    memset(FTAROW, FTATTR_ERASE_THEME, ft.cols);
     fterm_markdirty();
 }
 
@@ -820,7 +869,7 @@ clrregion(int r1, int r2)
     for (; r1 <= r2; r1++)
     {
         memset(FTCMAP[r1], FTCHAR_ERASE, ft.cols);
-        memset(FTAMAP[r1], FTATTR_ERASE, ft.cols);
+        memset(FTAMAP[r1], FTATTR_ERASE_THEME, ft.cols);
     }
     fterm_markdirty();
 }
@@ -873,7 +922,7 @@ redrawwin(void)
 {
     // flip page
     fterm_flippage();
-    clrscr();
+    clrscrraw();
 
     // clear raw terminal
     fterm_rawclear();
@@ -936,10 +985,14 @@ doupdate(void)
             WORD xAttr = FTAMAP[y][x], xxAttr;
             // w32 attribute: bit swap (0, 2) and (4, 6)
             xxAttr = xAttr & 0xAA;
-            if (xAttr & 0x01) xxAttr |= 0x04;
-            if (xAttr & 0x04) xxAttr |= 0x01;
-            if (xAttr & 0x10) xxAttr |= 0x40;
-            if (xAttr & 0x40) xxAttr |= 0x10;
+            if (xAttr & 0x01)
+                xxAttr |= 0x04;
+            if (xAttr & 0x04)
+                xxAttr |= 0x01;
+            if (xAttr & 0x10)
+                xxAttr |= 0x40;
+            if (xAttr & 0x40)
+                xxAttr |= 0x10;
 
             winbuf[y*ft.cols + x].Attributes= xxAttr;
             winbuf[y*ft.cols + x].Char.AsciiChar = FTCMAP[y][x];
@@ -1223,7 +1276,7 @@ scrl(int rows)
 void
 scroll(void)
 {
-    // scroll up
+    // scroll up (forward)
     int y;
     ftchar *c0 = FTCMAP[0], *oc0 = FTOCMAP[0];
     ftattr *a0 = FTAMAP[0], *oa0 = FTOAMAP[0];
@@ -1259,7 +1312,7 @@ scroll(void)
 void
 rscroll(void)
 {
-    // scroll down
+    // scroll down (backward)
     int y;
     ftchar *c0 = FTCMAP[ft.rows -1], *oc0 = FTOCMAP[ft.rows -1];
     ftattr *a0 = FTAMAP[ft.rows -1], *oa0 = FTOAMAP[ft.rows -1];
@@ -1359,9 +1412,12 @@ outstr(const char *str)
         int isdbcs = 0;
         while (*str)
         {
-            if (isdbcs == 1) isdbcs = 2;
-            else if (FTDBCS_ISLEAD(*str)) isdbcs = 1;
-            else isdbcs = 0;
+            if (isdbcs == 1)
+                isdbcs = 2;
+            else if (FTDBCS_ISLEAD(*str))
+                isdbcs = 1;
+            else
+                isdbcs = 0;
             str++;
         }
 
@@ -1485,7 +1541,8 @@ instr       (char *str)
     // determine stopping location
     while (x >= ft.x && FTCROW[x] == FTCHAR_ERASE)
         x--;
-    if (x < ft.x) return 0;
+    if (x < ft.x)
+        return 0;
     x = x - ft.x + 1;
     memcpy(str, FTCROW+ft.x, x);
     str[x] = 0;
@@ -1505,9 +1562,11 @@ innstr      (char *str, int n)
     // determine stopping location
     while (x >= ft.x && FTCROW[x] == FTCHAR_ERASE)
         x--;
-    if (x < ft.x) return 0;
+    if (x < ft.x)
+        return 0;
     n = x - ft.x + 1;
-    if (n >= on) n = on-1;
+    if (n >= on)
+        n = on-1;
     memcpy(str, FTCROW+ft.x, n);
     str[n] = 0;
     return n;
@@ -1534,7 +1593,8 @@ inansistr   (char *str, int n)
         x--;
 
     // retrieve [rt.x, x]
-    if (x < ft.x) return 0;
+    if (x < ft.x)
+        return 0;
 
     // preserve some bytes if last attribute is not FTATTR_DEFAULT
     for (i = ft.x; n > szTrail && i <= x; i++)
@@ -1645,7 +1705,8 @@ fterm_prepare_str(int len)
             dbcs = 1; // LEAD
         else
             dbcs = 0;
-        if (x == ft.x) sdbcs = dbcs;
+        if (x == ft.x)
+            sdbcs = dbcs;
     }
 
     x = ft.x;
@@ -1656,7 +1717,8 @@ fterm_prepare_str(int len)
         len ++;
     len = ranged(len, 0, ft.cols);
     len -= x;
-    if (len < 0) len = 0;
+    if (len < 0)
+        len = 0;
 
     memset(FTCROW + x, FTCHAR_ERASE, len);
     memset(FTAROW + x, ft.attr, len);
@@ -1738,8 +1800,10 @@ fterm_exec(void)
         y = n;
         if (isdigit(*p))  // `p` points to the second param or letter `H`/`f`
             x = atoi((char*)p);
-        if (y < 0) y = 1;
-        if (x < 0) x = 1;
+        if (y < 0)
+            y = 1;
+        if (x < 0)
+            x = 1;
         move(y-1, x-1);
         break;
 
@@ -1784,7 +1848,7 @@ fterm_exec(void)
         break;
 
     case 'S':   // SU: CSI n S
-        // Scroll whole page up by n (default 1) lines.
+        // Scroll whole page up (forward) by n (default 1) lines.
         // New lines are added at the bottom.
         if (n < 1)
             n = 1;
@@ -1792,7 +1856,7 @@ fterm_exec(void)
         break;
 
     case 'T':   // SD: CSI n T
-        // Scroll whole page down by n (default 1) lines.
+        // Scroll whole page down (backward) by n (default 1) lines.
         // New lines are added at the top.
         if (n < 1)
             n = 1;
@@ -1861,7 +1925,7 @@ fterm_exec(void)
             else switch (n)
             {
             case 0:
-                attrset(FTATTR_DEFAULT);
+                attrset(FTATTR_DEFAULT_THEME);
                 ft.cattr = FTCATTR_DEFAULT;
                 break;
             case 1:
@@ -1897,10 +1961,10 @@ fterm_exec(void)
                 ft.cattr &= ~FTCATTR_CONCEAL;
                 break;
             case 39:
-                attrsetfg(FTATTR_DEFAULT_FG);
+                attrsetfg(FTATTR_DEFAULT_FG_THEME);
                 break;
             case 49:
-                attrsetbg(FTATTR_DEFAULT_BG);
+                attrsetbg(FTATTR_DEFAULT_BG_THEME);
                 break;
             case 38:
             case 48:
@@ -2056,7 +2120,10 @@ fterm_chattr(char *s, ftattr oattr, ftattr nattr)
         // lead must be 1 since this is the first check.
         // We have dead code (else *s++) here but that's simply to ease moving
         // code around.
-        if (lead) lead = 0; else *s++ = ';';
+        if (lead)
+            lead = 0;
+        else
+            *s++ = ';';
         *s++ = '0';
 
         ofg = FTATTR_DEFAULT_FG;
@@ -2066,7 +2133,10 @@ fterm_chattr(char *s, ftattr oattr, ftattr nattr)
 
     if (bold && !obold)
     {
-        if (lead) lead = 0; else *s++ = ';';
+        if (lead)
+            lead = 0;
+        else
+            *s++ = ';';
         *s++ = '1';
 
 #ifdef FTCONF_WORKAROUND_BOLD
@@ -2081,18 +2151,27 @@ fterm_chattr(char *s, ftattr oattr, ftattr nattr)
     }
     if (blink && !oblink)
     {
-        if (lead) lead = 0; else *s++ = ';';
+        if (lead)
+            lead = 0;
+        else
+            *s++ = ';';
         *s++ = '5'; // XXX 5(slow) or 6(fast)?
     }
     if (ofg != fg)
     {
-        if (lead) lead = 0; else *s++ = ';';
+        if (lead)
+            lead = 0;
+        else
+            *s++ = ';';
         *s++ = '3';
         *s++ = '0' + fg;
     }
     if (obg != bg)
     {
-        if (lead) lead = 0; else *s++ = ';';
+        if (lead)
+            lead = 0;
+        else
+            *s++ = ';';
         *s++ = '4';
         *s++ = '0' + bg;
     }
@@ -2124,7 +2203,8 @@ fterm_strdlen(const char *s)
                     break;
 
                 case '\b':
-                    if (sz) sz--;
+                    if (sz)
+                        sz--;
                     break;
 
                 case '\t':
@@ -2236,7 +2316,7 @@ fterm_rawclreol(void)
     // XXX If we skip with "background only" here, future updating
     // may get wrong attributes. Or not? (consider DBCS...)
     // if (FTATTR_GETBG(oattr) != FTATTR_GETBG(FTATTR_ERASE))
-    fterm_rawattr(FTATTR_ERASE);
+    fterm_rawattr(FTATTR_ERASE_THEME);
 #endif
 
     // EL: CSI n K, n = 0
@@ -2396,21 +2476,22 @@ void
 fterm_rawscroll (int dy)
 {
 #ifdef FTCONF_USE_ANSI_SCROLL
-    // SU: CSI n S (up)
-    // SD: CSI n T (down)
+    // SU: CSI n S (up; forward)
+    // SD: CSI n T (down; backward)
 
     char cmd = (dy > 0) ? 'S' : 'T';
     int ady = abs(dy);
     if (ady == 0)
         return;
-    if (ady >= ft.rows) ady = ft.rows;
+    if (ady >= ft.rows)
+        ady = ft.rows;
     fterm_rawcmd(ady, 1, cmd);
     ft.scroll -= dy;
 
 #else
     // VT100 flavor:
-    //  *  ESC D: scroll down
-    //  *  ESC M: scroll up
+    //  *  ESC D: scroll down (backward)
+    //  *  ESC M: scroll up (forward)
     //
     // Elder BBS systems works in a mixed way:
     // \n at (rows-1) as scroll()
@@ -2426,14 +2507,23 @@ fterm_rawscroll (int dy)
     int ady = abs(dy);
     if (ady == 0)
         return;
-    if (ady >= ft.rows) ady = ft.rows;
+    if (ady >= ft.rows)
+        ady = ft.rows;
 
     // we are not going to preserve (rx, ry)
     // so don't use fterm_move*.
     if (dy > 0)
-        fterm_rawcmd2(ft.rows, 1, 1, 'H');
+    {
+        // use a large row number in case terminal height > ft.rows
+        // The terminal height passed to resizeterm() can be unreliable
+        fterm_rawcmd2(9999, 1, 1, 'H');
+    }
     else
+    {
+        fterm_rawcmd2(ft.rows + 1 - ady, 1, 1, 'H');
+        fterm_raws(ESC_STR "[J");
         fterm_rawcmd2(1, 1, 1, 'H');
+    }
 
     for (; ady > 0; ady--)
     {
@@ -2478,7 +2568,7 @@ fterm_rawnc(int c, int n)
 void
 grayoutrect(int y, int yend, int x, int xend, int level)
 {
-    char grattr = FTATTR_DEFAULT;
+    char grattr = FTATTR_DEFAULT_THEME;
     int rx;
 
     y    = ranged(y,   0, ft.rows-1);
@@ -2696,7 +2786,9 @@ void
 fterm_rawc(int c)
 {
 #ifdef PFTERM_TEST_MAIN
-    // if (c == ESC_CHR) putchar('*'); else
+    // if (c == ESC_CHR)
+    //     putchar('*');
+    // else
     putchar(c);
 #else
     ochar(c);

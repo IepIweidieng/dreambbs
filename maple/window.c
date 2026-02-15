@@ -231,18 +231,41 @@ draw_line(              /* 在 (y, x) 的位置塞入 msg，左右仍要印出原來的彩色文字 
 /* 選項繪製                                              */
 /* ----------------------------------------------------- */
 
+static int popup2_cur_color[XO_NCUR][1 << XO_NCUR] = {
+    {7, 44},
+    {7, 41, 44, 45},
+};
+
+GCC_CONSTEXPR
+static int get_dec_attr(int cur_idx, bool is_moving)
+{
+    return is_moving ? 7 : popup2_cur_color[xo_ncur - 1][1 << cur_idx];
+}
+
+static const char *get_dec_color(int dec_attr)
+{
+    static char dec_color[32];
+    if (dec_attr >= 90)
+        sprintf(dec_color, "\x1b[1;%um", 30 + (dec_attr - 90));
+    else
+        sprintf(dec_color, "\x1b[%um", dec_attr);
+    return dec_color;
+}
 
 static void
 draw_item(
     int y, int x,
     const char *desc,
     char hotkey,
-    int mode)           /* 0:清除光棒  1:畫上光棒 */
+    int cur_st,
+    int cur_idx)
 {
     char buf[128];
+    const int color = popup2_cur_color[xo_ncur - 1][cur_st];
+    const bool met = cur_st & (1U << cur_idx);
 
-    sprintf(buf, " │%s%c %c%c%c%-25s  \x1b[m│ ",
-        mode ? COLOR4 : "\x1b[30;47m", mode ? '>' : ' ',
+    sprintf(buf, " │\x1b[%um%c %c%c%c%-25s  \x1b[m│ ",
+        color, met ? '>' : ' ',
         (hotkey == *desc) ? '[' : '(', *desc,
         (hotkey == *desc) ? ']' : ')', desc + 1);
 
@@ -250,38 +273,35 @@ draw_item(
 }
 
 
-static int      /* 回傳總共有幾個選項 */
+static void
 draw_menu(
     int y, int x,
     const char *title,
     const char *const desc[],
     char hotkey,
-    int *cur)   /* 回傳預設值所在位置 */
+    int *cur,
+    int cur_idx,
+    int dec_attr)
 {
-    int i, meet;
+    int i;
     char buf[128];
 
     draw_line(y++, x, " ╭────────────────╮ ");
 
-    sprintf(buf, " │" COLOR4 "  %-28s  \x1b[m│ ", title);
+    sprintf(buf, " │\x1b[1m%s  %-28s  \x1b[m│ ", get_dec_color(dec_attr), title);
     draw_line(y++, x, buf);
 
     draw_line(y++, x, " ├────────────────┤ ");
 
     for (i = 1; desc[i]; i++)
     {
-        meet = (desc[i][0] == hotkey);
-        draw_item(y++, x, desc[i], hotkey, meet);
-        if (meet)
-            *cur = i;
+        draw_item(y++, x, desc[i], hotkey, cursor_get_state(cur, i), cur_idx);
     }
 
     draw_line(y, x, " ╰────────────────╯ ");
 
     /* 避免在偵測左右鍵全形下，按左鍵會跳離二層選單的問題 */
     move(b_lines, 0);
-
-    return i - 1;
 }
 
 
@@ -302,6 +322,8 @@ find_cur(               /* 找 ch 這個按鍵是第幾個選項 */
 
     for (i = 1; i <= max; i++)
     {
+        if (!desc[i])
+            return i;
         cc = desc[i][0];
         if (cc >= 'A' && cc <= 'Z')
             cc |= 0x20; /* 換小寫 */
@@ -313,6 +335,29 @@ find_cur(               /* 找 ch 這個按鍵是第幾個選項 */
     return -1;
 }
 
+GCC_CONSTEXPR static int popup2_geth(int max)
+{
+    return max + 3;
+}
+
+GCC_CONSTEXPR static int popup2_getw(void)
+{
+    return 38;
+}
+
+/* returns whether the menu moved successfully */
+GCC_NONNULLS
+static int popup2_move(int cmd, int *py_ref, int *px_ref, int max)
+{
+    const int h = popup2_geth(max);
+    const int w = popup2_getw();
+    const int y_ref = gety_bound_move(cmd, *py_ref, 0, (B_LINES_REF - h) >> 1, B_LINES_REF - h);
+    const int x_ref = getx_bound_move(cmd, *px_ref, 0, (B_COLS_REF - w) >> 1, B_COLS_REF - w);
+    const bool diff = (y_ref != *py_ref) || (x_ref != *px_ref);
+    *py_ref = y_ref;
+    *px_ref = x_ref;
+    return diff;
+}
 
 /*------------------------------------------------------ */
 /* 詢問選項，可用來取代 vans()                           */
@@ -332,9 +377,11 @@ int             /* 傳回小寫字母或數字 */
 popupmenu_ans2(const char *const desc[], const char *title, int y_ref, int x_ref)
 {
     int y, x;
-    int cur, old_cur, max;
+    int cur[XO_NCUR], old_cur, max, dflt;
     int ch = KEY_NONE;
     char hotkey;
+    int cur_idx = 0;
+    bool is_moving = false;
 
     screen_backup_t old_screen;
     screen_backup_t old_screen_dark;
@@ -348,41 +395,89 @@ popupmenu_ans2(const char *const desc[], const char *title, int y_ref, int x_ref
     scr_dump(&old_screen_dark);
 
     hotkey = desc[0][0];
+    max = find_cur('\0', INT_MAX, desc) - 1;
+    dflt = find_cur(hotkey, max, desc);
+
+    for (int i = 0; i < COUNTOF(cur); ++i)
+        cur[i] = dflt;
 
 popupmenu_ans2_redraw:
     y = gety_ref(y_ref);
     x = getx_ref(x_ref);
 
     /* 畫出整個選單 */
-    max = draw_menu(y, x, title, desc, hotkey, (ch != I_RESIZETERM) ? &cur : &old_cur);
+    draw_menu(y, x, title, desc, hotkey, cur, cur_idx, get_dec_attr(cur_idx, is_moving));
     y += 2;
 
     /* 一進入，游標停在預設值 */
     if (ch != I_RESIZETERM)
-        old_cur = cur;
+        old_cur = cur[cur_idx];
 
     while (1)
     {
-        if (old_cur != cur)             /* 游標變動位置才需要重繪 */
+        if (old_cur != cur[cur_idx])   /* 游標變動位置才需要重繪 */
         {
-            draw_item(y + old_cur, x, desc[old_cur], hotkey, 0);
-            draw_item(y + cur, x, desc[cur], hotkey, 1);
-            old_cur = cur;
+            draw_item(y + old_cur, x, desc[old_cur], hotkey, cursor_get_state(cur, old_cur), cur_idx);
+            draw_item(y + cur[cur_idx], x, desc[cur[cur_idx]], hotkey, cursor_get_state(cur, cur[cur_idx]), cur_idx);
+            old_cur = cur[cur_idx];
             /* 避免在偵測左右鍵全形下，按左鍵會跳離二層選單的問題 */
             move(b_lines, 0);
         }
 
         ch = vkey();
-        if (ch == I_RESIZETERM)
+        switch (ch)
         {
+        case KEY_PGUP:
+        case KEY_PGDN:
+        case KEY_UP:
+        case KEY_DOWN:
+        case KEY_HOME:
+        case KEY_END:
+        case KEY_LEFT:
+        case KEY_RIGHT:
+            if (is_moving)
+            {
+                if (popup2_move(ch, &y_ref, &x_ref, max))
+                {
+                    ch = I_RESIZETERM;
+                    scr_restore_keep(&old_screen_dark);
+                    goto popupmenu_ans2_redraw;
+                }
+                is_moving = false;
+                draw_menu(y - 2, x, title, desc, hotkey, cur, cur_idx, get_dec_attr(cur_idx, is_moving));
+            }
+            break;
+        case I_RESIZETERM:
+        case KEY_SHIYUU:
             /* Screen size changed and redraw is needed */
             /* clear */
             scr_restore_keep(&old_screen_dark);
+            /* Keep menu in bound after resizing */
+            popup2_move(ch, &y_ref, &x_ref, max);
             goto popupmenu_ans2_redraw;
+        default:
+            ;
         }
 
         switch (ch)
         {
+        case KEY_KONAMI:
+            for (int i = xo_ncur; i < XO_NCUR; ++i)
+                cur[i] = cur[xo_ncur - 1];
+            xo_ncur = xo_ncur % XO_NCUR + 1;
+            cur_idx %= xo_ncur;
+            goto popupmenu_ans2_redraw;
+        case KEY_TAB:
+            if (xo_ncur == 1) // Plain mode
+                break;
+            is_moving = !is_moving;
+            ch = I_RESIZETERM;
+            goto popupmenu_ans2_redraw;
+        case ' ':
+            is_moving = false;
+            cur_idx = (cur_idx + 1) % xo_ncur;
+            ch = I_RESIZETERM;
+            goto popupmenu_ans2_redraw;
         case KEY_LEFT:
         case KEY_ESC:
         case Meta(KEY_ESC):
@@ -390,30 +485,30 @@ popupmenu_ans2_redraw:
         case '\n':
             scr_free(&old_screen_dark);
             scr_restore_free(&old_screen);
-            ch = (ch == KEY_RIGHT || ch == '\n') ? desc[cur][0] : desc[0][1];
+            ch = (ch == KEY_RIGHT || ch == '\n') ? desc[cur[cur_idx]][0] : desc[0][1];
             if (ch >= 'A' && ch <= 'Z')
                 ch |= 0x20;             /* 回傳小寫 */
             return ch;
 
         case KEY_UP:
-            cur = (cur == 1) ? max : cur - 1;
+            cur[cur_idx] = (cur[cur_idx] == 1) ? max : cur[cur_idx] - 1;
             break;
 
         case KEY_DOWN:
-            cur = (cur == max) ? 1 : cur + 1;
+            cur[cur_idx] = (cur[cur_idx] == max) ? 1 : cur[cur_idx] + 1;
             break;
 
         case KEY_HOME:
-            cur = 1;
+            cur[cur_idx] = 1;
             break;
 
         case KEY_END:
-            cur = max;
+            cur[cur_idx] = max;
             break;
 
         default:                /* 去找所按鍵是哪一個選項 */
             if ((ch = find_cur(ch, max, desc)) > 0)
-                cur = ch;
+                cur[cur_idx] = ch;
             break;
         }
     }

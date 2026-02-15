@@ -471,7 +471,7 @@ static int (*const ulist_cmp[]) (const void *i, const void *j) =
     ulist_cmp_host,
     ulist_cmp_mode,
     ulist_cmp_nick,
-    ulist_cmp_idle
+    ulist_cmp_idle,
 };
 
 
@@ -528,8 +528,12 @@ ulist_init(
 
     xo->max = max = pp - ulist_pool;
 
-    if (xo->pos >= max)
-        xo->pos = xo->top = 0;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+    {
+        if (xo->pos[i] >= max)
+            xo->pos[i] = xo->top = 0;
+    }
+    xo->cur_idx = 0;
 
     if ((max > 1) && (pickup_way))
     {

@@ -191,10 +191,12 @@ argify(
     str_scpy(p, line, sizeof(argifybuffer));
     for (*argvp = argv, i = 0; *p && i < MAX_ARG;)
     {
-        for (*argv++ = p; *p && !strchr("\t\r\n ", *p); p++);
+        for (*argv++ = p; *p && !strchr("\t\r\n ", *p); p++)
+            ;
         if (*p == '\0')
             break;
-        for (*p++ = '\0'; strchr("\t\r\n ", *p) && *p; p++);
+        for (*p++ = '\0'; strchr("\t\r\n ", *p) && *p; p++)
+            ;
     }
     *argv = NULL;
     return argv - *argvp;
@@ -635,7 +637,7 @@ INTERNAL_INIT daemoncmd_t cmds[] =
     {"quit",     "quit",                  1, 1, 2, 0,                        NNTP_GOODBYE_ACK_VAL, CMDquit},
     {"ihave",    "ihave mid",             2, 2, 0, NNTP_HAVEIT_VAL,          NNTP_SENDIT_VAL,      CMDihave},
     {"stat",     "stat <mid>",            2, 2, 0, NNTP_NOTHING_FOLLOWS_VAL, NNTP_DONTHAVEIT_VAL,  CMDstat},
-    {NULL,       NULL,                    0, 0, 2, 0,                        0,                    NULL}
+    {NULL,       NULL,                    0, 0, 2, 0,                        0,                    NULL},
 };
 #ifdef __cplusplus
 }  // namespace

@@ -13,9 +13,6 @@
 /* definitions of MailGem Mode */
 
 
-#define GEM_WAY         2
-static int mailgem_way;
-
 static int MailGemBufferNum;
 
 static int mailgem_add(XO *xo);
@@ -23,122 +20,6 @@ static int mailgem_paste(XO *xo);
 static int mailgem_anchor(XO *xo);
 static int mailgem_recycle(XO *xo);
 static void XoMailGem(const char *folder, const char *title);
-
-static int
-mailgem_foot(
-    XO *xo)
-{
-    outf(MSG_GEM);
-    return XO_NONE;
-}
-
-static int
-mailgem_item(
-XO *xo,
-int pos)
-{
-    const HDR *const ghdr = (const HDR *) xo_pool_base + pos;
-    const int num = pos + 1;
-    int xmode, gtype;
-
-    xmode = ghdr->xmode;
-    gtype = (char) 0xba;
-    if (xmode & GEM_FOLDER)
-        gtype += 1;
-    prints("%6d %c\241%c ", num,
-           TagNum && !Tagger(ghdr->chrono, num - 1, TAG_NIN) ? '*' : ' ', gtype);
-
-    gtype = HAS_PERM(PERM_SYSOP) ? mailgem_way : 0;
-
-    prints("%-*.*s%-*s%s\n", d_cols + 47, d_cols + 46, ghdr->title,
-           IDLEN + 1, (gtype == 1 ? ghdr->xname : ghdr->owner), ghdr->date);
-
-    return XO_NONE;
-}
-
-static int
-mailgem_cur(
-XO *xo,
-int pos)
-{
-    move(3 + pos - xo->top, 0);
-    return mailgem_item(xo, pos);
-}
-
-static int
-mailgem_body(
-XO *xo)
-{
-    int num, max, tail;
-
-    move(3, 0);
-
-    max = xo->max;
-    if (max <= 0)
-    {
-        outs("\n《精華區》尚在吸取天地間的日精月華 :)\n");
-        outs("\n  (^P)新增資料 (^G)海錨功\能 (W)資源回收筒\n");
-        clrtobot();
-        return mailgem_foot(xo);
-    }
-
-    num = xo->top;
-    tail = num + XO_TALL;
-    max = BMIN(max, tail);
-
-    do
-    {
-        mailgem_item(xo, num++);
-    }
-    while (num < max);
-    clrtobot();
-
-    return mailgem_foot(xo);
-}
-
-
-static int
-mailgem_head(
-XO *xo)
-{
-    char buf[20];
-
-    vs_head("精華文章", (const char *) xo->xyz);
-
-    sprintf(buf, "(剪貼版 %d 篇)\n", MailGemBufferNum);
-
-    outs(NECK_MAILGEM1);
-    outs(buf);
-    prints(NECK_MAILGEM2, d_cols, "");
-    return mailgem_body(xo);
-}
-
-
-static int
-mailgem_toggle(
-XO *xo)
-{
-    mailgem_way = (mailgem_way + 1) % GEM_WAY;
-    return XO_BODY;
-}
-
-
-static int
-mailgem_init(
-XO *xo)
-{
-    xo_load(xo, sizeof(HDR));
-    return mailgem_head(xo);
-}
-
-
-static int
-mailgem_load(
-XO *xo)
-{
-    xo_load(xo, sizeof(HDR));
-    return mailgem_body(xo);
-}
 
 
 /* ----------------------------------------------------- */
@@ -184,7 +65,7 @@ XO *xo)
 
     level = xo->key;
 
-    gtype = vans("新增 (A)文章 (F)卷宗 (P)貼複 (Q)取消？[Q] ");
+    gtype = vans_xo(xo, "新增 (A)文章 (F)卷宗 (P)貼複 (Q)取消？[Q] ");
 
     if (gtype == 'p')
         return mailgem_paste(xo);
@@ -196,7 +77,7 @@ XO *xo)
     fd = -1;
     memset(&ghdr, 0, sizeof(HDR));
 
-    if (!vget(B_LINES_REF, 0, "標題：", title, 64, DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "標題：", title, 64, DOECHO))
         return XO_FOOT;
 
     fd = hdr_stamp(dir, gtype, &ghdr, fpath);
@@ -207,7 +88,7 @@ XO *xo)
     {
         if (bbsothermode & OTHERSTAT_EDITING)
         {
-            vmsg("你還有檔案還沒編完哦！");
+            vmsg_xo(xo, "你還有檔案還沒編完哦！");
             return XO_FOOT;
         }
         else if (vedit(fpath, false))
@@ -225,7 +106,7 @@ XO *xo)
     ghdr.xmode = gtype;
     strcpy(ghdr.title, title);
 
-    ans = vans("存放位置 A)ppend I)nsert N)ext Q)uit [A] ");
+    ans = vans_xo(xo, "存放位置 A)ppend I)nsert N)ext Q)uit [A] ");
 
     if (ans == 'q')
     {
@@ -235,7 +116,7 @@ XO *xo)
     }
 
     if (ans == 'i' || ans == 'n')
-        rec_ins(dir, &ghdr, sizeof(HDR), xo->pos + (ans == 'n'), 1);
+        rec_ins(dir, &ghdr, sizeof(HDR), xo->pos[xo->cur_idx] + (ans == 'n'), 1);
     else
         rec_add(dir, &ghdr, sizeof(HDR));
 
@@ -258,7 +139,7 @@ int pos)
 
     if (bbsothermode & OTHERSTAT_EDITING)
     {
-        vmsg("你還有檔案還沒編完哦！");
+        vmsg_xo(xo, "你還有檔案還沒編完哦！");
         return XO_FOOT;
     }
 
@@ -283,12 +164,12 @@ int pos)
         return XO_NONE;
 
     xhdr = *ghdr;
-    vget(B_LINES_REF, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY);
+    vget_xo(xo, B_LINES_REF, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY);
 
     dir = xo->dir;
 
     if (memcmp(ghdr, &xhdr, sizeof(HDR)) &&
-        vans("確定要修改嗎(y/N)？[N]") == 'y')
+        vans_xo(xo, "確定要修改嗎(y/N)？[N]") == 'y')
     {
         *ghdr = xhdr;
         num = pos;
@@ -328,7 +209,7 @@ int pos)
     if (!stat(fpath, &st))
         prints("\nTime: %s\nSize: %lld", Ctime(&st.st_mtime), (long long)st.st_size);
 
-    vmsg(NULL);
+    vmsg_xo(xo, NULL);
 
     return XO_BODY;
 }
@@ -367,15 +248,14 @@ int pos)
 
         /* browse article */
 
-        if ((xmode = more(fpath, MSG_GEM)) == -2)
+        if ((xmode = more(fpath, MSG_GEM)) == XO_HEAD)
             return XO_INIT;
         if (xmode == -1)
             break;
 
         xmode = xo_getch(xo, pos, xmode);
-        pos = xo->pos;
-    }
-    while (xmode == XO_BODY);
+        pos = xo->pos[xo->cur_idx];
+    } while (xmode == XO_BODY);
 
     return XO_HEAD;
 }
@@ -452,8 +332,7 @@ const HDR *ghdr)                /* NULL 代表放入 TagList, 否則將傳入的放入 */
         do
         {
             EnumTagHdr(&gbuf[locus], dir, locus);
-        }
-        while (++locus < num);
+        } while (++locus < num);
     }
 
     strcpy(MailGemFolder, dir);
@@ -479,7 +358,7 @@ int pos)
     if (tag > 0)
     {
         sprintf(buf, "確定要刪除 %d 篇標籤精華嗎(y/N)？[N] ", tag);
-        if (vans(buf) != 'y')
+        if (vans_xo(xo, buf) != 'y')
             return XO_FOOT;
     }
 
@@ -608,13 +487,13 @@ XO *xo)
     }
 
     dir = xo->dir;
-    switch (ans = vans("存放位置 A)ppend I)nsert N)ext E)xtend Q)uit [A] "))
+    switch (ans = vans_xo(xo, "存放位置 A)ppend I)nsert N)ext E)xtend Q)uit [A] "))
     {
     case 'q':
         return XO_FOOT;
 
     case 'e':
-        if (xo->max > 0 && mailgem_extend(xo, xo->pos, num))
+        if (xo->max > 0 && mailgem_extend(xo, xo->pos[xo->cur_idx], num))
         {
             zmsg("[Extend 檔案附加] 動作並未完全成功\");
             return XO_FOOT;
@@ -623,7 +502,7 @@ XO *xo)
 
     case 'i':
     case 'n':
-        rec_ins(dir, MailGemBuffer, sizeof(HDR), xo->pos + (ans == 'n'), num);
+        rec_ins(dir, MailGemBuffer, sizeof(HDR), xo->pos[xo->cur_idx] + (ans == 'n'), num);
         break;
 
     default:
@@ -649,7 +528,7 @@ int pos)
         return XO_NONE;
 
     sprintf(buf + 5, "請輸入第 %d 選項的新位置：", pos + 1);
-    if (!vget(B_LINES_REF, 0, buf + 5, buf, 5, DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, buf + 5, buf, 5, DOECHO))
         return XO_FOOT;
 
     newOrder = TCLAMP(atoi(buf) - 1, 0, xo->max - 1);
@@ -676,7 +555,7 @@ XO *xo)
     int ans;
     char *folder;
 
-    ans = vans("精華區 A)定錨 D)拔錨 J)就位 Q)取消 [J] ");
+    ans = vans_xo(xo, "精華區 A)定錨 D)拔錨 J)就位 Q)取消 [J] ");
     if (ans != 'q')
     {
         folder = MailGemAnchor;
@@ -694,7 +573,7 @@ XO *xo)
         {
             if (!*folder)
             {
-                vmsg("尚未定錨");
+                vmsg_xo(xo, "尚未定錨");
                 return  XO_FOOT;
             }
 
@@ -751,14 +630,14 @@ int pos)
 
     if (tag > 0)
     {
-        switch (vans("串列文章 1)合成一篇 2)分別建檔 Q)取消 [2] "))
+        switch (vans_xo(xo, "串列文章 1)合成一篇 2)分別建檔 Q)取消 [2] "))
         {
         case 'q':
             return DL_RELEASE(XO_FOOT);
 
         case '1':
             strcpy(xhdr.title, currtitle);
-            if (!vget(B_LINES_REF, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY))
+            if (!vget_xo(xo, B_LINES_REF, 0, "標題：", xhdr.title, TTLEN + 1, GCARRY))
                 return DL_RELEASE(XO_FOOT);
             fp = fdopen(hdr_stamp(folder, 'A', &ghdr, fpath), "w");
             strcpy(ghdr.owner, cuser.userid);
@@ -818,8 +697,7 @@ int pos)
             }
 
         }
-    }
-    while (++locus < tag);
+    } while (++locus < tag);
 
     if (fp)
     {
@@ -858,7 +736,7 @@ mailgem_help(
 XO *xo)
 {
     /*  film_out(FILM_GEM, -1);*/
-    vmsg("尚未編輯使用說明");
+    vmsg_xo(xo, "尚未編輯使用說明");
     return XO_HEAD;
 }
 
@@ -896,14 +774,14 @@ int pos)
             if (!(hdr->xmode & GEM_FOLDER))
             {
                 sprintf(xtitle, STR_FORWARD " %.66s", hdr->title);
-                if (!vget(2, 0, "標題:", xtitle, TTLEN + 1, GCARRY))
+                if (!vget_xo(xo, 2, 0, "標題:", xtitle, TTLEN + 1, GCARRY))
                     return XO_HEAD;
             }
             else
                 return XO_HEAD;
         }
 
-        rc = vget(2, 0, "(S)存檔 (Q)取消？[Q] ", buf, 3, LCECHO);
+        rc = vget_xo(xo, 2, 0, "(S)存檔 (Q)取消？[Q] ", buf, 3, LCECHO);
         if (*buf != 's' && *buf != 'S')
             return XO_HEAD;
 
@@ -953,12 +831,11 @@ int pos)
 
                 success_count++;
             }
-        }
-        while (locus < tag);
+        } while (locus < tag);
 
         if (success_count == 0)
         {
-            vmsg("轉錄失敗。");
+            vmsg_xo(xo, "轉錄失敗。");
         }
         if (battr & BRD_NOCOUNT)
         {
@@ -977,7 +854,7 @@ int pos)
             else
                 sprintf(buf, "轉錄 %d 篇成功\，%d 篇失敗，你的文章增為 %d 篇",
                     success_count, ((tag == 0) ? 1 : tag) - success_count, cuser.numposts);
-            vmsg(buf);
+            vmsg_xo(xo, buf);
         }
     }
     return XO_HEAD;
@@ -995,12 +872,13 @@ XO *xo)
 
 static KeyFuncList mailgem_cb =
 {
-    {XO_INIT, {mailgem_init}},
-    {XO_LOAD, {mailgem_load}},
-    {XO_HEAD, {mailgem_head}},
-    {XO_BODY, {mailgem_body}},
-    {XO_FOOT, {mailgem_foot}},
-    {XO_CUR | XO_POSF, {.posf = mailgem_cur}},
+    {XO_INIT, {gem_init}},
+    {XO_LOAD, {gem_load}},
+    {XO_HEAD, {gem_head}},
+    {XO_NECK, {gem_neck}},
+    {XO_BODY, {gem_body}},
+    {XO_FOOT, {gem_foot}},
+    {XO_CUR | XO_POSF, {.posf = gem_cur}},
 
     {'r' | XO_POSF, {.posf = mailgem_browse}},
 
@@ -1012,16 +890,18 @@ static KeyFuncList mailgem_cb =
     {'d' | XO_POSF, {.posf = mailgem_delete}},
     {'c' | XO_POSF, {.posf = mailgem_copy}},
     {'W', {mailgem_recycle}},
+    {Ctrl('W'), {mailgem_recycle}},
+    {Meta('W'), {mailgem_recycle}},
 
     {Ctrl('G'), {mailgem_anchor}},
     {Ctrl('V'), {mailgem_paste}},
 
     {'t' | XO_POSF, {.posf = mailgem_tag}},
-    {'f', {mailgem_toggle}},
+    {'f', {gem_toggle}},
 
     {'S' | XO_POSF, {.posf = mailgem_state}},
 
-    {'h', {mailgem_help}}
+    {'h', {mailgem_help}},
 };
 
 
@@ -1030,22 +910,8 @@ XoMailGem(
 const char *folder,
 const char *title)
 {
-    XO *xo, *last;
-
-    last = xz[XZ_MAILGEM - XO_ZONE].xo; /* record */
-
-    xz[XZ_MAILGEM - XO_ZONE].xo = xo = xo_new(folder);
-    xo->cb = mailgem_cb;
-    xo->recsiz = sizeof(HDR);
-    xo->pos = 0;
-    xo->key = 0;
-    xo->xyz = (void *)title;
-
-    xover(XZ_MAILGEM);
-
-    free(xo);
-
-    xz[XZ_MAILGEM - XO_ZONE].xo = last; /* restore */
+    const int level = HAS_PERM(PERM_SYSOP|PERM_BOARD|PERM_GEM) ? GEM_SYSOP : GEM_MANAGER;
+    XoXGem(folder, title, level, XZ_INDEX_MAILGEM, mailgem_cb);
 }
 
 
@@ -1053,27 +919,16 @@ void
 mailgem_main(void)
 {
     DL_HOLD;
-    XO *xo, *last;
     char fpath[128];
-
-    last = xz[XZ_MAILGEM - XO_ZONE].xo;  /* record */
-
     usr_fpath(fpath, cuser.userid, "gem");
 
     if (access(fpath, 0))
         mak_dirs(fpath);
 
     usr_fpath(fpath, cuser.userid, "gem/.DIR");
-    xz[XZ_MAILGEM - XO_ZONE].xo = xo = xo_new(fpath);
-    xo->cb = mailgem_cb;
-    xo->recsiz = sizeof(HDR);
-    xo->pos = 0;
-    xo->key = 0;
-    xo->xyz = (void *)"我的精華區";
-    xover(XZ_MAILGEM);
-    free(xo);
 
-    xz[XZ_MAILGEM - XO_ZONE].xo = last;  /* restore */
+    const int level = HAS_PERM(PERM_SYSOP|PERM_BOARD|PERM_GEM) ? GEM_SYSOP : GEM_MANAGER;
+    XoXGem(fpath, "我的精華區", level, XZ_INDEX_MAILGEM, mailgem_cb);
 
     DL_RELEASE_VOID();
 }
@@ -1319,8 +1174,7 @@ const char *fgem)
             }
         }
 
-    }
-    while (++xsync < xtail);
+    } while (++xsync < xtail);
 
     /* 處理一般檔案 */
 
@@ -1341,8 +1195,7 @@ const char *fgem)
             sprintf(hdr.title, "滄海拾遺 [%s]", str);
             fwrite(&hdr, sizeof(hdr), 1, fpw);
         }
-    }
-    while (++xpool < xtail);
+    } while (++xpool < xtail);
 
     fclose(fpw);
 

@@ -154,6 +154,7 @@ GCC_NONNULLS void str_ansi(char *dst, const char *str, int max);
 GCC_NONNULLS void str_cat(char *dst, const char *s1, const char *s2);
 GCC_NONNULLS GCC_PURE int str_casecmp(const char *s1, const char *s2);
 GCC_NONNULLS GCC_PURE int str_casecmp_dbcs(const char *s1, const char *s2);
+GCC_NONNULL(1) GCC_PURE char *str_chr_next_or(const char *str, char delim, const char *dflt);
 GCC_NONNULLS void str_split_2nd(char *dst, const char *src);
 GCC_NONNULLS GCC_PURE enum DbcsState dbcs_state(const char *str, size_t idx);
 GCC_NONNULLS GCC_PURE enum DbcsState dbcs_nstate(const char *str GCC_NONSTRING, size_t idx, size_t len);
@@ -180,6 +181,8 @@ GCC_NONNULLS ssize_t str_sncpy(char *dst, const char *src GCC_NONSTRING, size_t 
 GCC_NONNULLS GCC_RET_NONNULL char *str_ndup(const char *src GCC_NONSTRING, int len);
 GCC_NONNULLS GCC_PURE size_t str_nlen(const char *str GCC_NONSTRING, size_t maxlen);
 GCC_NONNULLS GCC_PURE bool str_pat(const char *str, const char *pat);
+GCC_NONNULLS int rmsg_sprint(char *dst, int pushscore, const char *verb, const char *userid, const char *msg, time_t time);
+GCC_NONNULLS int rmsg_sprint_date(char *dst, int pushscore, const char *verb, const char *userid, const char *msg, const char *date);
 GCC_NONNULLS GCC_RET_NONNULL char *str_rev_tail(char *dst, const char *src);
 GCC_NONNULLS int rle_encode(char *str);
 GCC_NONNULLS GCC_PURE char *str_casestr(const char *str, const char *tag);

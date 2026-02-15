@@ -320,7 +320,7 @@ personal_edit(
     PB *personal,
     int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(personal, 0, sizeof(PB));
     if (vget(B_LINES_REF, 0, "申請人:", personal->userid, sizeof(personal->userid), echo)
      && vget(B_LINES_REF, 0, "看板名:", personal->brdname, sizeof(personal->brdname), echo)
@@ -338,7 +338,7 @@ personal_delete(
     int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(PB), pos, NULL, NULL))
         {
@@ -394,13 +394,13 @@ mail2usr(
     memset(&hdr, 0, sizeof(hdr));
 
     usr_fpath(folder, personal->userid, fn_dir);
-    hdr_stamp(folder, 0, &hdr, fpath);
+    const int fd = hdr_stamp(folder, 0, &hdr, fpath);
     strcpy(hdr.owner, "SYSOP");
     strcpy(hdr.nick, SYSOPNICK);
     strcpy(hdr.title, title[admin]);
     rec_add(folder, &hdr, sizeof(HDR));
 
-    if ((fp = fopen(fpath, "w")))
+    if ((fp = fdopen(fd, "w")))
     {
         fprintf(fp, "作者: SYSOP (%s)\n標題: %s\n時間: %s\n", SYSOPNICK, title[admin], ctime(&now));
         fprintf(fp, "申請人:   %s\n", personal->userid);
@@ -492,17 +492,17 @@ personal_open(
 
     if (brd_bno(personal->brdname) >= 0)
     {
-        vmsg("板名雷同");
+        vmsg_xo(xo, "板名雷同");
         return XO_FOOT;
     }
 
     if (bshm->number >= MAXBOARD)
     {
-        vmsg("超過系統所能容納看版個數，請調整系統參數");
+        vmsg_xo(xo, "超過系統所能容納看版個數，請調整系統參數");
         return XO_FOOT;
     }
 
-    if (vans("確定要開設此看板嗎？[y/N]") != 'y')
+    if (vans_xo(xo, "確定要開設此看板嗎？[y/N]") != 'y')
         return XO_FOOT;
 
     memset(&newboard, 0, sizeof(newboard));
@@ -525,7 +525,7 @@ personal_open(
     }
     else if (rec_add(FN_BRD, &newboard, sizeof(newboard)) < 0)
     {
-        vmsg("無法建立新板");
+        vmsg_xo(xo, "無法建立新板");
         return XO_FOOT;
     }
 
@@ -555,7 +555,7 @@ personal_open(
     rec_put(xo->dir, personal, sizeof(PB), pos);
     move(3 + cur, 0);
     personal_item(xo, pos);
-    cursor_show(3 + cur, 0);
+    cursor_show(xo, 3 + cur, 0, xo->pos[xo->cur_idx]);
 
     mail2usr(personal, 0);
     if (acct_load(&acct, personal->userid) >= 0)
@@ -567,7 +567,7 @@ personal_open(
 
     personal_log(personal, 1);
 
-    vmsg("新板成立");
+    vmsg_xo(xo, "新板成立");
 
     return XO_FOOT;
 }
@@ -584,10 +584,10 @@ personal_deny(
     if (personal->state & PB_OPEN)
         return XO_NONE;
 
-    if (!vget(B_LINES_REF, 0, "拒絕開板理由: ", msg, sizeof(msg), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "拒絕開板理由: ", msg, sizeof(msg), DOECHO))
         return XO_FOOT;
 
-    if (vans("確定拒絕此申請嗎？[y/N]") != 'y')
+    if (vans_xo(xo, "確定拒絕此申請嗎？[y/N]") != 'y')
         return XO_FOOT;
 
     mail2usr(personal, 1);
@@ -627,7 +627,7 @@ KeyFuncList personal_cb =
     {KEY_TAB, {personal_switch}},
     {'O' | XO_POSF, {.posf = personal_open}},
     {'D' | XO_POSF, {.posf = personal_deny}},
-    {'h', {personal_help}}
+    {'h', {personal_help}},
 };
 
 int
@@ -642,7 +642,9 @@ personal_admin(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(FN_ETC_PERSONAL);
     xo->cb = personal_cb;
     xo->recsiz = sizeof(PB);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     free(xo);
 

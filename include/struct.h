@@ -523,7 +523,7 @@ struct UTMP  /* SHMDATA(raw) */
     char          username[24];
     char          realname[20];
     uint32_t      userlevel;
-    char          from[48];                     /* remote host */
+    char          from[64];                     /* remote host */
 #ifdef  HAVE_SHOWNUMMSG
     int32_t       num_msg;                      /* receive messages */
 #endif
@@ -865,10 +865,12 @@ typedef KeyFunc *KeyFuncIter;
 typedef KeyFunc *KeyFuncListRef;
 #endif
 
+#define XO_NCUR                 2 /* Maximum number of Xover cursors */
 
 typedef struct OverView
 {
-    int pos;                    /* current position */
+    int pos[XO_NCUR];           /* current positions */
+    int cur_idx;                /* Index of the current cursor */
     int top;                    /* top */
     int max;                    /* max */
     int key;                    /* key */
@@ -876,6 +878,7 @@ typedef struct OverView
     struct OverView *nxt;       /* next */
     KeyFuncListRef cb;          /* Callback functions */
     int recsiz;                 /* Record size */
+    int xz_idx;                 /* Xover zone index */
     char dir[FLEX_SIZE];        /* data path */
 } XO;
 #define OverView_FLEX_MEMBER    dir

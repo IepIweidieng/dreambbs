@@ -109,21 +109,21 @@ myfavorite_body(
 
 
 static int
-myfavorite_head(
+myfavorite_neck(
     XO *xo)
 {
-    vs_head("我的最愛", str_site);
+    move(1, 0);
     prints(NECK_MYFAVORITE,
         cuser.ufo2 & UFO2_BRDNEW ? "總數" : "編號", d_cols + 33, "中   文   敘   述");
     return myfavorite_body(xo);
 }
 
 static int
-myfavorite_newmode(
+myfavorite_head(
     XO *xo)
 {
-    cuser.ufo2 ^= UFO2_BRDNEW;  /* Thor.980805: 特別注意 utmp.ufo的同步問題 */
-    return XO_HEAD;
+    vs_head("我的最愛", str_site);
+    return myfavorite_neck(xo);
 }
 
 
@@ -238,24 +238,24 @@ myfavorite_add(
 
     if (!HAS_PERM(PERM_VALID))
     {
-        vmsg("尚未通過認證，無法新增我的最愛！");
+        vmsg_xo(xo, "尚未通過認證，無法新增我的最愛！");
         return XO_QUIT;
     }
     memset(&hdr, 0, sizeof(HDR));
-    ans = vans("新增 (B)看板捷徑 (F)資料夾 (G)精華區捷徑 (L)分隔線 (Q)離開 [Q]");
+    ans = vans_xo(xo, "新增 (B)看板捷徑 (F)資料夾 (G)精華區捷徑 (L)分隔線 (Q)離開 [Q]");
 
     if (ans == 'b')
     {
         brd = ask_board(buf, BRD_R_BIT, NULL);
         if (brd == NULL)
         {
-            vmsg(ERR_BID);
+            vmsg_xo(xo, ERR_BID);
             return XO_HEAD;
         }
         brd2myfavorite(brd, &hdr);
         if (myfavorite_find_same(brd, currdir) >= 0)
         {
-            vmsg("已有此看板!");
+            vmsg_xo(xo, "已有此看板!");
             return XO_FOOT;
         }
     }
@@ -264,7 +264,7 @@ myfavorite_add(
         char title[64];
         char fpath[64];
 
-        if (!vget(B_LINES_REF, 0, "請輸入標題: ", title, sizeof(title), DOECHO))
+        if (!vget_xo(xo, B_LINES_REF, 0, "請輸入標題: ", title, sizeof(title), DOECHO))
             return XO_NONE;
 
         hdr_stamp(currdir, ans|HDR_LINK, &hdr, fpath);
@@ -276,7 +276,7 @@ myfavorite_add(
         brd = ask_board(buf, BRD_R_BIT, NULL);
         if (brd == NULL)
         {
-            vmsg(ERR_BID);
+            vmsg_xo(xo, ERR_BID);
             return XO_HEAD;
         }
         brd2myfavorite(brd, &hdr);
@@ -293,7 +293,7 @@ myfavorite_add(
         return XO_FOOT;
     }
 
-    ans = vans("存放位置 A)ppend I)nsert N)ext Q)uit [A] ");
+    ans = vans_xo(xo, "存放位置 A)ppend I)nsert N)ext Q)uit [A] ");
 
     if (ans == 'q')
     {
@@ -301,7 +301,7 @@ myfavorite_add(
     }
 
     if (ans == 'i' || ans == 'n')
-        rec_ins(currdir, &hdr, sizeof(HDR), xo->pos + (ans == 'n'), 1);
+        rec_ins(currdir, &hdr, sizeof(HDR), xo->pos[xo->cur_idx] + (ans == 'n'), 1);
     else
         rec_add(currdir, &hdr, sizeof(HDR));
 
@@ -340,7 +340,7 @@ myfavorite_delete(
     if (!HAS_PERM(PERM_VALID))
         return XO_NONE;
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         const HDR *hdr = (const HDR *) xo_pool_base + pos;
         const HDR hdr_orig = *hdr;
@@ -378,7 +378,7 @@ myfavorite_mov(
     ghdr = (const HDR *) xo_pool_base + pos;
 
     sprintf(buf + 5, "請輸入第 %d 選項的新位置：", pos + 1);
-    if (!vget(B_LINES_REF, 0, buf + 5, buf, 5, DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, buf + 5, buf, 5, DOECHO))
         return XO_FOOT;
 
     newOrder = TCLAMP(atoi(buf) - 1, 0, xo->max - 1);
@@ -389,9 +389,8 @@ myfavorite_mov(
         if (!rec_del(currdir, sizeof(HDR), pos, NULL, NULL))
         {
             rec_ins(currdir, &ghdr_orig, sizeof(HDR), newOrder, 1);
-            xo->pos = newOrder;
             logitfile(FN_FAVORITE_LOG, "< MOV >", ghdr_orig.xname);
-            return XO_LOAD;
+            return XR_LOAD + XO_MOVE + newOrder;
         }
     }
     return XO_FOOT;
@@ -424,7 +423,7 @@ myfavorite_edit(
     }
     else if (hdr->xmode & GEM_FOLDER)
     {
-        if (!vget(B_LINES_REF, 0, "請輸入標題: ", hdr->title, 64, GCARRY))
+        if (!vget_xo(xo, B_LINES_REF, 0, "請輸入標題: ", hdr->title, 64, GCARRY))
             return XO_FOOT;
         rec_put(currdir, hdr, sizeof(HDR), pos);
         return XO_LOAD;
@@ -453,7 +452,7 @@ myfavorite_search(
     const HDR *hdr;
 
     ptr = buf;
-    num = vget(B_LINES_REF, 0, "請輸入搜尋關鍵字：", ptr, IDLEN + 1, DOECHO);
+    num = vget_xo(xo, B_LINES_REF, 0, "請輸入搜尋關鍵字：", ptr, IDLEN + 1, DOECHO);
     move(b_lines, 0);
     clrtoeol();
 
@@ -479,7 +478,7 @@ myfavorite_search(
             {
                 chn = hdr->recommend;
                 brd = bshm->bcache + chn;
-                //vmsg(ptr);
+                //vmsg_xo(xo, ptr);
 
                 if (strstr(brd->brdname, ptr) || strstr(brd->title, ptr))
                     return XO_MOVE + pos;
@@ -508,6 +507,7 @@ KeyFuncList myfavorite_cb =
     {XO_INIT, {myfavorite_init}},
     {XO_LOAD, {myfavorite_load}},
     {XO_HEAD, {myfavorite_head}},
+    {XO_NECK, {myfavorite_neck}},
     {XO_BODY, {myfavorite_body}},
     {XO_CUR | XO_POSF, {.posf = myfavorite_cur}},
 
@@ -515,12 +515,12 @@ KeyFuncList myfavorite_cb =
     {'a', {myfavorite_add}},
     {'r' | XO_POSF, {.posf = myfavorite_browse}},
     {'s', {myfavorite_switch}},
-    {'c', {myfavorite_newmode}},
+    {'c', {class_newmode}},
     {'d' | XO_POSF, {.posf = myfavorite_delete}},
     {'M' | XO_POSF, {.posf = myfavorite_mov}},
     {'E' | XO_POSF, {.posf = myfavorite_edit}},
     {'/' | XO_POSF, {.posf = myfavorite_search}},
-    {'h', {myfavorite_help}}
+    {'h', {myfavorite_help}},
 };
 
 static void
@@ -541,7 +541,9 @@ XoFavorite(
     xz[XZ_MYFAVORITE - XO_ZONE].xo = xo = xo_new(folder);
     xo->cb = myfavorite_cb;
     xo->recsiz = sizeof(HDR);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_MYFAVORITE;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xo->key = XZ_MYFAVORITE;
 
     xover(XZ_MYFAVORITE);
@@ -693,7 +695,7 @@ class_add(
 
     if (myfavorite_find_same(brd, fpath) >= 0)
     {
-        vmsg("已有此看板!");
+        vmsg_xo(xo, "已有此看板!");
         return XO_FOOT;
     }
 
@@ -702,7 +704,7 @@ class_add(
 
     rec_add(fpath, &hdr, sizeof(HDR));
     logitfile(FN_FAVORITE_LOG, "< ADD >", hdr.xname);
-    vmsg("已加入我的最愛");
+    vmsg_xo(xo, "已加入我的最愛");
 
     return XO_FOOT;
 }

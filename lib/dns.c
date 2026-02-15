@@ -12,6 +12,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
+#include <netinet/tcp.h>
 
 void dns_init(void)
 {
@@ -21,7 +22,28 @@ void dns_init(void)
     //  _res.options |= RES_USEVC;
 }
 
-
+/* IID.2023-02-21: Below is the data format of output parameter `ans` in pseudo code. See RFC 1035.
+    struct DnsMessage {
+        HEADER hdr; // defined in <arpa/nameser_compat.h>
+        struct QSection question[];
+        struct ASection answer[],
+            authority[],
+            additional[];
+    };
+    struct QSection {
+        char domain_name[];
+        uint16_t query_type;
+        uint16_t query_class;
+    };
+    struct ASection { // see the struct `ns_rr` defined in <arpa/nameser.h>
+        char domain_name[];
+        uint16_t type;
+        uint16_t class_;
+        uint32_t ttl;
+        uint16_t resource_data_length;
+        const unsigned char resource_data[];
+    };
+*/
 int dns_query(const char *name, /* domain name */
               int qtype,        /* type of query */
               querybuf * ans    /* buffer to put answer */
@@ -30,13 +52,13 @@ int dns_query(const char *name, /* domain name */
     querybuf buf;
 
     qtype =
-        res_mkquery(QUERY, name, C_IN, qtype, (unsigned char *)NULL, 0, NULL,
-                    (unsigned char *)&buf, sizeof(buf));
+        res_mkquery(ns_o_query, name, ns_c_in, qtype, NULL, 0, NULL,
+                    buf.buf, sizeof(buf));
 
     if (qtype >= 0)
     {
         qtype =
-            res_send((unsigned char *)&buf, qtype, (unsigned char *)ans,
+            res_send(buf.buf, qtype, ans->buf,
                      sizeof(querybuf));
 
         /* avoid problems after truncation in tcp packets */
@@ -62,7 +84,7 @@ int dns_query(const char *name, /* domain name */
 
 ip_addr dns_addr(const char *name)
 {
-    static const int qtypes[] = {T_A, T_AAAA};
+    static const int qtypes[] = {ns_t_a, ns_t_aaaa};
     struct addrinfo hints = {0};
     struct addrinfo *hosts;
     ip_addr addr = {0};
@@ -72,7 +94,7 @@ ip_addr dns_addr(const char *name)
     hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST | AI_NUMERICSERV;
     {
         int status = getaddrinfo(name, NULL, &hints, &hosts);
-        if (status)
+        if (!status)
         {
             switch (addr.family = hosts->ai_family)
             {
@@ -102,41 +124,46 @@ ip_addr dns_addr(const char *name)
 
             /* find first satisfactory answer */
 
-            cp = (unsigned char *)&ans + sizeof(HEADER);
-            eom = (unsigned char *)&ans + n;
+            cp = ans.buf + sizeof(HEADER);
+            eom = ans.buf + n;
         }
 
+        /* skip question section */
         for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
         {
             int n = dn_skipname(cp, eom);
             if (n < 0)
                 return IPADDR_NONE;
-            cp += n + QFIXEDSZ;
+            cp += n + NS_QFIXEDSZ;
         }
 
         for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
         {
-            char hostbuf[MAXDNAME];
+            char hostbuf[NS_MAXDNAME];
             int type;
-            int n = dn_expand((unsigned char *)&ans, eom, cp, hostbuf, MAXDNAME);
+            /* cp: domain_name */
+            int n = dn_expand(ans.buf, eom, cp, hostbuf, NS_MAXDNAME);
             if (n < 0)
                 return IPADDR_NONE;
 
             cp += n;
+
+            /* cp: type */
             type = getshort(cp);
-            n = getshort(cp + 8);
+            n = getshort(cp + 8); // resource_data_length
             cp += 10;
 
+            /* cp: resource_data */
             if (type == qtypes[i])
             {
                 ip_addr addr = {0};
                 switch (type)
                 {
-                case T_A:
+                case ns_t_a:
                     addr.family = AF_INET;
                     addr.v4.sin_addr = *(struct in_addr *) cp;
                     return addr;
-                case T_AAAA:
+                case ns_t_aaaa:
                     addr.family = AF_INET6;
                     addr.v6.sin6_addr = *(struct in6_addr *) cp;
                     return addr;
@@ -175,14 +202,19 @@ ip_addr dns_addr(const char *name)
 
 
 #define RFC931_TIMEOUT            /* Thor.991215: ¬O§_´£¨Ñ timeout */
+#undef ALARM_TIMEOUT              /* IID.2023-02-21: Whether to use alarm() for timeout */
 
 #ifdef RFC931_TIMEOUT
 static const int timeout = 1;    /* ­Y 1 ¬í«á³s½u¥¼§¹¦¨¡A«h©ñ±ó */
 
+  #ifdef ALARM_TIMEOUT
 static void pseudo_handler(GCC_UNUSED int signum) /* Thor.991215: for timeout */
 {
     /* connect time out */
 }
+  #endif
+#else /* !#ifdef RFC931_TIMEOUT */
+  #undef ALARM_TIMEOUT
 #endif
 
 /* Thor.990325: ¬°¤FÅý¤Ï¬d®É¯à½T©w¬d¥X¡A¨Ó¦Û­þ­Óinterface´N±q¨º³s¦^¡A¥H¨¾¤Ï¬d¤£¨ì */
@@ -196,7 +228,7 @@ void dns_ident(int sock,        /* Thor.990330: ­t¼Æ«O¯dµ¹, ¥ÎgetsockµLªk§ì¥X¥¿½
     char rmt_pt[NI_MAXSERV];
     char our_pt[NI_MAXSERV];
 
-#ifdef RFC931_TIMEOUT
+#ifdef ALARM_TIMEOUT
     unsigned old_alarm;            /* Thor.991215: for timeout */
     struct sigaction oact;
 #endif
@@ -208,7 +240,7 @@ void dns_ident(int sock,        /* Thor.990330: ­t¼Æ«O¯dµ¹, ¥ÎgetsockµLªk§ì¥X¥¿½
     if (dns_name(from, rhost, rhost_sz))
         return;                    /* °²³]¨S¦³ FQDN ´N¨S¦³¶] identd */
 
-#ifdef RFC931_TIMEOUT
+#ifdef ALARM_TIMEOUT
     {
         struct sigaction act;
         /* Thor.991215: set for timeout */
@@ -285,6 +317,10 @@ void dns_ident(int sock,        /* Thor.990330: ­t¼Æ«O¯dµ¹, ¥ÎgetsockµLªk§ì¥X¥¿½
             if (s < 0)
                 goto cleanup_rmt;
 
+#if defined RFC931_TIMEOUT && !defined ALARM_TIMEOUT
+            setsockopt(s, IPPROTO_TCP, TCP_USER_TIMEOUT, &TEMPLVAL(unsigned int, {1000 * timeout}), sizeof(unsigned int));
+#endif
+
             /* Thor.990325: ¬°¤FÅý¤Ï¬d®É¯à½T©w¬d¥X¡A¨Ó¦Û­þ­Óinterface´N±q¨º³s¦^ */
             if ((sock < 0 || !bind(s, our_h->ai_addr, our_h->ai_addrlen))
                 && !connect(s, rmt_h->ai_addr, rmt_h->ai_addrlen))
@@ -355,7 +391,8 @@ cleanup_our:
         freeaddrinfo(our_hosts);
 
 cleanup_alarm:
-#ifdef RFC931_TIMEOUT
+    ;
+#ifdef ALARM_TIMEOUT
     /* Thor.991215: recover for timeout */
     alarm(old_alarm);
     sigaction(SIGALRM, &oact, NULL);
@@ -410,7 +447,7 @@ int dns_name(const ip_addr *addr, char *name, int name_sz)
 
     {
         const unsigned char *ad;
-        char qbuf[MAXDNAME];
+        char qbuf[NS_MAXDNAME];
         int n;
 
         switch (addr->family)
@@ -444,40 +481,45 @@ int dns_name(const ip_addr *addr, char *name, int name_sz)
             return -1;
         }
 
-        n = dns_query(qbuf, T_PTR, &ans);
+        n = dns_query(qbuf, ns_t_ptr, &ans);
         if (n < 0)
             return n;
 
         /* find first satisfactory answer */
 
-        cp = (unsigned char *)&ans + sizeof(HEADER);
-        eom = (unsigned char *)&ans + n;
+        cp = ans.buf + sizeof(HEADER);
+        eom = ans.buf + n;
     }
 
+    /* skip question section */
     for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
     {
         int n = dn_skipname(cp, eom);
         if (n < 0)
             return n;
-        cp += n + QFIXEDSZ;
+        cp += n + NS_QFIXEDSZ;
     }
 
     for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
     {
-        char hostbuf[MAXDNAME];
+        char hostbuf[NS_MAXDNAME];
         int type;
-        int n = dn_expand((unsigned char *)&ans, eom, cp, hostbuf, MAXDNAME);
+        /* cp: domain_name */
+        int n = dn_expand(ans.buf, eom, cp, hostbuf, NS_MAXDNAME);
         if (n < 0)
             return n;
 
         cp += n;
+
+        /* cp: type */
         type = getshort(cp);
-        n = getshort(cp + 8);
+        n = getshort(cp + 8); // resource_data_length
         cp += 10;
 
-        if (type == T_PTR)
+        /* cp: resource_data */
+        if (type == ns_t_ptr)
         {
-            int n = dn_expand((unsigned char *)&ans, eom, cp, hostbuf, MAXDNAME);
+            int n = dn_expand(ans.buf, eom, cp, hostbuf, NS_MAXDNAME);
             if (n >= 0)
             {
                 str_scpy(name, hostbuf, name_sz);
@@ -486,7 +528,7 @@ int dns_name(const ip_addr *addr, char *name, int name_sz)
         }
 
 #if 0
-        if (type == T_CNAME)
+        if (type == ns_t_cname)
         {
             str_scpy(name, hostbuf, name_sz);
             return 0;
@@ -517,7 +559,7 @@ int dns_openip(const ip_addr *addr, int port)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_ADDRCONFIG | AI_NUMERICHOST | AI_NUMERICSERV;
 
-    getnameinfo((const struct sockaddr *)addr, sizeof(*addr), addr_str, sizeof(port_str), NULL, NI_MAXSERV, NI_NUMERICHOST);
+    getnameinfo((const struct sockaddr *)addr, sizeof(*addr), addr_str, sizeof(addr_str), NULL, NI_MAXSERV, NI_NUMERICHOST);
     sprintf(port_str, "%d", port);
 
     if (getaddrinfo(addr_str, port_str, &hints, &hosts))
@@ -541,10 +583,10 @@ int dns_openip(const ip_addr *addr, int port)
 
 int dns_open(const char *host, int port)
 {
-    static const int qtypes[] = {T_A, T_AAAA};
+    static const int qtypes[] = {ns_t_a, ns_t_aaaa};
     querybuf ans;
     unsigned char *cp, *eom;
-    char buf[MAXDNAME];
+    char buf[NS_MAXDNAME];
 
 #if 1
     /* Thor.980707: ¦]gem.c©I¥s®É¥i¯à±Nhost¥Îip©ñ¤J¡A¬G§@¯S§O³B²z */
@@ -583,44 +625,48 @@ int dns_open(const char *host, int port)
 
             /* find first satisfactory answer */
 
-            cp = (unsigned char *)&ans + sizeof(HEADER);
-            eom = (unsigned char *)&ans + n;
+            cp = ans.buf + sizeof(HEADER);
+            eom = ans.buf + n;
         }
 
+        /* skip question section */
         for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
         {
             int n = dn_skipname(cp, eom);
             if (n < 0)
                 return n;
-            cp += n + QFIXEDSZ;
+            cp += n + NS_QFIXEDSZ;
         }
 
         for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
         {
             int type;
-            int n = dn_expand((unsigned char *)&ans, eom, cp, buf, MAXDNAME);
+            /* cp: domain_name */
+            int n = dn_expand(ans.buf, eom, cp, buf, NS_MAXDNAME);
             if (n < 0)
                 return -1;
 
             cp += n;
 
+            /* cp: type */
             type = getshort(cp);
-            n = getshort(cp + 8);
+            n = getshort(cp + 8); // resource_data_length
             cp += 10;
 
+            /* cp: resource_data */
             if (type == qtypes[i])
             {
                 ip_addr addr = {0};
                 int sock;
                 switch (type)
                 {
-                case T_A:
+                case ns_t_a:
                     addr.family = AF_INET;
-                    addr.v4.sin_addr = *(struct in_addr *)buf;
+                    addr.v4.sin_addr = *(struct in_addr *)cp;
                     break;
-                case T_AAAA:
+                case ns_t_aaaa:
                     addr.family = AF_INET6;
-                    addr.v6.sin6_addr = *(struct in6_addr *)buf;
+                    addr.v6.sin6_addr = *(struct in6_addr *)cp;
                     break;
                 default:
                     return -1;
@@ -658,43 +704,47 @@ static inline void dns_mx(const char *domain, char *mxlist, int mxlist_sz)
     *mxlist = 0;
 
     {
-        int n = dns_query(domain, T_MX, &ans);
+        int n = dns_query(domain, ns_t_mx, &ans);
 
         if (n < 0)
             return;
 
         /* find first satisfactory answer */
 
-        cp = (unsigned char *)&ans + sizeof(HEADER);
-        eom = (unsigned char *)&ans + n;
+        cp = ans.buf + sizeof(HEADER);
+        eom = ans.buf + n;
     }
 
+    /* skip question section */
     for (int qdcount = ntohs(ans.hdr.qdcount); qdcount--;)
     {
         int n = dn_skipname(cp, eom);
         if (n < 0)
             return;
-        cp += n + QFIXEDSZ;
+        cp += n + NS_QFIXEDSZ;
     }
 
     for (int ancount = ntohs(ans.hdr.ancount); --ancount >= 0 && cp < eom;)
     {
         int type;
-        int n = dn_expand((unsigned char *)&ans, eom, cp, mxlist, mxlist_end - mxlist);
+        /* cp: domain_name */
+        int n = dn_expand(ans.buf, eom, cp, mxlist, mxlist_end - mxlist);
         if (n < 0)
             break;
 
         cp += n;
 
+        /* cp: type */
         type = getshort(cp);
-        n = getshort(cp + 8);
+        n = getshort(cp + 8); // resource_data_length
         cp += 10;
 
-        if (type == T_MX)
+        /* cp: resource_data */
+        if (type == ns_t_mx)
         {
             /* pref = getshort(cp); */
             *mxlist = '\0';
-            if ((dn_expand((unsigned char *)&ans, eom, cp + 2, mxlist, mxlist_end - mxlist)) < 0)
+            if ((dn_expand(ans.buf, eom, cp + 2, mxlist, mxlist_end - mxlist)) < 0)
                 break;
 
             if (!*mxlist)

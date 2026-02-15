@@ -8,6 +8,7 @@
 
 
 #include <stdarg.h>
+#include <sys/time.h>
 #include <arpa/telnet.h>
 
 #include "bbs.h"
@@ -23,10 +24,11 @@
 #define t_columns  ((void)0, b_cols  + 1)
 
 #ifdef M3_USE_PFTERM
-// filed color   (defined in theme.h)
-#define STANDOUT() (void) ( attrsetbg(FILEDBG), attrsetfg(FILEDFG) )
-// default color (\x1b[37; 40m)
-#define STANDEND() (void) ( attrsetbg(0), attrsetfg(7) )
+// IID(2025-04-01): These were defined with fixed colors but did not work with bright mode
+// filed color
+#define STANDOUT() (void) ( addstr("\x1b[27;7m") )
+// default color
+#define STANDEND() (void) ( addstr("\x1b[27m") )
 #endif  /* #ifdef M3_USE_PFTERM */
 int cur_row, cur_col;           /* Current position without ANSI codes (display coordination) */
 int cur_pos;                    /* current column position with ANSI codes (raw character coordination) */
@@ -1449,8 +1451,14 @@ vmsg_body(
     }
 }
 
+int vmsg(const char *msg)
+{
+    return vmsg_xo(NULL, msg);
+}
+
 int
-vmsg(
+vmsg_xo(
+    XO *xo,
     const char *msg)             /* length <= 54 */
 {
     int b_lines_prev = b_lines;
@@ -1458,13 +1466,21 @@ vmsg(
     for (;;)
     {
         vmsg_body(msg);
-        if ((res_key = vkey()) != I_RESIZETERM)
+        switch ((res_key = vkey()))
+        {
+        default:
+            return res_key;
+        case I_RESIZETERM:
             break;
+        case KEY_KONAMI:
+        case KEY_SHIYUU:
+            xover_key(xo, 0, res_key); // invoke only general key functions
+        }
         move(b_lines_prev, 0);
         clrtoeol();
         b_lines_prev = b_lines;
+        xover_resize(xo);
     }
-    return res_key;
 }
 
 static inline void
@@ -1522,71 +1538,116 @@ vs_bar(
 #endif
 }
 
+GCC_NONNULLS
+unsigned int cursor_get_state(int cur[XO_NCUR], int pos)
+{
+    unsigned int res = 0;
+    for (int i = 0; i < xo_ncur; ++i)
+        if (cur[i] == pos)
+            res |= 1U << i;
+    return res;
+}
 
+GCC_NONNULLS
+void cursor_show_mark(XO *xo, int row, int column, int pos)
+{
+    const unsigned int cur_st = cursor_get_state(xo->pos, pos);
+    move(row, column);
+    outs((cur_st & (1U << xo->cur_idx)) ? str_cur_color_curr[xo_ncur - 1][cur_st] : str_cur_color[xo_ncur - 1][cur_st]);
+    outs(STR_CURSOR);
+    outs("\x1b[m");
+    move(row, column + 1);
+}
+
+GCC_NONNULLS
+void cursor_clear_mark(XO *xo, int row, int column, int pos_prev)
+{
+    const unsigned int cur_st = cursor_get_state(xo->pos, pos_prev);
+    move(row, column);
+    if (cur_st)
+    {
+        outs(str_cur_color[xo_ncur - 1][cur_st]);
+        outs(STR_CURSOR);
+    }
+    else
+        outs(STR_UNCUR);
+    outs("\x1b[m");
+    move(row, column + 1);
+}
+
+GCC_NONNULLS
 void
 cursor_bar_show(
-    int row, int column, int width)
+    XO *xo, int row, int column, int width, int pos)
 {
-    move(row, column);
-    if (HAVE_UFO2_CONF(UFO2_MENU_LIGHTBAR))
+    if (row < 0 || column < 0)
+        return;
+
+    if (HAVE_UFO2_CONF(UFO2_MENU_LIGHTBAR) && pos == xo->pos[xo->cur_idx])
     {
         if (width > 0)
             grayoutrect(row, row + 1, column, column + width + 2, GRAYOUT_COLORBOLD);
         else
             grayout(row, row + 1, GRAYOUT_COLORBOLD);
     }
-    outs(STR_CURSOR);
-    move(row, column + 1);
+    cursor_show_mark(xo, row, column, pos);
 }
 
 
+GCC_NONNULLS
 void
 cursor_bar_clear(
-    int row, int column, int width)
+    XO *xo, int row, int column, int width, int pos, int pos_prev)
 {
-    move(row, column);
-    if (HAVE_UFO2_CONF(UFO2_MENU_LIGHTBAR))
+    if (row < 0 || column < 0)
+        return;
+
+    if (HAVE_UFO2_CONF(UFO2_MENU_LIGHTBAR) && pos == xo->pos[xo->cur_idx])
     {
         if (width > 0)
             grayoutrect(row, row + 1, column, column + width + 2, GRAYOUT_COLORNORM);
         else
             grayout(row, row + 1, GRAYOUT_COLORNORM);
     }
-    outs(STR_UNCUR);
+    cursor_clear_mark(xo, row, column, pos_prev);
 }
 
 
+GCC_NONNULLS
 int
 cursor_bar_key(
-    int row, int column, int width)
+    XO *xo, int row, int column, int width, int pos, int pos_prev)
 {
     int ch;
 
-    cursor_bar_show(row, column, width);
+    cursor_bar_show(xo, row, column, width, pos);
     ch = vkey();
-    cursor_bar_clear(row, column, width);
+    cursor_bar_clear(xo, row, column, width, pos, pos_prev);
     return ch;
 }
 
 
+GCC_NONNULLS
 void
 cursor_show(
-    int row, int column)
+    XO *xo, int row, int column, int pos)
 {
-    cursor_bar_show(row, column, 0);
+    cursor_bar_show(xo, row, column, 0, pos);
 }
 
 
+GCC_NONNULLS
 void
-cursor_clear(int row, int column)
+cursor_clear(XO *xo, int row, int column, int pos, int pos_prev)
 {
-    cursor_bar_clear(row, column, 0);
+    cursor_bar_clear(xo, row, column, 0, pos, pos_prev);
 }
 
+GCC_NONNULLS
 int
-cursor_key(int row, int column)
+cursor_key(XO *xo, int row, int column, int pos, int pos_prev)
 {
-    return cursor_bar_key(row, column, 0);
+    return cursor_bar_key(xo, row, column, 0, pos, pos_prev);
 }
 
 static void
@@ -1779,12 +1840,13 @@ iac_process(
     case IAC:  /* `IAC` `IAC` => `'\xff'` */
         res_key = '\xff';
         goto iac_process_end;
-    default:;
+    default:
+        ;
     }
 
 iac_process_end:
     if (pcount)
-        *pcount = look - current;
+        *pcount = BMIN(look, end) - current;
     return res_key;
 }
 
@@ -1872,8 +1934,8 @@ igetch(void)
                     {
                         vi_size = cc;
                         vi_head = 0;
-                        iac_next = (unsigned char *)strchr((char *)vi_pool, IAC);
-                        if (iac_next > vi_pool)
+                        iac_next = (unsigned char *)memchr((char *)vi_pool, IAC, vi_size);
+                        if (iac_next != vi_pool)
                             reset_idle();
                         break;
                     }
@@ -1940,8 +2002,8 @@ igetch(void)
             int count;
             const int iac_key = iac_process(vi_pool + vi_head, vi_pool + vi_size, &count);
             vi_head += count;
-            iac_next = (unsigned char *)strchr((char *)vi_pool + vi_head, IAC);
-            if (iac_next > vi_pool + vi_head)
+            iac_next = (unsigned char *)memchr((char *)vi_pool + vi_head, IAC, vi_size - vi_head);
+            if (iac_next != vi_pool + vi_head)
                 reset_idle();
             if (iac_key == KEY_NONE)
                 continue;
@@ -2110,7 +2172,8 @@ int vkey_process(int (*fgetch)(void))
             case 'F':
                 ch = mod_key(mod, KEY_END);
                 goto vkey_end;
-            default:;
+            default:
+                ;
             }
             if (last == 'O' || mod)   /* "<Esc> O `ch`" | "<Esc> [ 1 ; <2-9> `ch`" | "<Esc> [ 1 ; 1 <0-6> `ch`" */
             {
@@ -2250,7 +2313,8 @@ int vkey_process(int (*fgetch)(void))
                     case '2':               /* "<Esc> [ 2 `last` <~$^@>" */ /* F9 - F12 */
                         ch = mod_key(mod, KEY_F9 + (last - '0') - (last > '2'));
                         goto vkey_end;
-                    default:;
+                    default:
+                        ;
                     }
                 }
                 ch = char_opt(ch, KEY_INVALID, KEY_INVALID);
@@ -2309,10 +2373,95 @@ int vkey_process_no_dbcs_repeat(int (*fgetch)(void))
     return key;
 }
 
+typedef int KeyXFormer(int);
+
+typedef struct
+{
+    int key;
+    int idx;
+    struct timeval tbeg;
+    struct timeval tlast;
+    const int *seq;
+    KeyXFormer *xform;
+} KeySeq;
+
+static const int key_seq_konami[] =
+{
+    KEY_UP, KEY_UP, KEY_DOWN, KEY_DOWN,
+    KEY_LEFT, KEY_RIGHT, KEY_LEFT, KEY_RIGHT,
+    'B', 'A', KEY_NONE,
+};
+
+static const int key_seq_shiyuu[] =
+{
+    KEY_RIGHT, KEY_UP, KEY_UP, KEY_UP, KEY_UP, KEY_DOWN,
+    KEY_LEFT, KEY_RIGHT, KEY_LEFT, KEY_RIGHT, KEY_UP,
+    'C', 'C', KEY_NONE,
+};
+
+static KeySeq key_seq[] =
+{
+    {KEY_KONAMI, 0, {0, 0}, {0, 0}, key_seq_konami, toupper},
+    {KEY_SHIYUU, 0, {0, 0}, {0, 0}, key_seq_shiyuu, toupper},
+};
+
+#define KEY_SEQ_TIMEOUT_MS 10000
+static int key_seq_process(int key)
+{
+    int res = KEY_NONE;
+    struct timeval tnow;
+    gettimeofday(&tnow, NULL);
+    for (KeySeq *p = key_seq; p < key_seq + COUNTOF(key_seq); ++p)
+    {
+        struct timeval tdiff;
+        timersub(&tnow, &p->tlast, &tdiff);
+        if (1000 * tdiff.tv_sec + tdiff.tv_usec / 1000 > KEY_SEQ_TIMEOUT_MS)
+            p->idx = 0;
+        int key_xformed = (p->xform) ? p->xform(key) : key;
+        if (p->seq[p->idx] == key_xformed)
+        {
+            if (p->idx == 0)
+                p->tbeg = tnow;
+            p->tlast = tnow;
+            ++p->idx;
+            if (p->seq[p->idx] == KEY_NONE)
+            {
+                timersub(&tnow, &p->tbeg, &tdiff);
+                if (1000 * tdiff.tv_sec + tdiff.tv_usec / 1000 <= KEY_SEQ_TIMEOUT_MS)
+                    res = p->key;
+                p->idx = 0;
+            }
+        }
+        else
+        {
+            p->idx = 0;
+        }
+    }
+    return res;
+}
+
 int
 vkey(void)
 {
+    static int unget_key = KEY_NONE;
+    if (unget_key != KEY_NONE)
+    {
+        const int key = unget_key;
+        unget_key = KEY_NONE;
+
+        switch (key) {
+        case KEY_SHIYUU:
+#ifdef M3_USE_PFTERM
+            if (!themeset(themeget() + 1))
+                themeset(0);
+#endif
+            break;
+        }
+        return key;
+    }
+
     const int key = vkey_process_no_dbcs_repeat(igetch);
+    unget_key = key_seq_process(key);
 
     switch (key)
     {
@@ -2607,9 +2756,13 @@ vget_match(
 
 char lastcmd[MAXLASTCMD][80];
 
+int vget(int y_ref, int x_ref, const char *prompt, char *data, int max, int echo)
+{
+    return vget_xo(NULL, y_ref, x_ref, prompt, data, max, echo);
+}
 
 /* IID.20200202: Use screen size referencing coordinate */
-int vget(int y_ref, int x_ref, const char *prompt, char *data, int max, int echo)
+int vget_xo(XO *xo, int y_ref, int x_ref, const char *prompt, char *data, int max, int echo)
 {
     int ch = KEY_NONE;
     int len;
@@ -2698,13 +2851,17 @@ vget_redraw:
             move(y, x + col);
 
         ch = vkey();
-        if (ch == I_RESIZETERM)
+        if (ch == I_RESIZETERM || ch == KEY_KONAMI || ch == KEY_SHIYUU)
         {
-            /* Screen size changed and redraw is needed */
+            if (ch != I_RESIZETERM)
+                xover_key(xo, 0, ch); // invoke only general key functions
+            ch = I_RESIZETERM;
+            /* Redraw is needed */
             /* clear */
             move(y, x_prompt);
             clrtoeol();
             /* redraw */
+            xover_resize(xo);
             data[len] = '\0';
             goto vget_redraw;
         }
@@ -3070,11 +3227,17 @@ vget_redraw:
 }
 
 
+int vans(const char *prompt)
+{
+    return vans_xo(NULL, prompt);
+}
+
 int
-vans(
+vans_xo(
+    XO *xo,
     const char *prompt)
 {
     char ans[3];
 
-    return vget(B_LINES_REF, 0, prompt, ans, sizeof(ans), LCECHO);
+    return vget_xo(xo, B_LINES_REF, 0, prompt, ans, sizeof(ans), LCECHO);
 }

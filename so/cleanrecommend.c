@@ -58,27 +58,14 @@ cleanrecommend_item(
 {
     const RMSG *const cleanrecommend = (const RMSG *) xo_pool_base + pos;
     const int num = pos + 1;
-
-    char tmp[10];
     const char *pn;
-
-    pn = tmp;
-
     if (cleanrecommend->pn == POSITIVE)
-    {
         pn = "\x1b[1;33m+";
-        prints("%4d%s%2s\x1b[m%-*s %-*s%-5s\n", num, pn, cleanrecommend->verb, IDLEN, cleanrecommend->userid, d_cols + 54, cleanrecommend->msg, cleanrecommend->rtime);
-    }
     else if (cleanrecommend->pn == NEGATIVE)
-    {
         pn = "\x1b[1;31m-";
-        prints("%4d%s%2s\x1b[m%-*s %-*s%-5s\n", num, pn, cleanrecommend->verb, IDLEN, cleanrecommend->userid, d_cols + 54, cleanrecommend->msg, cleanrecommend->rtime);
-    }
     else
-    {
         pn = " ";
-        prints("%4d%s%2s\x1b[m%-*s %-*s%-5s\n", num, pn, cleanrecommend->verb, IDLEN, cleanrecommend->userid, d_cols + 54, cleanrecommend->msg, cleanrecommend->rtime);
-    }
+    prints("%4d%s%2s\x1b[m%*s %-*s%-5s\n", num, pn, cleanrecommend->verb, IDLEN, cleanrecommend->userid, d_cols + 54, cleanrecommend->msg, cleanrecommend->rtime);
 
     return XO_NONE;
 }
@@ -156,7 +143,7 @@ cleanrecommend_edit(
     RMSG *cleanrecommend,
     int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(cleanrecommend, 0, sizeof(RMSG));
     if (vget(B_LINES_REF, 0, "使用者:", cleanrecommend->userid, sizeof(cleanrecommend->userid), echo)
      && vget(B_LINES_REF, 0, "動詞:", cleanrecommend->verb, sizeof(cleanrecommend->verb), echo)
@@ -174,7 +161,7 @@ cleanrecommend_delete(
     int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         const RMSG *rmsg = (const RMSG *) xo_pool_base + pos;
         const RMSG rmsg_orig = *rmsg;
@@ -215,7 +202,7 @@ static int
 cleanrecommend_cleanall(
     XO *xo)
 {
-    if (vans("確定要刪除所有的留言嗎？[y/N]") == 'y')
+    if (vans_xo(xo, "確定要刪除所有的留言嗎？[y/N]") == 'y')
     {
         unlink(xo->dir);
         cleanrecommend_log(NULL, 1);
@@ -244,7 +231,7 @@ KeyFuncList cleanrecommend_cb =
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = cleanrecommend_delete}},
     {'D', {cleanrecommend_cleanall}},
-    {'h', {cleanrecommend_help}}
+    {'h', {cleanrecommend_help}},
 };
 
 int
@@ -259,22 +246,19 @@ clean(
     char fpath[128], buf[256], tmp[128], recommenddb[128];
     FILE *fp;
     RMSG rmsg;
-    int i, pushstart;
+    int i;
     time_t chrono;
     struct stat st;
     int total, fd;
-    const BRD *brd;
-    unsigned int battr;
 
     counter = 0;
-    pushstart = 0;
 
     if (!(bbstate & STAT_BOARD))
         return DL_RELEASE(0);
 
     hdr = (const HDR *) xo_pool_base + pos;
 
-    if (!hdr->recommend || hdr->xmode & (POST_DELETE | POST_CANCEL | POST_MDELETE | POST_LOCK | POST_CURMODIFY))
+    if (hdr->xmode & (POST_DELETE | POST_CANCEL | POST_MDELETE | POST_LOCK | POST_CURMODIFY))
         return DL_RELEASE(XO_NONE);
 
     chrono = hdr->chrono;
@@ -287,87 +271,58 @@ clean(
     unlink(tmp);
     unlink(recommenddb);
 
-    brd = bshm->bcache + currbno;
-    battr = brd->battr;
-
     if ((fp = fopen(fpath, "r")))
     {
-
-/*
-        if (brd->battr & BRD_PUSHSNEER)
-        {
-            if (addscore == 1)
-                sprintf(add,                "[[1;33m→ %*s：[[36m%-54.54s [[m%5.5s\n", IDLEN, cuser.userid, msg, Btime(&hdr->pushtime)+3);
-            else if (addscore == -1)
-                sprintf(add,      "[[1;31m噓[[m [[1;33m%*s：[[36m%-54.54s [[m%5.5s\n", IDLEN, cuser.userid, msg, Btime(&hdr->pushtime)+3);
-        }
-        else if (brd->battr & BRD_PUSHDEFINE)
-        {
-            if (addscore == 1)
-                sprintf(add, "[[1;33m%02.2s %*s：[[36m%-54.54s [[m%5.5s\n", verb, IDLEN, cuser.userid, msg, Btime(&hdr->pushtime)+3);
-            else if (addscore == -1)
-                sprintf(add, "[[1;31m%02.2s[[m [[1;33m%*s：[[36m%-54.54s [[m%5.5s\n", verb, IDLEN, cuser.userid, msg, Btime(&hdr->pushtime)+3);
-            else
-                sprintf(add,                "[[1;33m→ %*s：[[36m%-54.54s [[m%5.5s\n", IDLEN, cuser.userid, msg, Btime(&hdr->pushtime)+3);
-        }
-        else
-            sprintf(add,                  "[[1;33m→ %*s：[[36m%-54.54s [[m%5.5s\n", IDLEN, cuser.userid, msg, Btime(&hdr->pushtime)+3);
-*/
+        bool pushstart = false;
         while (fgets(buf, 256, fp))
         {
-            memset(&rmsg, 0, sizeof(RMSG));
-            if (!strncmp(buf, "\x1b[1;32m※", 9))
-                pushstart = 1;
-
-            if (pushstart)
+            if (strncmp(buf, "\x1b[1;32m※", 9) == 0) // "Origin" or "Modify" tag
             {
-                const char *c2;
-                if (!strncmp(buf, "\x1b[1;32m※", 9))
-                {
-                    f_cat(tmp, buf);
-                    continue;
-                }
-                c2 = strrchr(buf, '\n') - 5;
-                str_scpy(rmsg.rtime, c2, sizeof(rmsg.rtime));
-
-                c2 -= 58;
-                str_scpy(rmsg.msg, c2, sizeof(rmsg.msg));
-
-                c2 -= 19;
-                str_scpy(rmsg.userid, c2, sizeof(rmsg.userid));
-
-                c2 = strchr(buf, 'm');
-                str_scpy(rmsg.verb, c2+1, sizeof(rmsg.verb));
-
-                if ((battr & BRD_PUSHDEFINE) && !strncmp(rmsg.verb, "→", 2) )
-                    rmsg.pn = COMMENT;
-                else if (!strncmp(rmsg.verb, "\x1b[m\x1b[1;33", 2))
-                    rmsg.pn = COMMENT;
-                /*else if (strncmp(buf, "\x1b[1;33→", 8))
-                    rmsg.pn = POSITIVE;*/
-                else
-                    rmsg.pn = !strncmp(buf, "\x1b[1;33", 6);
-
-                rec_add(recommenddb, &rmsg, sizeof(RMSG));
-//              if (!strncmp(buf, "\x1b[1;33m→", 9))
-//              {
-/*
-                    for (i=0; i<12; i++)
-                        rmsg.userid[i] = buf[i+10];
-                    rmsg.userid[12] = '\0';
-                    for (i=0; i<54; i++)
-                        rmsg.msg[i] = buf[i+29];
-                    rmsg.msg[54] = '\0';
-                    for (i=0; i<5; i++)
-                        rmsg.rtime[i] = buf[i+87];
-                    rmsg.rtime[5] = '\0';
-                    rec_add(recommenddb, &rmsg, sizeof(RMSG));
-*/
-//              }
-
+                pushstart = true;
+                goto non_recommend;
             }
+            if (!pushstart)
+                goto non_recommend;
+
+            const char *c2;
+            const char *const cr = buf + strcspn(buf, "\n"); // First of '\n' or '\0'
+            memset(&rmsg, 0, sizeof(RMSG));
+
+            c2 = cr - (sizeof(rmsg.rtime) - 1);
+            if (c2 < buf || c2[2] != '/')
+                goto non_recommend;
+            str_scpy(rmsg.rtime, c2, sizeof(rmsg.rtime));
+
+            c2 -= (sizeof(rmsg.msg) - 1) + 4; // Including trailing " \x1b[m"
+            if (c2 < buf)
+                goto non_recommend;
+            str_scpy(rmsg.msg, c2, sizeof(rmsg.msg));
+            str_rtrim(rmsg.msg);
+
+            c2 -= IDLEN + 7; // Including trailing "：\x1b[36m"
+            if (c2 < buf || strncmp(c2 + IDLEN, "：", 2) != 0)
+                goto non_recommend;
+            const size_t idx_uid = strspn(c2, " "); // Skip leading spaces
+            str_scpy(rmsg.userid, c2 + idx_uid, sizeof(rmsg.userid) - idx_uid);
+
+            c2 = strchr(buf, 'm');
+            if (!c2)
+                goto non_recommend;
+            ++c2;
+            if (c2[0] != '\x1b') // Non-empty verb
+                str_scpy(rmsg.verb, c2, sizeof(rmsg.verb));
+
+            if (strncmp(buf, "\x1b[1;31m", 7) == 0) // Negative color
+                rmsg.pn = NEGATIVE;
+            else if (c2[0] == '\x1b' || c2[2] == '\x1b') // Special ANSI escape patterns for COMMENT
+                rmsg.pn = COMMENT;
             else
-                f_cat(tmp, buf);
+                rmsg.pn = POSITIVE;
+
+            rec_add(recommenddb, &rmsg, sizeof(RMSG));
+            continue;
+non_recommend:
+            f_cat(tmp, buf);
         }
         fclose(fp);
     }
@@ -377,7 +332,9 @@ clean(
     xz[XZ_OTHER - XO_ZONE].xo = xoo = xo_new(recommenddb);
     xoo->cb = cleanrecommend_cb;
     xoo->recsiz = sizeof(RMSG);
-    xoo->pos = 0;
+    xoo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xoo->pos); ++i)
+        xoo->pos[i] = 0;
     xover(XZ_OTHER);
     free(xoo);
 
@@ -386,20 +343,12 @@ clean(
     for (i=0; i<rec_num(recommenddb, sizeof(RMSG)); i++)
     {
         rec_get(recommenddb, &rmsg, sizeof(RMSG), i);
-        if (rmsg.pn == POSITIVE)
-        {
-            counter++;
-            sprintf(buf, "\x1b[1;33m%2s %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", rmsg.verb, IDLEN, rmsg.userid, rmsg.msg, rmsg.rtime);
-        }
-        else if (rmsg.pn == NEGATIVE)
-        {
-            counter--;
-            sprintf(buf, "\x1b[1;31m%2s \x1b[33m%*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", rmsg.verb, IDLEN, rmsg.userid, rmsg.msg, rmsg.rtime);
-        }
-        else
-        {
-            sprintf(buf, "\x1b[m\x1b[1;33m   %*s：\x1b[36m%-54.54s \x1b[m%5.5s\n", IDLEN, rmsg.userid, rmsg.msg, rmsg.rtime);
-        }
+        const int pushscore = (rmsg.pn == POSITIVE) ? 1
+            : (rmsg.pn == NEGATIVE) ? -2 // Simplify the ANSI escapes
+            : 0;
+        const char *const verb = (rmsg.pn == COMMENT) ? "" : rmsg.verb;
+        counter += pushscore;
+        rmsg_sprint_date(buf, pushscore, verb, rmsg.userid, rmsg.msg, rmsg.rtime);
         f_cat(tmp, buf);
     }
 

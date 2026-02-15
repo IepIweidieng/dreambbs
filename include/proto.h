@@ -84,6 +84,7 @@ bool XoPostSimple(int bno);
 bool XoPost(int bno);
 void board_outs(int chn, int num);
 void class_outs(const char *title, int num);
+int class_newmode(XO *xo);
 int Select(void);
 int Class(void);
 void check_new(BRD *brd);
@@ -116,8 +117,19 @@ void ve_header(FILE *fp);
 int ve_subject(int row, const char *topic, const char *dft);
 int vedit(char *fpath, int ve_op);
 /* gem.c */
+int gem_foot(XO *xo);
+int gem_item(XO *xo, int pos);
+int gem_cur(XO *xo, int pos);
+int gem_body(XO *xo);
+int gem_neck(XO *xo);
+int gem_head(XO *xo);
+int gem_toggle(XO *xo);
+int gem_init(XO *xo);
+int gem_load(XO *xo);
+int url_fpath(char *fpath, const char *folder, const HDR *hdr);
 void brd2gem(const BRD *brd, HDR *gem);
 int gem_gather(XO *xo, int pos);
+void XoXGem(const char *folder, const char *title, int level, int xz_idx, KeyFuncListRef cb);
 void XoGem(const char *folder, const char *title, int level);
 void gem_main(void);
 /* mail.c */
@@ -161,6 +173,8 @@ const char *check_info(const void *func, const char *input);
 void main_menu(void);
 void domenu(MENU *menu, int y_ref, int x_ref, int height_ref, int width_ref, int cmdcur_max);
 void domenu_cursor_show(XO *xo);
+GCC_PURE int gety_bound_move(int cmd, int y_ref, int min_ref, int mid_ref, int max_ref);
+GCC_PURE int getx_bound_move(int cmd, int x_ref, int min_ref, int mid_ref, int max_ref);
 /* more.c */
 char *mgets(int fd);
 void *mread(int fd, int len);
@@ -274,14 +288,18 @@ void cursor_save(void);
 void cursor_restore(void);
 void vmsg_body(const char *msg);
 int vmsg(const char *msg);
+int vmsg_xo(XO *xo, const char *msg);
 void zmsg(const char *msg);
 void vs_bar(const char *title);
-void cursor_bar_show(int row, int column, int width);
-void cursor_bar_clear(int row, int column, int width);
-int cursor_bar_key(int row, int column, int width);
-void cursor_show(int row, int column);
-void cursor_clear(int row, int column);
-int cursor_key(int row, int column);
+GCC_NONNULLS unsigned int cursor_get_state(int cur[XO_NCUR], int pos);
+GCC_NONNULLS void cursor_show_mark(XO *xo, int row, int column, int pos);
+GCC_NONNULLS void cursor_clear_mark(XO *xo, int row, int column, int pos_prev);
+GCC_NONNULLS void cursor_bar_show(XO *xo, int row, int column, int width, int pos);
+GCC_NONNULLS void cursor_bar_clear(XO *xo, int row, int column, int width, int pos, int pos_prev);
+GCC_NONNULLS int cursor_bar_key(XO *xo, int row, int column, int width, int pos, int pos_prev);
+GCC_NONNULLS void cursor_show(XO *xo, int row, int column, int pos);
+GCC_NONNULLS void cursor_clear(XO *xo, int row, int column, int width, int pos_prev);
+GCC_NONNULLS int cursor_key(XO *xo, int row, int column, int pos, int pos_prev);
 #ifndef M3_USE_PFTERM
 void grayoutrect(int y, int yend, int x, int xend, int level);
 void grayout(int y, int end, int level);
@@ -295,13 +313,15 @@ GCC_NONNULLS int vkey_process_no_dbcs_repeat(int (*fgetch)(void));
 int vkey(void);
 BRD *ask_board(char *board, unsigned int perm, const char *msg);
 int vget(int y_ref, int x_ref, const char *prompt, char *data, int max, int echo);
+int vget_xo(XO *xo, int y_ref, int x_ref, const char *prompt, char *data, int max, int echo);
 int vans(const char *prompt);
+int vans_xo(XO *xo, const char *prompt);
 
 /* xover.c */
 XO *xo_new(const char *path);
 XO *xo_get(const char *path);
 void xo_load(XO *xo, int recsiz);
-void xo_fpath(char *fpath, const char *dir, HDR *hdr);
+void xo_fpath(char *fpath, const char *dir, const HDR *hdr);
 int hdr_prune(const char *folder, int nhead, int ntail, int post);
 int xo_delete(XO *xo);
 int Tagger(time_t chrono, int recno, int op);
@@ -322,6 +342,7 @@ int xo_cb_quit(XO *xo);
 void xover(int cmd);
 int xover_exec_cb(XO *xo, int cmd);
 int xover_exec_cb_pos(XO *xo, int cmd, int pos);
+int xover_resize(XO *xo);
 int xover_key(XO *xo, int zone, int cmd);
 void every_Z(XO *xo);
 void every_U(void);
@@ -333,6 +354,10 @@ int POP3_Check(const char *site, const char *account, const char *passwd);
 int Ext_POP3_Check(const char *site, const char *account, const char *passwd);
 #ifdef M3_USE_PMORE
 /* pmore.c */
+int expand_esc_star(char *buf, const char *src, int szbuf);
+unsigned char *mf_movieFrameHeader(const unsigned char *p, const unsigned char *end);
+int pmore2(const char *fpath, int promptend, void *ctx, int (*key_handler)(int key, void *ctx), int (*footer_handler)(int ratio, int width, void *ctx), int (*help_handler)(int y, void *ctx));
+int pmore2_inmemory(void *content, int size, int promptend, void *ctx, int (*key_handler)(int key, void *ctx), int (*footer_handler)(int ratio, int width, void *ctx), int (*help_handler)(int y, void *ctx));
 int pmore(const char *fpath, int promptend);
 #endif  /* #ifdef M3_USE_PMORE */
 /* popupmenu.c */

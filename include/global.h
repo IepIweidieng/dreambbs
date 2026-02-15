@@ -56,7 +56,7 @@ VAR int b_lines;                /* bottom line */
 VAR int b_cols;                 /* bottom columns */
 VAR int d_cols;                 /* difference columns from standard */
 
-VAR char fromhost[INET6_ADDRSTRLEN];
+VAR char fromhost[64];
 
 VAR char quote_file[80];
 VAR char quote_user[80];
@@ -74,6 +74,8 @@ VAR unsigned int currbattr;            /* currently selected board battr */
 VAR char ipv6addr[INET6_ADDRSTRLEN];   /* User's IP (IPv4 or IPv6) */
 
 VAR int  chk_mailstat   INI(0);
+
+VAR int xo_ncur INI(1);         /* Number of cursors */
 
 /* filename */
 VAR const char *const fn_dir          INI(FN_DIR);
@@ -99,7 +101,21 @@ VAR const char *const str_author2     INI(STR_AUTHOR2);
 VAR const char *const str_post1       INI(STR_POST1);
 VAR const char *const str_post2       INI(STR_POST2);
 VAR const char *const str_host        INI(MYHOSTNAME);
-VAR const char *const str_site        INI(BOARDNAME);
+
+VAR const char *str_site              INI(BOARDNAME);
+VAR const char *str_site_nick         INI(NICKNAME);
+
+/* Colors for cursors not on the current cursor position */
+VAR const char *const str_cur_color[XO_NCUR][1 << XO_NCUR] INI({
+    {/* 0b0 */ "", /* 0b1 */ ""},
+    {/* 0b00 */ "", /* 0b01 */ "\x1b[0;31m", /* 0b10 */ "\x1b[0;36m", /* 0b11 */ "\x1b[0;35m"},
+});
+
+/* Colors for cursors on the current cursor position */
+VAR const char *const str_cur_color_curr[XO_NCUR][1 << XO_NCUR] INI({
+    {/* 0b0 */ "", /* 0b1 */ ""},
+    {/* 0b00 */ "", /* 0b01 */ "\x1b[0;1;31m", /* 0b10 */ "\x1b[0;1;36m", /* 0b11 */ "\x1b[0;1;35m"},
+});
 
 #ifdef  HAVE_RECOMMEND
 VAR int recommend_time  INI(0);

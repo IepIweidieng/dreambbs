@@ -142,8 +142,7 @@ mail_to_bm(void)
             else
                 break;
         }
-    }
-    while (++head < tail);
+    } while (++head < tail);
     strcpy(ve_title, "[板主通告]");
     title = ve_title;
     vget(1, 0, "◎ 主 題：", title, 60, GCARRY);
@@ -194,7 +193,8 @@ const char *title)
     {
         return;
     }
-    for (str = fpath; *str; str++);
+    for (str = fpath; *str; str++)
+        ;
     *str++ = '/';
 
     while ((de = readdir(dirp)))
@@ -420,8 +420,7 @@ bm_check(void)
                 break;
         }
         head->BM[0] = '\0';
-    }
-    while (++head < tail);
+    } while (++head < tail);
 
     fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0600);
     ptr = bm;
@@ -445,8 +444,7 @@ bm_check(void)
         {
             write(fd, ptr, sizeof(BM));
         }
-    }
-    while (*(++ptr)->id);
+    } while (*(++ptr)->id);
 
     close(fd);
     free(bm);
@@ -687,30 +685,31 @@ m_xfile(void)
 
     static const char *const desc[] =
     {
-        "重要公告",             /* lkchu.990510: edit ~/etc/announce online */
-        "不雅名單",
-        "修改 Email",
-        "新手上路須知",
-        "身份認證的方法",
-        "身份認證信函",
-        "看板期限",
-        "廣告/垃圾信名單",         /* lkchu.981201: 線上編輯 mail.acl */
-        "允許\註冊名單",
-        "禁止上站位置",
-        "不信任名單",           /* pcbug.990806: edit ~/etc/untrust */
-        "程式版本",
-        "歷史上的一刻",
-        "站務列表",
-        "未通過身分認證",
-        "擋信紀錄",
-        "點歌紀錄",
-        "匿名版紀錄",
-        "註冊單說明",
-        "擋發信軟體",
-        "Email 通過認證",
-        "POP3 通過認證",
-        "BMTA 通過認證",
-        NULL
+        "文 重要公告",          /* lkchu.990510: edit ~/etc/announce online */
+        "表 不雅代號",
+        "助 修改 Email",
+        "文 新手上路須知",
+        "助 身份認證說明",
+        "信 身份認證信函",
+        "表 看板文章期限",
+        "表 廣告/垃圾信",       /* lkchu.981201: 線上編輯 mail.acl */
+        "表 允許\註冊",
+        "表 禁止上站",
+        "表 不信任/停權",       /* pcbug.990806: edit ~/etc/untrust */
+        "文 源碼著作權",
+        "紀 歷史上的一刻",
+        "表 站務列表",
+        "信 未經身分認證",
+        "紀 擋信紀錄",
+        "紀 點歌紀錄",
+        "紀 匿名板紀錄",
+        "助 註冊單說明",
+        "表 擋發信軟體",
+        "信 註冊單核可",
+        "信 Email 認證",
+        "信 POP3 認證",
+        "信 BMTA 認證",
+        NULL,
     };
 
     static const char *const path[] =
@@ -736,8 +735,9 @@ m_xfile(void)
         FN_ETC_RFORM,
         FN_ETC_MAILER_ACL,
         FN_ETC_APPROVED,
+        FN_ETC_JUSTIFIED,
         FN_ETC_JUSTIFIED_POP3,
-        FN_ETC_JUSTIFIED_BMTA
+        FN_ETC_JUSTIFIED_BMTA,
     };
 
     x_file(M_XFILES, desc, path);
@@ -751,33 +751,33 @@ m_xhlp(void)
 
     static const char *const desc[] =
     {
-        "進站廣告",
-        "註冊提示畫面",
-        "錯誤動態看板畫面",
-        "進站畫面",
-        "文章發表綱領",
-        "錯誤登入畫面",
-        "歡迎畫面",
-        "系統管理員",
-        "上站通知名單",
-        "擋信列表",
-        "訊息選單",
-        "看板",
-        "看板選單",
-        "聯絡名單",
-        "編輯器",
-        "好友名單",
-        "精華區",
-        "電子信箱",
-        "備忘錄",
-        "郵件系統",
-        "閱\讀文章",
-        "連署系統",
-        "點歌系統",
-        "完全聊天手冊",
-        "投票箱",
-        "最愛提示畫面",
-        NULL
+        "文 進站廣告",
+        "文 註冊提示",
+        "文 動態看板錯誤",
+        "圖 進站畫面",
+        "文 文章發表綱領",
+        "文 登入錯誤",
+        "圖 歡迎畫面",
+        "助 系統管理員",
+        "助 上站通知名單",
+        "助 擋信列表",
+        "助 訊息選單",
+        "助 看板文章",
+        "助 看板選單",
+        "助 聯絡名單",
+        "助 編輯器",
+        "助 好友名單",
+        "助 精華區",
+        "助 電子信箱",
+        "助 備忘錄",
+        "助 郵件系統",
+        "助 閱\讀文章",
+        "助 連署系統",
+        "助 點歌系統",
+        "助 完全聊天手冊",
+        "助 投票箱",
+        "助 我的最愛",
+        NULL,
     };
 
     static const char *const path[] =

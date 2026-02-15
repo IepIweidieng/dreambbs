@@ -139,7 +139,7 @@ const TABLE table[] = {
 //  {UFO_NWLOG, UFO2_NWLOG},
 //  {UFO_NTLOG, UFO2_NTLOG},
     {UFO_ACL, UFO2_ACL},
-    {0, 0}
+    {0, 0},
 };
 
 #endif  /* #ifdef  TRANUFO */
@@ -580,8 +580,6 @@ utmp_setup(
 
     strcpy(utmp.userid, cuser.userid);
     time32(&utmp.idle_time);
-    srand(time(0));
-    srandom(time(0));
     strcpy(utmp.username, ((!str_casecmp(cuser.userid, STR_GUEST)||!HAS_PERM(PERM_VALID)||HAS_PERM(PERM_DENYNICK))&&!HAS_PERM(PERM_SYSOP)) ? guestname[rand()%GUESTNAME] : cuser.username);
     strcpy(utmp.realname, cuser.realname);
     str_scpy(utmp.from, fromhost, sizeof(utmp.from));
@@ -607,8 +605,102 @@ utmp_setup(
 /* user login                                            */
 /* ----------------------------------------------------- */
 
+// tn_login redraw helpers
+
+typedef struct {
+    long nproc;
+    double load[3], load_norm;
+} TnMainXyz;
+
+GCC_NONNULLS static int tn_login_redo(XO *xo, int cmd);
+
+GCC_NONNULLS static int tn_login_init(XO *xo) { return tn_login_redo(xo, XO_INIT); }
+GCC_NONNULLS static int tn_login_load(XO *xo) { return tn_login_redo(xo, XO_LOAD); }
+GCC_NONNULLS static int tn_login_head(XO *xo) { return tn_login_redo(xo, XO_HEAD); }
+GCC_NONNULLS static int tn_login_neck(XO *xo) { return tn_login_redo(xo, XO_NECK); }
+GCC_NONNULLS static int tn_login_body(XO *xo) { return tn_login_redo(xo, XO_BODY); }
+GCC_NONNULLS static int tn_login_foot(XO *xo) { return tn_login_redo(xo, XO_FOOT); }
+
+KeyFuncList tn_login_cb =
+{
+    {XO_INIT, {tn_login_init}},
+    {XO_LOAD, {tn_login_load}},
+    {XO_HEAD, {tn_login_head}},
+    {XO_NECK, {tn_login_neck}},
+    {XO_BODY, {tn_login_body}},
+    {XO_FOOT, {tn_login_foot}},
+};
+
+GCC_NONNULLS static int tn_login_redo(XO *xo, int cmd)
+{
+    TnMainXyz *const xyz = (TnMainXyz *)xo->xyz;
+    int cmd_res = cmd & XO_MOVE_MASK;
+
+    if (cmd & XZ_ZONE)
+        return cmd;  /* Cannot handle this */
+
+    if (cmd & XR_PART_LOAD)
+    {
+        // currently nothing to do
+    }
+
+    if (cmd & XR_PART_HEAD)
+    {
+        clear();
+        prints("\x1b[m" MYHOSTNAME " ⊙ " OWNER " ⊙ " BBSIP " [" BBSVERNAME " " BBSVERSION "]");
+    }
+
+    if (cmd & XR_PART_NECK) {
+        move(1, 0);
+        prints("歡迎光臨【\x1b[1;33;46m %s \x1b[m】 系統負載 %.2f %.2f %.2f /%ld [%s] 線上人數 [%d/%d]",
+            str_site, xyz->load[0], xyz->load[1], xyz->load[2], xyz->nproc,
+            (xyz->load_norm > 5) ? "\x1b[1;37;41m過高\x1b[m"
+            : (xyz->load_norm > 1) ? "\x1b[1;37;42m偏高\x1b[m"
+            : "\x1b[1;37;44m正常\x1b[m",
+            ushm->count, MAXACTIVE);
+    }
+
+    if (cmd & XR_PART_BODY) {
+        move(2, 0);
+        film_out(FILM_INCOME, 2);
+    }
+
+    if (cmd & XR_PART_FOOT) {
+        /* 081119.cache: 正常顯示進站畫面 */
+        move(b_lines, 0);
+        prints("\x1b[m參觀用帳號：\x1b[1;32mguest\x1b[m  申請新帳號：\x1b[1;31mnew\x1b[m");
+
+        /* TODO(IID.2021-11-26): Implement UTF-8 conversion so that this fallback can be removed */
+        if (tn.enc == CONN_ENC_UTF8) /* Connection via SSH as user bbsu */
+        {
+            tn.enc = CONN_ENC_NATIVE;
+            prints("  UTF-8 isn't supported; u in bbsu ignored.");
+        }
+
+        /*move(b_lines, 0);
+        outs("※ 無法連線時，請利用 port 3456 上站");*/
+
+#ifdef loginAD
+
+        /*090823.cache: 進站廣告*/
+        FILE *fp;
+        char buf[128];
+        move(18, 0);
+        if ((fp = fopen("gem/@/@AD", "r")))
+        {
+            while (fgets(buf, sizeof(buf), fp))
+                outs(buf);
+            fclose(fp);
+        }
+
+#endif
+    }
+
+    return cmd_res;
+}
+
 static void
-tn_login(void)
+tn_login(XO *xo)
 {
     int fd, attempts;
     unsigned int level, ufo;
@@ -633,34 +725,7 @@ tn_login(void)
 #endif
 /* by visor */
 
-    /* 081119.cache: 正常顯示進站畫面 */
-    move(b_lines, 0);
-    prints("\x1b[m參觀用帳號：\x1b[1;32mguest\x1b[m  申請新帳號：\x1b[1;31mnew\x1b[m");
-
-    /* TODO(IID.2021-11-26): Implement UTF-8 conversion so that this fallback can be removed */
-    if (tn.enc == CONN_ENC_UTF8) /* Connection via SSH as user bbsu */
-    {
-        tn.enc = CONN_ENC_NATIVE;
-        prints("  UTF-8 isn't supported; u in bbsu ignored.");
-    }
-
-    /*move(b_lines, 0);
-    outs("※ 無法連線時，請利用 port 3456 上站");*/
-
-#ifdef loginAD
-
-    /*090823.cache: 進站廣告*/
-    FILE *fp;
-    char buf[128];
-    move(18, 0);
-    if ( ( fp = fopen("gem/@/@AD", "r") ) )
-    {
-        while (fgets(buf, sizeof(buf), fp))
-        outs(buf);
-        fclose(fp);
-    }
-
-#endif
+    tn_login_redo(xo, XR_FOOT);
 
     attempts = 0;
     for (;;)
@@ -671,7 +736,7 @@ tn_login(void)
             login_abort("\n再見 ....");
         }
 
-        vget(21, 0, msg_uid, uid, IDLEN + 1, DOECHO);
+        vget_xo(xo, 21, 0, msg_uid, uid, IDLEN + 1, DOECHO);
 
         if (str_casecmp(uid, STR_NEW) == 0)
         {
@@ -690,11 +755,11 @@ tn_login(void)
         }
         else if (!*uid || (acct_load(&cuser, uid) < 0))
         {
-            vmsg(err_uid);
+            vmsg_xo(xo, err_uid);
         }
         else if (str_casecmp(uid, STR_GUEST))
         {
-            if (!vget(21, D_COLS_REF + 26, MSG_PASSWD, passbuf, PLAINPASSSIZE, NOECHO | VGET_STEALTH_NOECHO))
+            if (!vget_xo(xo, 21, D_COLS_REF + 26, MSG_PASSWD, passbuf, PLAINPASSSIZE, NOECHO | VGET_STEALTH_NOECHO))
             {
                 continue;       /* 發現 userid 輸入錯誤，在輸入 passwd 時直接跳過 */
             }
@@ -704,7 +769,7 @@ tn_login(void)
             if (chkpasswd(cuser.passwd, cuser.passhash, passbuf))
             {
                 logattempt('-');
-                vmsg(ERR_PASSWD);
+                vmsg_xo(xo, ERR_PASSWD);
             }
             else
             {
@@ -763,7 +828,7 @@ tn_login(void)
                         break;          /* stale entry in utmp file */
                     }
 
-                    if (vans("偵測到多重登入，您想刪除其他重複的 login (Y/n)嗎？[Y] ") != 'n')
+                    if (vans_xo(xo, "偵測到多重登入，您想刪除其他重複的 login (Y/n)嗎？[Y] ") != 'n')
                     {
                         kill(pid, SIGTERM);
                         blog_pid("MULTI", cuser.username, pid);
@@ -1146,8 +1211,19 @@ tn_signals(void)
 static inline void
 tn_main(void)
 {
-    long nproc;
-    double load[3], load_norm;
+    TnMainXyz xyz;
+    XO xo =
+    {
+        .pos = {0},
+        .cur_idx = 0,
+        .top = 0,
+        .max = 0,
+        .xyz = &xyz,
+        .cb = tn_login_cb,
+        .recsiz = 0,
+        .xz_idx = -1,
+    };
+
     char buf[128], buf2[128];
 
     getnameinfo((struct sockaddr *)&tn.addr, sizeof(tn.addr), buf2, sizeof(buf2), NULL, NI_MAXSERV, NI_NUMERICHOST);
@@ -1162,8 +1238,28 @@ tn_main(void)
     while (igetch() != I_TIMEOUT);
     add_io(0, 60);
 
+    /* IID.2024-04-01: random site name */
+    static const char* const boardname_list[] = BOARDNAME_LIST;
+    static const char* const nickname_list[COUNTOF(boardname_list)] = NICKNAME_LIST;
+    uint32_t seed = 0;
+    if (!getrandom_bytes((char *)&seed, sizeof(seed)))
+        seed = time(0) ^ getpid();
+    srand(seed);
+    srandom(seed);
+    const size_t idx_site_name = random() % COUNTOF(boardname_list);
+
+    str_site = boardname_list[idx_site_name];
+    str_site_nick = nickname_list[idx_site_name];
+
+    /* IID.2024-04-01: set terminal title */
+    char ansi_cmd[24];
+    /* OSC 2 ; Pt ST: Change Window Title to Pt
+     * CSI 2 J: Erase All */
+    const size_t len_ansi_cmd = sprintf(ansi_cmd, "\x1b]2;%s\a\x1b[2J", str_site);
+    send(0, ansi_cmd, len_ansi_cmd, 0);
 
     clear();
+
 /*cache.080510: --維修用, 開站時要記得設定這段變成註解--*/
 /*cache.080714: power user 可以輸入busy開啟login畫面測試*/
 #if 0
@@ -1176,7 +1272,7 @@ tn_main(void)
 #if 0
     sprintf(buf, BBSHOME "/gem/@/@close");
     more(buf, (char *) -1);
-    login_abort("\n夢之大地主機搬遷中...");
+    login_abort("\n" BOARDNAME "主機搬遷中...");
     return;
     sleep(10);
     login_abort("\n");
@@ -1184,12 +1280,12 @@ tn_main(void)
 
 
     //負載提到前面取得
-    nproc = sysconf(_SC_NPROCESSORS_ONLN);
-    getloadavg(load, 3);
-    load_norm = load[0] / ((nproc > 0) ? nproc : 2);
+    xyz.nproc = sysconf(_SC_NPROCESSORS_ONLN);
+    getloadavg(xyz.load, 3);
+    xyz.load_norm = xyz.load[0] / ((xyz.nproc > 0) ? xyz.nproc : 2);
 
     //負載過高禁止login
-    if (load_norm>5)
+    if (xyz.load_norm > 5)
     {
         prints("\n對不起...\n\n由於目前負載過高，請稍後再來...");
         //pcman會自動重連時間設太短會變成 DOS 很可怕 :P
@@ -1201,13 +1297,7 @@ tn_main(void)
     currbno = -1;
 
     //getloadavg(load, 3);
-    prints( MYHOSTNAME " ⊙ " OWNER " ⊙ " BBSIP " [" BBSVERNAME " " BBSVERSION "]");
-    move(1, 0);
-    prints("歡迎光臨【\x1b[1;33;46m %s \x1b[m】。系統負載：%.2f %.2f %.2f / %ld [%s] 線上人數 [%d/%d]",
-        str_site, load[0], load[1], load[2], nproc, load_norm>5?"\x1b[1;37;41m過高\x1b[m":load_norm>1?"\x1b[1;37;42m偏高\x1b[m":"\x1b[1;37;44m正常\x1b[m", ushm->count, MAXACTIVE);
-
-    move(2, 0);
-    film_out(FILM_INCOME, 2);
+    tn_login_redo(&xo, (XR_LOAD & ~XR_FOOT) + KEY_NONE);
 
     total_num = ushm->count+1;
     currpid = getpid();
@@ -1215,7 +1305,7 @@ tn_main(void)
 
 
     tn_signals();  /* Thor.980806: 放於 tn_login前, 以便 call in不會被踢 */
-    tn_login();
+    tn_login(&xo);
 
     /* cache.090823 防止人數錯誤爆炸 */
     if (ushm->count < 0)
@@ -1562,7 +1652,7 @@ static int start_daemon(int argc, char *const argv[])
             setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (char *) &val, sizeof(val));
 
             if (port != -2)
-                setsockopt(fd, host->ai_socktype, TCP_NODELAY, (char *) &val, sizeof(val));
+                setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char *) &val, sizeof(val));
 #endif
 
             ld.l_onoff = ld.l_linger = 0;

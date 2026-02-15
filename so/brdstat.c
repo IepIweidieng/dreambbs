@@ -55,8 +55,7 @@ XO *xo)
     do
     {
         bstat_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -130,7 +129,7 @@ XO *xo)
     if (!HAS_PERM(PERM_ALLBOARD))
         return XO_NONE;
 
-    if (vans("確定清除所有紀錄嗎？[y/N]") == 'y')
+    if (vans_xo(xo, "確定清除所有紀錄嗎？[y/N]") == 'y')
     {
 
         chn = xo->key;
@@ -167,7 +166,7 @@ KeyFuncList bstat_cb =
     {'s', {xo_cb_init}},
     {'S', {bstat_stat}},
     {'c', {bstat_clear}},
-    {'h', {bstat_help}}
+    {'h', {bstat_help}},
 };
 
 
@@ -197,6 +196,7 @@ int pos)
         xz[XZ_OTHER - XO_ZONE].xo = xx = xo_new(fpath);
         xx->cb = bstat_cb;
         xx->recsiz = sizeof(BSTAT);
+        xx->xz_idx = XZ_INDEX_OTHER;
         xx->pos = 0;
         xx->key = chn;
         xover(XZ_OTHER);

@@ -81,6 +81,7 @@
 #define FN_ETC_COUNTER          "etc/counter"           /* 歷史紀錄與成長 */
 #define FN_ETC_EMAIL            "etc/e-mail"            /* 修改 Email, 進行身分認證 */
 #define FN_ETC_EXPIRE_CONF      "etc/expire.conf"       /* 版面期限 */
+#define FN_ETC_JUSTIFIED        "etc/justified"         /* Email 通過身分認證 */
 #define FN_ETC_JUSTIFIED_POP3   "etc/justified.pop3"    /* POP3 通過身分認證 */
 #define FN_ETC_JUSTIFIED_BMTA   "etc/justified.bmta"    /* BMTA 通過身分認證 */
 #define FN_ETC_JUSTIFY          "etc/justify"           /* 身分認證的方法 */
@@ -286,6 +287,10 @@
 #define KEY_F11         0x025B
 #define KEY_F12         0x025C
 
+/* Key sequence */
+#define KEY_KONAMI      0x0573
+#define KEY_SHIYUU      0x0930
+
 /* Special key values */
 #define KEY_INVALID     0x03FE
 
@@ -343,7 +348,6 @@
 
 #define QUOTE_CHAR1     '>'
 #define QUOTE_CHAR2     ':'
-
 
 //#define STR_CURSOR      "●"
 //#define STR_UNCUR       "  "  // Needs to be as wide as `STR_CURSOR`

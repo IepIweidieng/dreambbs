@@ -37,13 +37,34 @@ endif()
 
 ## Toolchain settings
 
+function(MACROVALUE compiler conf default output)
+    set(valueif "#ifdef ${conf}\n${conf}\n#else\n${default}\n#endif")
+    execute_process(
+        COMMAND echo ${valueif}
+        COMMAND ${compiler} -E -P -
+        COMMAND sed [[s/^"\(.*\)"$/\1/g]] # unquote
+        COMMAND head -c -1 # strip the trailing newline
+        OUTPUT_VARIABLE res
+        ERROR_QUIET
+    )
+    set("${output}" "${res}" PARENT_SCOPE)
+endfunction(MACROVALUE)
+
 if(NOT USE_CXX)
     # specify the C standard
-    add_compile_options(-x c --std=gnu99)
+    add_compile_options(-x c)
+    MACROVALUE("${CMAKE_C_COMPILER};-x;c" "__STDC_VERSION__" "" CSTD)
+    if(CSTD STRLESS "199901L")
+        add_compile_options(--std=gnu99)
+    endif()
     set(USE_CXX OFF CACHE BOOL "Compile C code using C++ mode")
 else()
     # specify the C++ standard
     add_compile_options(-x c++ --std=gnu++14)
+    MACROVALUE("${CMAKE_CXX_COMPILER};-x;c++" "__cplusplus" "" CXXSTD)
+    if(CXXSTD STRLESS "201402L")
+        add_compile_options(--std=gnu++14)
+    endif()
     link_libraries(stdc++)
     set(USE_CXX ON CACHE BOOL "Compile C code using C++ mode")
 endif()
@@ -70,28 +91,38 @@ link_libraries(-L${PROJECT_BINARY_DIR}/lib dao crypt)
 
 ## Tool functions
 
-function(GETVALUE conf default hdr output)
-    set(valueif "#ifdef ${conf}\n${conf}\n#else\n${default}\n#endif")
+function(SED str command output)
     execute_process(
-        COMMAND echo ${valueif}
-        COMMAND ${CMAKE_C_COMPILER} -x c -E -P -imacros "${hdr}" -
-        COMMAND xargs
-        OUTPUT_VARIABLE "${output}"
-        OUTPUT_STRIP_TRAILING_WHITESPACE
+        COMMAND echo ${str}
+        COMMAND sed "${command}"
+        COMMAND head -c -1 # strip the trailing newline
+        OUTPUT_VARIABLE res
         ERROR_QUIET
     )
-    set("${output}" "${${output}}" PARENT_SCOPE)
+    set("${output}" "${res}" PARENT_SCOPE)
+endfunction(SED)
+
+function(ESCAPE_QUOTES str output)
+    SED("${str}" [[s/\([^\\]\)"/\1\\"/g;s/^"/\\"/g]] res)
+    set("${output}" "${res}" PARENT_SCOPE)
+endfunction(ESCAPE_QUOTES)
+
+function(GETVALUE conf default hdr output)
+    MACROVALUE("${CMAKE_C_COMPILER};-x;c;-imacros;${hdr}" "${conf}" "${default}" res)
+    set("${output}" "${res}" PARENT_SCOPE)
 endfunction(GETVALUE)
 
 function(LOADVALUE conf default hdr output)
-    if(DEFINED ENV{${conf}})
-        set("${output}" "$ENV{${conf}}")
-    elseif(DEFINED "${conf}")
-        set("${output}" "${${conf}}")
+    if(DEFINED "${conf}")
+        set(res "${${conf}}")
+    elseif(DEFINED ENV{${conf}})
+        set(res "$ENV{${conf}}")
     else()
-        GETVALUE("${conf}" "${default}" "${hdr}" "${output}")
+        GETVALUE("${conf}" "${default}" "${hdr}" res)
     endif()
-    set("${output}" "${${output}}" PARENT_SCOPE)
+    ESCAPE_QUOTES("${res}" res)
+    unset("${output}" CACHE)
+    set("${output}" "${res}" PARENT_SCOPE)
 endfunction(LOADVALUE)
 
 set(ID_DEFAULT 9999)
@@ -99,33 +130,33 @@ set(ID_DEFAULT 9999)
 function(GETUID name output)
     execute_process(
         COMMAND sh -c "id -u ${name} || echo ${ID_DEFAULT}"
-        OUTPUT_VARIABLE "${output}"
+        OUTPUT_VARIABLE res
         OUTPUT_STRIP_TRAILING_WHITESPACE
         ERROR_QUIET
     )
-    set("${output}" "${${output}}" PARENT_SCOPE)
+    set("${output}" "${res}" PARENT_SCOPE)
 endfunction(GETUID)
 
 function(GETGID name output)
     execute_process(
         COMMAND getent group ${name}
         COMMAND cut -d: -f3 -
-        OUTPUT_VARIABLE "${output}"
+        OUTPUT_VARIABLE res
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    if ("${${output}}" STREQUAL "")
+    if ("${res}" STREQUAL "")
         set("${output}" ${ID_DEFAULT})
     endif()
-    set("${output}" "${${output}}" PARENT_SCOPE)
+    set("${output}" "${res}" PARENT_SCOPE)
 endfunction(GETGID)
 
 function(DEF_TEST conf hdr output)
     if("${hdr}" IS_NEWER_THAN ${CMAKE_CACHEFILE_DIR}/CMakeCache.txt)
         set(MARK_CACHE_UPDATED ON)
         unset("${output}" CACHE)
-        check_symbol_exists("${conf}" "${hdr}" "${output}")
+        check_symbol_exists("${conf}" "${hdr}" res)
     endif()
-    set("${output}" "${${output}}" PARENT_SCOPE)
+    set("${output}" "${res}" PARENT_SCOPE)
 endfunction(DEF_TEST)
 
 ## Read variables from the configuration C files
@@ -302,13 +333,14 @@ endif()
 
 ## Generate configure file
 function(EXPORT_CONF export_file)
-    execute_process(COMMAND printf "\\033[1;36mGenerating '${export_file}'...\\033[0m\n")
+    string(ASCII 27 esc)
+    message("${esc}[1;36mGenerating '${export_file}'...${esc}[m")
     configure_file(
         ${export_file}.in ${export_file}
         NEWLINE_STYLE LF
     )
     file(READ ${export_file} EXPORT_FILE_CONTENT)
-    execute_process(COMMAND printf "\\033[1;33m${EXPORT_FILE_CONTENT}\\033[0m")
+    message("${esc}[1;33m${EXPORT_FILE_CONTENT}${esc}[m")
 endfunction()
 
 EXPORT_CONF(${CMAKE_CURRENT_SOURCE_DIR}/make_export.conf)

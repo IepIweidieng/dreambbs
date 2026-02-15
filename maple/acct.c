@@ -207,7 +207,11 @@ unsigned int bitset(unsigned int pbits, int count,    /* 共有幾個選項 */
         }
         move(5 + (i % 16U), (i < 16 ? 0 : (b_cols+1) >> 1));
         if (perms[i])
-            prints("%c %s %s", radix32[i], msg, perms[i]);
+        {
+            /* Format of perms[i]: "<off-state>\n<on-state>" or "<both-state>" */
+            const char *const str_perm = (pbits & j) ? str_chr_next_or(perms[i], '\n', perms[i]) : perms[i];
+            prints("%c %s %.*s", radix32[i], msg, INT(strcspn(str_perm, "\n")), str_perm);
+        }
         else
             prints("\x1b[1;30m%c\x1b[m", radix32[i]);
         j <<= 1;
@@ -238,6 +242,13 @@ unsigned int bitset(unsigned int pbits, int count,    /* 共有幾個選項 */
             pbits ^= j;
             move(5 + (i % 16U), (i < 16 ? 0 : (b_cols+1) >> 1) + 2);
             outs(msg);
+            /* Format of perms[i]: "<off-state>\n<on-state>" or "<both-state>" */
+            const char *const str_on = str_chr_next_or(perms[i], '\n', NULL);
+            if (str_on) {
+                const char *const str_perm = (pbits & j) ? str_on : perms[i];
+                const char *const str_other = (pbits & j) ? perms[i] : str_on;
+                prints(" %-*.*s", INT(strlen(str_other)), INT(strcspn(str_perm, "\n")), str_perm);
+            }
         }
     }
     return (pbits);
@@ -286,6 +297,7 @@ static void acct_su(const ACCT * u)
     xz[XZ_MBOX - XO_ZONE].xo =  xo_new(path);
     xz[XZ_MBOX - XO_ZONE].xo->cb = mbox_cb;
     xz[XZ_MBOX - XO_ZONE].xo->recsiz = sizeof(HDR);
+    xz[XZ_MBOX - XO_ZONE].xo->xz_idx = XZ_INDEX_MBOX;
     xz[XZ_MBOX - XO_ZONE].xo->pos = 0;
     free(xo);
 */
@@ -296,7 +308,9 @@ static void acct_su(const ACCT * u)
     xz[XZ_BMW - XO_ZONE].xo =  xo_new(path);
     xz[XZ_BMW - XO_ZONE].xo->cb = bmw_cb;
     xz[XZ_BMW - XO_ZONE].xo->recsiz = sizeof(BMW);
-    xz[XZ_BMW - XO_ZONE].xo->pos = 0;
+    xz[XZ_BMW - XO_ZONE].xo->xz_idx = XZ_INDEX_BMW;
+    for (int i = 0; i < COUNTOF(xz[XZ_BMW - XO_ZONE].xo->pos); ++i)
+        xz[XZ_BMW - XO_ZONE].xo->pos[i] = 0;
     free(xo);
     pal_cache();
 }
@@ -323,8 +337,7 @@ static void bm_list(            /* 顯示 userid 是哪些板的板主 */
                 outc(' ');
             }
         }
-    }
-    while (++bhdr < tail);
+    } while (++bhdr < tail);
 
     outc('\n');
 }
@@ -842,24 +855,21 @@ void acct_setup(ACCT * u, int adm)
     do
     {
         vget(i, 0, "暱    稱：", str, sizeof(x.username), GCARRY);
-    }
-    while (str_len_nospace(str) < 1);
+    } while (str_len_nospace(str) < 1);
 
     i++;
     str = x.realname;
     do
     {
         vget(i, 0, "真實姓名：", str, sizeof(x.realname), GCARRY);
-    }
-    while (str_len_nospace(str) < 4);
+    } while (str_len_nospace(str) < 4);
 
     i++;
     str = x.address;
     do
     {
         vget(i, 0, "居住地址：", str, sizeof(x.address), GCARRY);
-    }
-    while (str_len_nospace(str) < 8);
+    } while (str_len_nospace(str) < 8);
 
     if (adm)
     {
@@ -1267,7 +1277,7 @@ static const char *const UFO_FLAGS[] = {
     /* HIDDEN */ "隱藏來源",
 
     /* CLOAK */ "隱身術",
-    NULL
+    NULL,
 };
 
 static const char *const UFO2_FLAGS[] = {
@@ -1302,7 +1312,7 @@ static const char *const UFO2_FLAGS[] = {
     /* REALNAME */ "真實姓名",
     /* RESERVE */ NULL,
     /* RESERVE */ NULL,
-    /* RESERVE */ NULL
+    /* RESERVE */ NULL,
 };
 
 
@@ -1461,7 +1471,9 @@ int u_lock(void)
 
     clear();
     prints("\x1b[1;44;33m");
-    vs_mid(BOARDNAME "    閒置/鎖定狀態");
+    const char vs_mid_str[32];
+    sprintf(vs_mid_str, "%s    閒置/鎖定狀態", str_site);
+    vs_mid(vs_mid_str);
     move(4, 6);
     prints("閒置中：%s", cutmp->mateid);
     if (buf[0] == 'y' || buf[0] == 'Y')
@@ -1482,8 +1494,8 @@ int u_lock(void)
                 sprintf(temp, "[%s] BBS %s\n", Ctime(&ap_start), fromhost);
                 f_cat(fpath, temp);
             }
-        }
-        while (check);
+        } while (check);
+        bbstate ^= STAT_LOCK;
     }
     else
     {
@@ -1491,7 +1503,6 @@ int u_lock(void)
     }
 
     strcpy(cutmp->mateid, swapmateid);
-    bbstate ^= STAT_LOCK;
     cutmp->ufo &= ~UFO_REJECT;
     return 0;
 }
@@ -1509,7 +1520,7 @@ int u_xfile(void)
         "暫存檔.3",
         "暫存檔.4",
         "暫存檔.5",
-        NULL
+        NULL,
     };
 
     static const char *const path[] = {
@@ -2049,7 +2060,7 @@ static int scan_register_form(int fd)
     static const char logfile[] = FN_RFORM_LOG;
     static const char *const reason[] = { "輸入真實姓名", "詳實填寫申請表",
         "詳填住址資料", "詳填連絡電話", "詳填服務單位、或學校系級",
-        "用中文填寫申請單", "採用 E-mail 認證", "填寫身分證號碼", NULL
+        "用中文填寫申請單", "採用 E-mail 認證", "填寫身分證號碼", NULL,
     };
 
     ACCT muser;
@@ -2137,8 +2148,7 @@ static int scan_register_form(int fd)
             do
             {
                 rec_add(FN_RFORM, &rform, sizeof(RFORM));
-            }
-            while (read(fd, &rform, sizeof(RFORM)) == sizeof(RFORM));
+            } while (read(fd, &rform, sizeof(RFORM)) == sizeof(RFORM));
 
         case 'd':
             break;
@@ -2292,8 +2302,7 @@ static int ans_request(void)
                 do
                 {
                     rec_add(FN_RFORM_R, &form, sizeof(RFORM_R));
-                }
-                while (read(fd, &form, sizeof(RFORM_R)) == sizeof(RFORM_R));
+                } while (read(fd, &form, sizeof(RFORM_R)) == sizeof(RFORM_R));
                 break;
             default:
                 rec_add(FN_RFORM_R, &form, sizeof(RFORM_R));
@@ -2584,7 +2593,7 @@ int u_verify(void)
             time32(&cuser.tvalid);
             acct_save(&cuser);
             usr_fpath(buf, cuser.userid, fn_dir);
-            hdr_stamp(buf, HDR_LINK, &fhdr, "etc/justified");
+            hdr_stamp(buf, HDR_LINK, &fhdr, FN_ETC_JUSTIFIED);
             strcpy(fhdr.title, "[註冊成功\] 您已經通過身分認證了！");
             strcpy(fhdr.owner, str_sysop);
             rec_add(buf, &fhdr, sizeof(fhdr));

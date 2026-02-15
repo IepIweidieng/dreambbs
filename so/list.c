@@ -60,8 +60,7 @@ XO *xo)
     do
     {
         list_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -168,7 +167,7 @@ XO *xo)
 
     if (xo->max >= PAL_MAX)
     {
-        vmsg("您的群組名單太多，請善加整理");
+        vmsg_xo(xo, "您的群組名單太多，請善加整理");
         return XO_FOOT;
     }
 
@@ -188,7 +187,7 @@ XO *xo)
 
         if (have_it(&acct, xo->dir))
         {
-            vmsg("群組名單中已有此人");
+            vmsg_xo(xo, "群組名單中已有此人");
             return XO_FOOT;
         }
     }
@@ -197,8 +196,7 @@ XO *xo)
     {
         strcpy(list.userid, mode ? brd->brdname : acct.userid);
         rec_add(xo->dir, &list, sizeof(LIST));
-        xo->pos = XO_TAIL;
-        xo_load(xo, sizeof(LIST));
+        return XR_INIT + XO_MOVE + XO_TAIL;
     }
     return XO_HEAD;
 }
@@ -215,7 +213,7 @@ int pos)
     cur=pos;
     max=xo->max;
 
-    if (!vget(B_LINES_REF, 0, "關鍵字：", buf, sizeof(buf), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "關鍵字：", buf, sizeof(buf), DOECHO))
         return XO_FOOT;
 
     str_lower(buf, buf);
@@ -242,7 +240,7 @@ XO *xo,
 int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(LIST), pos, NULL, NULL))
         {
@@ -267,11 +265,11 @@ XO *xo)
     {
         read(fd, &list, sizeof(LIST_TITLE));
         close(fd);
-        vget(B_LINES_REF, 0, "請輸入群組名稱：", list.title[ways-1], 41, GCARRY);
+        vget_xo(xo, B_LINES_REF, 0, "請輸入群組名稱：", list.title[ways-1], 41, GCARRY);
     }
 
     if ((fd = open(fpath, O_WRONLY | O_CREAT | O_TRUNC, 0600)) >= 0
-        && vans("確定嗎 [Y/n]：") != 'n')
+        && vans_xo(xo, "確定嗎 [Y/n]：") != 'n')
     {
         write(fd, &list, sizeof(LIST_TITLE));
         close(fd);
@@ -320,7 +318,7 @@ KeyFuncList list_cb =
     {'d' | XO_POSF, {.posf = list_delete}},
     {KEY_TAB, {list_mode}},
     {'/' | XO_POSF, {.posf = list_search}},
-    {'h', {list_help}}
+    {'h', {list_help}},
 };
 
 
@@ -338,7 +336,9 @@ XO *xo)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = list_cb;
     xo->recsiz = sizeof(LIST);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     return XO_INIT;
 }
 
@@ -360,7 +360,9 @@ XO *xo)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = list_cb;
     xo->recsiz = sizeof(LIST);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     return XO_INIT;
 }
 #endif
@@ -413,7 +415,9 @@ List(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = list_cb;
     xo->recsiz = sizeof(LIST);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i]= 0;
     xover(XZ_OTHER);
     free(xo);
 

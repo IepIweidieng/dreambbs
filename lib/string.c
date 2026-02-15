@@ -115,6 +115,17 @@ GCC_PURE int str_casecmp_dbcs(const char *s1, const char *s2)
     }
 }
 
+/* Returns the pointer to next character of the first `delim` in `str`
+ * Returns `dflt` if `delim` is not in `str` */
+GCC_NONNULL(1)
+GCC_PURE char *str_chr_next_or(const char *str, char delim, const char *dflt)
+{
+    if (delim == '\0')
+        return dflt;
+    const char *const pdelim = strchr(str, delim);
+    return !pdelim ? dflt : (char *)pdelim + 1;
+}
+
 /* Split string `src` with spaces and copy the first line of the second splitted item to `dst` (formerly `str_cut`) */
 GCC_NONNULLS
 void str_split_2nd(char *dst, const char *src)
@@ -512,8 +523,8 @@ GCC_PURE size_t str_nmove_ansi(const char *str, size_t idx, ssize_t diff, size_t
 {
     const char *ptr = str + BMIN(idx, len);
 
-    /* `diff > 0`: Move afterwards; `diff < 0`: Move backwards */
-    if (diff > 0)
+    /* `diff >= 0`: Move afterwards; `diff < 0`: Move backwards */
+    if (diff >= 0)
     {
         do
         {
@@ -565,7 +576,7 @@ GCC_PURE size_t str_nmove_ansi(const char *str, size_t idx, ssize_t diff, size_t
                 ++ptr;
         }
     }
-    else if (diff < 0)
+    else // diff < 0
     {
         /* Assume `*ptr` has a value not for the param bytes of ANSI escape */
         const char *final = ptr;
@@ -819,6 +830,36 @@ GCC_PURE bool str_pat(const char *str, const char *pat)
     return true;
 }
 
+/* Print the message for `userid` commenting `msg` with `verb` at `time`
+ * which increases/decreases/keeps the score of the main article (by at most 1 point) according to the sign of `pushscore`,
+ * into buffer `dst`
+ * If `pushscore` < -1, the ANSI escapes of the verb color is simplified.
+ * Returns the number of characters printed */
+GCC_NONNULLS
+int rmsg_sprint(char *dst, int pushscore, const char *verb, const char *userid, const char *msg, time_t time)
+{
+    const char *const date = Btime_any(&time) + 3; // skip the year
+    return rmsg_sprint_date(dst, pushscore, verb, userid, msg, date);
+}
+
+/* Similar to `rmsg_sprint()` but `date` is a "2-digit month/2-digit day" string.
+ * Returns the number of characters printed */
+GCC_NONNULLS
+int rmsg_sprint_date(char *dst, int pushscore, const char *verb, const char *userid, const char *msg, const char *date)
+{
+    char verb_color[24];
+    if (pushscore > 0)
+        sprintf(verb_color, "\x1b[1;33m%2.2s ", verb);
+    else if (pushscore == -1)
+        sprintf(verb_color, "\x1b[1;31m%2.2s\x1b[m \x1b[1;33m", verb);
+    else if (pushscore < -1) // Simplified the ANSI escapes
+        sprintf(verb_color, "\x1b[1;31m%2.2s \x1b[33m", verb);
+    else if (*verb != '\0')
+        sprintf(verb_color, "\x1b[1;33m%2.2s\x1b[m \x1b[1;33m", verb);
+    else
+        strcpy(verb_color, "\x1b[m\x1b[1;33m   ");
+    return sprintf(dst, "%s%*s¡G\x1b[36m%-54.54s \x1b[m%5.5s\n", verb_color, IDLEN, userid, msg, date);
+}
 
 /* Reverse the string `src`, output the result to a buffer from the buffer end `dst`, and return the string head of `dst` (formerly `str_rev`) */
 GCC_NONNULLS

@@ -65,8 +65,7 @@ XO *xo)
     do
     {
         viol_item(xo, num++);
-    }
-    while (num < max);
+    } while (num < max);
 
     return XO_NONE;
 }
@@ -105,7 +104,7 @@ viol_edit(
 EMAIL *viol,
 int echo)
 {
-    if (echo == DOECHO)
+    if (!(echo & GCARRY))
         memset(viol, 0, sizeof(EMAIL));
     if (vget(B_LINES_REF, 0, "E-mail：", viol->email, sizeof(viol->email), echo))
         return 1;
@@ -123,8 +122,7 @@ XO *xo)
     if (viol_edit(&viol, DOECHO))
     {
         rec_add(xo->dir, &viol, sizeof(EMAIL));
-        xo->pos = XO_TAIL;
-        xo_load(xo, sizeof(EMAIL));
+        return XR_INIT + XO_MOVE + XO_TAIL;
     }
     return XO_HEAD;
 }
@@ -135,7 +133,7 @@ XO *xo,
 int pos)
 {
 
-    if (vans(msg_del_ny) == 'y')
+    if (vans_xo(xo, msg_del_ny) == 'y')
     {
         if (!rec_del(xo->dir, sizeof(EMAIL), pos, NULL, NULL))
         {
@@ -175,7 +173,7 @@ int pos)
     int fd;
     char buf[64];
 
-    if (!vget(B_LINES_REF, 0, "請輸入查詢字串:", buf, sizeof(buf), DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "請輸入查詢字串:", buf, sizeof(buf), DOECHO))
         return XO_FOOT;
 
     fd = open(FN_VIOLATELAW_DB, O_RDONLY);
@@ -189,9 +187,8 @@ int pos)
         {
             if (str_casestr(viol.email, buf))
             {
-                xo->pos = pos;
                 close(fd);
-                return XO_INIT;
+                return XR_INIT + XO_MOVE + pos;
             }
             pos++;
         }
@@ -229,7 +226,7 @@ KeyFuncList viol_cb =
     {'c' | XO_POSF, {.posf = viol_change}},
     {'s', {xo_cb_init}},
     {'d' | XO_POSF, {.posf = viol_delete}},
-    {'h', {viol_help}}
+    {'h', {viol_help}},
 };
 
 
@@ -247,7 +244,9 @@ Violate(void)
     xz[XZ_OTHER - XO_ZONE].xo = xo = xo_new(fpath);
     xo->cb = viol_cb;
     xo->recsiz = sizeof(EMAIL);
-    xo->pos = 0;
+    xo->xz_idx = XZ_INDEX_OTHER;
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
+        xo->pos[i] = 0;
     xover(XZ_OTHER);
     free(xo);
 

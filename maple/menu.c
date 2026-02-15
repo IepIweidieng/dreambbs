@@ -18,8 +18,11 @@
 #define STUDENT_HAVE    "1Student  【 \x1b[41;33;1;5m快進來看看\x1b[m 】"
 #endif
 
-#define GOODBYE_EXIT    "Goodbye   【再別" BOARDNAME "】"
+#define GOODBYE_EXIT    "Goodbye   【再別%s】"
 #define GOODBYE_GOBACK  "GoBack    【 回上層選單 】"
+
+#define MENU_HELP       NULL
+#define MENU_HELP_NCUR  "(Tab) 開關選單移動模式；(Space) 切換使用中游標" // Multiple-cursor mode
 
 static int
 system_result(void)
@@ -113,7 +116,7 @@ pad_view(void)
 
     clear();
     move(0, 23);
-    outs("\x1b[1;37;45m ●  " BOARDNAME " 留 言 板  ● \x1b[m\n\n");
+    prints("\x1b[1;37;45m ●  %s 留 言 板  ● \x1b[m\n\n", str_site);
     count = 0;
 
     mgets(-1);
@@ -222,13 +225,15 @@ goodbye(void)
         return QUIT;
 
     bmw_save();
+    char vans_str[64];
+    sprintf(vans_str, "G)再別%s M)報告站長 N)留言板 Q)取消？[Q] ", str_site_nick);
     if (cuser.ufo2 & UFO2_DEF_LEAVE)
     {
-        if (!(ans = vans("G)再別" NICKNAME " M)報告站長 N)留言板 Q)取消？[Q] ")))
+        if (!(ans = vans(vans_str)))
             ans = 'q';
     }
     else
-        ans = vans("G)再別" NICKNAME " M)報告站長 N)留言板 Q)取消？[Q] ");
+        ans = vans(vans_str);
 
     switch (ans)
     {
@@ -247,9 +252,8 @@ goodbye(void)
         break;
 
     case 'q':
+    default: /* 090911.cache: 不小心按錯不要趕走人家 ;( */
         return XEASY;
-    default:
-        return XEASY; /* 090911.cache: 不小心按錯不要趕走人家 ;( */
     }
 
     return QUIT;
@@ -479,7 +483,7 @@ INTERNAL_INIT MENU menu_boardadm[] =
     "Personal   個人板審核"},
 
     {{.menu = menu_admin}, PERM_MENU + 'N', M_ADMIN,
-    "看板總管"}
+    "看板總管"},
 };
 
 INTERNAL_INIT MENU menu_accadm[] =
@@ -509,7 +513,7 @@ INTERNAL_INIT MENU menu_accadm[] =
 #endif
 
     {{.menu = menu_admin}, PERM_MENU + 'U', M_ADMIN,
-    "註冊總管"}
+    "註冊總管"},
 };
 
 INTERNAL_INIT MENU menu_settingadm[] =
@@ -537,7 +541,7 @@ INTERNAL_INIT MENU menu_settingadm[] =
     "Database   系統資料庫更新"},
 
     {{.menu = menu_admin}, PERM_MENU + 'X', M_ADMIN,
-    "系統資料"}
+    "系統資料"},
 };
 
 /* ----------------------------------------------------- */
@@ -567,7 +571,7 @@ INTERNAL_INIT MENU menu_reset[] =
     "All        全部"},
 
     {{.menu = menu_admin}, PERM_MENU + 'K', M_ADMIN,
-    "系統重置"}
+    "系統重置"},
 };
 
 
@@ -605,7 +609,7 @@ INTERNAL_INIT MENU menu_admin[] =
 #endif
 
     {{.menu = menu_main}, PERM_MENU + 'A', M_ADMIN,
-    "系統維護"}
+    "系統維護"},
 };
 
 #ifdef __cplusplus
@@ -672,7 +676,7 @@ INTERNAL_INIT MENU menu_mail[] =
     "Yes Sir!   寄信給站長"},
 
     {{.menu = menu_main}, PERM_MENU + 'R', M_MMENU,       /* itoc.020829: 怕 guest 沒選項 */
-    "電子郵件"}
+    "電子郵件"},
 };
 #ifdef __cplusplus
 }  // namespace
@@ -721,7 +725,7 @@ INTERNAL_INIT MENU menu_talk[] =
 
     /* Thor.990220: chatroom client 改採外掛 */
     {{.dl = {DL_NAME("chat.so", t_chat)}}, PERM_CHAT, M_DL(M_CHAT),
-    "ChatRoom   " NICKNAME CHATROOMNAME},
+    "ChatRoom   %.0s%s" CHATROOMNAME},
 
     {{t_recall}, PERM_BASIC, M_XMODE,
     "Write      回顧前幾次熱訊"},
@@ -731,7 +735,7 @@ INTERNAL_INIT MENU menu_talk[] =
     "Notify     設定系統網友協尋"},
 #endif
     {{.menu = menu_main}, PERM_MENU + 'U', M_UMENU,
-    "休閒聊天"}
+    "休閒聊天"},
 };
 
 
@@ -764,14 +768,14 @@ INTERNAL_INIT MENU menu_information[] =
     "3Year      本年度百大熱門話題"},
 
     {{.menu = menu_xyz}, PERM_MENU + 'L', M_MMENU,
-    "統計資料"}
+    "統計資料"},
 };
 
 
 INTERNAL_INIT MENU menu_xyz[] =
 {
     {{.menu = menu_information}, 0, M_XMENU,
-    "Tops       " NICKNAME "排行榜"},
+    "Tops       %.0s%s" "排行榜"},
 
     {{FUNCARG(menumore, FN_ETC_VERSION)}, 0, M_READA | M_ARG,
     "Version    源碼發展資訊"},
@@ -789,7 +793,7 @@ INTERNAL_INIT MENU menu_xyz[] =
     "History    本站歷史軌跡"},
 
     {{.menu = menu_main}, PERM_MENU + 'T', M_SMENU,
-    "系統資訊"}
+    "系統資訊"},
 };
 
 /* ----------------------------------------------------- */
@@ -826,7 +830,7 @@ INTERNAL_INIT MENU menu_reg[] =
     "1List      群組名單"},
 
     {{.menu = menu_user}, PERM_MENU + 'I', M_MMENU,
-    "註冊資訊"}
+    "註冊資訊"},
 };
 
 
@@ -853,7 +857,7 @@ INTERNAL_INIT MENU menu_user[] =
     "ViewLog    檢視上站紀錄"},
 
     {{.menu = menu_service}, PERM_MENU + 'C', M_UMENU,
-    "個人設定"}
+    "個人設定"},
 };
 
 
@@ -870,7 +874,7 @@ INTERNAL MENU menu_service[];
 INTERNAL_INIT MENU menu_game[] =
 {
     {{.dl = {DL_NAME("bj.so", BlackJack)}}, PERM_VALID, M_DL(M_XMODE),
-    "BlackJack  " NICKNAME "黑傑克"},
+    "BlackJack  %.0s%s黑傑克"},
 
     {{.dl = {DL_NAME("guessnum.so", fightNum)}}, PERM_VALID, M_DL(M_XMODE),
     "FightNum   數字大決戰"},
@@ -879,10 +883,10 @@ INTERNAL_INIT MENU menu_game[] =
     "GuessNum   傻瓜猜數字"},
 
     {{.dl = {DL_NAME("mine.so", Mine)}}, PERM_VALID, M_DL(M_XMODE),
-    "Mine       " NICKNAME "踩地雷"},
+    "Mine       %.0s%s踩地雷"},
 
     {{.dl = {DL_NAME("pip.so", p_pipple)}}, PERM_VALID, M_DL(M_XMODE),
-    "Pip        " NICKNAME "戰鬥雞"},
+    "Pip        %.0s%s戰鬥雞"},
 
     {{.menu = menu_service}, PERM_MENU + 'F', M_UMENU,
     "遊戲休閒"}
@@ -914,7 +918,7 @@ INTERNAL_INIT MENU menu_special[] =
     "CameraReset  版面重設"},
 
     {{.menu = menu_service}, PERM_MENU + 'R', M_UMENU,
-    "加值服務"}
+    "加值服務"},
 };
 
 
@@ -936,7 +940,7 @@ INTERNAL_INIT MENU menu_song[] =
     "Submit        投稿專區"},
 
     {{.menu = menu_special}, PERM_MENU + 'R', M_XMENU,
-    "網呼點歌"}
+    "網呼點歌"},
 };
 #endif
 
@@ -986,7 +990,7 @@ INTERNAL_INIT MENU menu_service[] =
 #endif
 */
     {{.menu = menu_main}, PERM_MENU + 'U', M_UMENU,
-     NICKNAME "服務"}
+     "%.0s%s服務"},
 };
 
 #ifdef __cplusplus
@@ -1015,7 +1019,7 @@ INTERNAL_INIT MENU skin_main[] =
     "DreamBBS   預設的系統"},
 
     {{.menu = menu_main}, PERM_MENU + 'W', M_MMENU,
-    "介面選單"}
+    "介面選單"},
 };
 #ifdef __cplusplus
 }  // namespace
@@ -1069,7 +1073,7 @@ INTERNAL_INIT MENU menu_main[] =
     "Talk      【 休閒聊天區 】"},
 
     {{.menu = menu_service}, PERM_BASIC, M_XMENU,
-    "DService  【 " NICKNAME "服務區 】"},
+    "DService  【 %.0s%s服務區 】"},
 
     /* lkchu.990428: 不要都塞在個人工具區 */
     {{.menu = menu_xyz}, 0, M_SMENU,
@@ -1080,11 +1084,13 @@ INTERNAL_INIT MENU menu_main[] =
     "2Skin     【 選擇介面區 】"},
 #endif
 
+#ifndef MENU_NO_GOODBYE
     {{goodbye}, 0, M_XMODE,
     GOODBYE_EXIT},
+#endif
 
     {{NULL}, PERM_MENU + 'B', M_MMENU,
-    "主功\能表"}
+    "主功\能表"},
 };
 
 #ifdef __cplusplus
@@ -1127,7 +1133,7 @@ INTERNAL_INIT MENU menu_treat[] =
     GOODBYE_EXIT},
 
     {{NULL}, PERM_MENU + 'G', M_MMENU,
-    "主功\能表"}
+    "主功\能表"},
 };
 #ifdef __cplusplus
 }  // namespace
@@ -1149,7 +1155,8 @@ int strip_ansi_n_len(
         ptr = strstr(ptr, "\x1b");
         if (ptr)
         {
-            for (tmp=ptr; *tmp!='m'; tmp++);
+            for (tmp=ptr; *tmp!='m'; tmp++)
+                ;
             len -= (tmp-ptr+1);
             ptr = tmp+1;
         }
@@ -1219,12 +1226,12 @@ main_menu(void)
 /* IID.20200331: Restructure with xover commands */
 
 typedef struct {
-    int y_ref, x_ref, height_ref, width_ref;
+    int y_ref, x_ref, y_ref_prev, x_ref_prev, height_ref, width_ref;
     int y, x, height, width;
     MENU *menu, *mtail;
     MENU **table;
     int table_size;
-    int pos_prev; /* previous cursor position */
+    int pos_prev; /* previous cursor positions */
     int max_prev; /* previous menu max */
 
     /* IID.20200107: Match input sequence. */
@@ -1233,9 +1240,12 @@ typedef struct {
     int *cmdlen;  /* Command matching length (no spaces) */
     bool keep_cmd;
     bool keyboard_cmd;
+    bool default_cmd;
     int *item_length;
     int max_item_length;
     int explan_len_prev;
+    bool is_moving;
+    bool is_moving_prev;
 } DomenuXyz;
 
 GCC_PURE static int
@@ -1260,6 +1270,33 @@ domenu_getx(
         return xyz->x;
 }
 
+GCC_NONNULLS
+GCC_PURE static int domenu_geth(int max, const DomenuXyz *xyz)
+{
+    return (xyz->height) ? xyz->height : max;
+}
+
+GCC_NONNULLS
+GCC_PURE static int domenu_getw(int max, const DomenuXyz *xyz)
+{
+    return ((xyz->width) ? xyz->width : xyz->max_item_length) * ((xyz->height) ? (max - 1)/xyz->height + 1 : 1);
+}
+
+/* returns whether the menu moved successfully */
+GCC_NONNULLS
+static bool domenu_move(XO *xo, int cmd)
+{
+    DomenuXyz *const xyz = (DomenuXyz *)xo->xyz;
+    const int h = domenu_geth(xo->max, xyz);
+    const int w = domenu_getw(xo->max, xyz);
+    const int y_ref = gety_bound_move(cmd, xyz->y_ref, 1, 1 + ((B_LINES_REF - h) >> 1), B_LINES_REF - h);
+    const int x_ref = getx_bound_move(cmd, xyz->x_ref, 0, (B_COLS_REF - w) >> 1, B_COLS_REF - w);
+    const bool diff = (y_ref != xyz->y_ref) || (x_ref != xyz->x_ref);
+    xyz->y_ref = y_ref;
+    xyz->x_ref = x_ref;
+    return diff;
+}
+
 static int
 domenu_item(
     XO *xo,
@@ -1268,7 +1305,9 @@ domenu_item(
     DomenuXyz *const xyz = (DomenuXyz *)xo->xyz;
     char item[ANSILINESIZE];
     const MENU *const mptr = xyz->table[pos];
-    const char *const str = check_info((const void *)mptr->item.func, mptr->desc);
+    const char *const str_fmt = check_info((const void *)mptr->item.func, mptr->desc);
+    char str[96];
+    snprintf(str, sizeof(str), str_fmt, str_site, str_site_nick);
     const int item_str_len = strcspn(str, "\n");
     const int match_max = BMIN(xyz->cmdcur_max, item_str_len);
     const int y = domenu_gety(pos, xyz);
@@ -1346,19 +1385,31 @@ domenu_redo_reload:
             else
                 cmd_res = mlevel ^ PERM_MENU;  /* default command */
             xyz->keyboard_cmd = false;
+            xyz->default_cmd = true;
         }
         utmp_mode(xyz->mtail->umode);
     }
     if (cmd & XR_PART_HEAD)
     {
+        /* Keep menu in bound after resizing */
+        domenu_move(xo, cmd);
+
         /* Resize */
         xyz->y = gety_ref(xyz->y_ref);
         xyz->x = getx_ref(xyz->x_ref);
         xyz->height = gety_ref(xyz->height_ref);
         xyz->width = getx_ref(xyz->width_ref);
 
+        /* Reset the previous state */
+        xyz->y_ref_prev = xyz->y_ref;
+        xyz->x_ref_prev = xyz->x_ref;
+        xyz->max_prev = xo->max;
+
         clear();
-        vs_head(xyz->mtail->desc, NULL);
+        const char *const desc_fmt = xyz->mtail->desc;
+        char desc[96];
+        snprintf(desc, sizeof(desc), desc_fmt, str_site, str_site_nick);
+        vs_head(desc, NULL);
         //prints("\n\x1b[30;47m     選項         選項說明                         動態看板                   \x1b[m\n");
     }
     if (cmd & XR_PART_NECK)
@@ -1368,27 +1419,86 @@ domenu_redo_reload:
     }
     if (cmd & XR_PART_BODY)
     {
-        const int h = (xyz->height) ? xyz->height : xo->max;
+        const int y_prev = gety_ref(xyz->y_ref_prev);
+        const int x_prev = getx_ref(xyz->x_ref_prev);
+        const int h_prev = domenu_geth(xyz->max_prev, xyz);
+        const int h = domenu_geth(xo->max, xyz);
 
+        /* Clear the screen area for the menu item first */
+        for (int i = 0; i < h_prev; ++i)
+        {
+            move_ansi(y_prev + i, BMAX(BMIN(x_prev, xyz->x) - 1, 0));
+            clrtoeol();
+        }
         if (xyz->y + (h - 1) >= b_lines - 1 && xyz->explan_len_prev > b_cols - xyz->x)
         {
             /* Clean the previous explanation if the explanation is overlapped in the middle */
             move_ansi(b_lines - 1, b_cols - xyz->explan_len_prev);
             clrtoeol();
             xyz->explan_len_prev = 0;
+            cmd |= XR_PART_KNEE;
         }
 
+        /* Then draw the menu item */
         xyz->max_item_length = 0;
-        for (int i = 0; i <= xyz->max_prev; i++)
+        for (int i = 0; i < xo->max; i++)
         {
             move_ansi(domenu_gety(i, xyz), domenu_getx(i, xyz) + 2);
-            if (i < xo->max)
-                domenu_item(xo, i);
-            else
-                clrtoeol();
+            domenu_item(xo, i);
         }
+        xyz->y_ref_prev = xyz->y_ref;
+        xyz->x_ref_prev = xyz->x_ref;
         xyz->pos_prev = -1;
         xyz->max_prev = xo->max;
+
+        /* Ensure that all items are inside the screen; otherwise move the screen and then redraw again */
+        const int w = domenu_getw(xo->max, xyz);
+        if (xyz->x > 1 && xyz->x + w > b_cols)
+        {
+            xyz->x_ref -= xyz->x + w - b_cols;
+            /* Clean straying text caused by auto line wrapping */
+            xyz->x_ref_prev = 0;
+            xyz->max_prev = xo->max + 1;
+            cmd_res |= XR_HEAD;
+        }
+    }
+    if (cmd & XR_PART_KNEE)
+    {
+        const MENU *const mptr = xyz->table[xo->pos[xo->cur_idx]];
+        const char *const desc_fmt = check_info((const void *)mptr->item.func, mptr->desc);
+        char desc[96];
+        snprintf(desc, sizeof(desc), desc_fmt, str_site, str_site_nick);
+        const char *explan = strchr(desc, '\n');
+        if (!explan)
+            explan = strchr(xyz->mtail->desc, '\n');
+        if (!explan && xo_ncur > 1)
+            explan = MENU_HELP_NCUR;
+        if (!explan)
+            explan = MENU_HELP;
+
+        move_ansi(b_lines - 1, b_cols - xyz->explan_len_prev);
+        clrtoeol();
+        if (explan)
+        {
+            const int h = domenu_geth(xo->max, xyz);
+            const int w = domenu_getw(xo->max, xyz);
+            while (explan[0] == '\n')
+                ++explan;
+            int explan_len = strip_ansi_len(explan);
+
+            /* Ensure there is room to display the explanation */
+            if (xyz->y + (h - 1) < b_lines - 1 || b_cols - (xyz->x + w) > explan_len)
+            {
+                move_ansi(b_lines - 1, b_cols - explan_len);
+                outs(explan);
+                xyz->explan_len_prev = explan_len;
+            }
+        }
+        else
+        {
+            xyz->explan_len_prev = 0;
+        }
+
     }
     if (cmd & XR_PART_FOOT)
     {
@@ -1431,6 +1541,56 @@ KeyFuncList domenu_cb =
 
 static int domenu_exec(XO *xo, int cmd);
 
+GCC_PURE int
+gety_bound_move(
+    int cmd, int y_ref, int min_ref, int mid_ref, int max_ref)
+{
+    int y = gety_ref(y_ref);
+    int min = gety_ref(min_ref);
+    int mid = gety_ref(mid_ref);
+    int max = gety_ref(max_ref);
+
+    switch (cmd)
+    {
+    case KEY_PGUP:
+    case KEY_PGDN:
+        if ((cmd == KEY_PGUP) ? y > mid : y < mid)
+            return mid_ref;
+        else
+            return (cmd == KEY_PGUP) ? min_ref : max_ref;
+    case KEY_UP:
+    case KEY_DOWN:
+        return y_ref + TCLAMP(y + ((cmd == KEY_DOWN) ? 1 : -1), min, BMAX(min, max)) - y;
+    default:
+        return y_ref + TCLAMP(y, min, BMAX(min, max)) - y;
+    }
+}
+
+GCC_PURE int
+getx_bound_move(
+    int cmd, int x_ref, int min_ref, int mid_ref, int max_ref)
+{
+    const int x = getx_ref(x_ref);
+    const int min = getx_ref(min_ref);
+    const int mid = getx_ref(mid_ref);
+    const int max = getx_ref(max_ref);
+
+    switch (cmd)
+    {
+    case KEY_HOME:
+    case KEY_END:
+        if ((cmd == KEY_HOME) ? x > mid : x < mid)
+            return mid_ref;
+        else
+            return (cmd == KEY_HOME) ? min_ref : max_ref;
+    case KEY_LEFT:
+    case KEY_RIGHT:
+        return x_ref + TCLAMP(x + ((cmd == KEY_RIGHT) ? 1 : -1), min, BMAX(min, max)) - x;
+    default:
+        return x_ref + TCLAMP(x, min, BMAX(min, max)) - x;
+    }
+}
+
 void
 domenu(
     MENU *menu, int y_ref, int x_ref, int height_ref, int width_ref, int cmdcur_max)
@@ -1446,6 +1606,8 @@ domenu(
     {
         .y_ref = y_ref,
         .x_ref = x_ref,
+        .y_ref_prev = y_ref,
+        .x_ref_prev = x_ref,
         .height_ref = height_ref,
         .width_ref = width_ref,
         .menu = menu,
@@ -1459,19 +1621,24 @@ domenu(
         .cmdlen = cmdlen,
         .keep_cmd = false,
         .keyboard_cmd = true,
+        .default_cmd = false,
         .item_length = item_length,
         .max_item_length = 0,
         .explan_len_prev = 0,
+        .is_moving = false,
+        .is_moving_prev = false,
     };
 
     XO xo =
     {
-        .pos = 0,
+        .pos = {0},
+        .cur_idx = 0,
         .top = 0,
         .max = 0,
         .xyz = &xyz,
         .cb = domenu_cb,
         .recsiz = sizeof(MENU),
+        .xz_idx = -1,
     };
 
     int cmd = XO_INIT;
@@ -1482,8 +1649,24 @@ domenu(
         if ((cmd & ~XO_MOVE_MASK) == (XZ_ZONE | XZ_QUIT))
             break;
 
+        /* Redraw on movement */
+        if (xyz.y_ref != xyz.y_ref_prev || xyz.x_ref != xyz.x_ref_prev)
+        {
+            /* Update the current state */
+            xyz.x = getx_ref(xyz.x_ref);
+            xyz.y = gety_ref(xyz.y_ref);
+
+            /* Set up redraw flags */
+            cmd |= XR_BODY;
+            if (MENU_NOMOVIE_POS(xyz.y, xyz.x) != MENU_NOMOVIE_POS(gety_ref(xyz.y_ref_prev), getx_ref(xyz.x_ref_prev)))
+                cmd |= XR_PART_HEAD | XR_PART_NECK;
+
+            continue;
+        }
+
         cmd = vkey();
         xyz.keyboard_cmd = true;
+        xyz.default_cmd = false;
 
         if (cmd == I_RESIZETERM)
             cmd = XO_HEAD;
@@ -1493,50 +1676,61 @@ domenu(
 void domenu_cursor_show(XO *xo)
 {
     DomenuXyz *const xyz = (DomenuXyz *)xo->xyz;
+    xo->cur_idx %= xo_ncur + 1;
 
     int ycc, xcc, ycx, xcx;
     if (xyz->height > 0 && xyz->width > 0)
     {
-        ycc = xyz->y + (xo->pos % xyz->height);
-        xcc = xyz->x + (xo->pos / xyz->height * xyz->width);
+        ycc = xyz->y + (xo->pos[xo->cur_idx] % xyz->height);
+        xcc = xyz->x + (xo->pos[xo->cur_idx] / xyz->height * xyz->width);
         ycx = xyz->y + (xyz->pos_prev % xyz->height);
         xcx = xyz->x + (xyz->pos_prev / xyz->height * xyz->width);
     }
     else
     {
-        ycc = xyz->y + xo->pos;
+        ycc = xyz->y + xo->pos[xo->cur_idx];
         xcc = xyz->x;
         ycx = xyz->y + xyz->pos_prev;
         xcx = xyz->x;
     }
-    if (xo->pos != xyz->pos_prev)
+    if (xo->pos[xo->cur_idx] != xyz->pos_prev || xyz->is_moving != xyz->is_moving_prev)
     {
-        const char *explan = strchr(xyz->table[xo->pos]->desc, '\n');
-        if (!explan)
-            explan = strchr(xyz->mtail->desc, '\n');
-        if (explan)
+        domenu_redo(xo, XR_PART_KNEE + XO_NONE);
+        if (xyz->pos_prev == -1)
         {
-            const int h = (xyz->height) ? xyz->height : xo->max;
-            const int w = ((xyz->width) ? xyz->width : xyz->max_item_length) * ((xyz->height) ? (xo->max - 1)/xyz->height + 1 : 1);
-            int explan_len = strip_ansi_len(explan + 1);
-
-            /* Ensure there is room to display the explanation */
-            if (xyz->y + (h - 1) < b_lines - 1 || b_cols - (xyz->x + w) > explan_len)
+            for (int i = 0; i < xo_ncur; ++i)
             {
-                move_ansi(b_lines - 1, b_cols - xyz->explan_len_prev);
-                clrtoeol();
-                move_ansi(b_lines - 1, b_cols - explan_len);
-                outs(explan + 1);
-                xyz->explan_len_prev = explan_len;
+                if (i == xo->cur_idx)
+                    continue;
+                int yi, xi;
+                if (xyz->height > 0 && xyz->width > 0)
+                {
+                    yi = xyz->y + (xo->pos[i] % xyz->height);
+                    xi = xyz->x + (xo->pos[i] / xyz->height * xyz->width);
+                }
+                else
+                {
+                    yi = xyz->y + xo->pos[i];
+                    xi = xyz->x;
+                }
+                cursor_show_mark(xo, yi, xi, xo->pos[i]);
             }
         }
-
-        if (xyz->pos_prev >= 0)
+        else
         {
-            cursor_bar_clear(ycx, xcx, xyz->width);
+            cursor_bar_clear(xo, ycx, xcx, xyz->width, xo->pos[xo->cur_idx], xyz->pos_prev);
         }
-        cursor_bar_show(ycc, xcc, xyz->width);
-        xyz->pos_prev = xo->pos;
+        const int cur_idx = xo->cur_idx;
+        if (xyz->is_moving) // HACK: disable highlighting
+        {
+            xo->cur_idx = XO_NCUR; // an invalid index
+            cursor_show_mark(xo, ycc, xcc, xo->pos[cur_idx]);
+            xo->cur_idx = cur_idx;
+        }
+        else
+            cursor_bar_show(xo, ycc, xcc, xyz->width, xo->pos[cur_idx]);
+        xyz->pos_prev = xo->pos[xo->cur_idx];
+        xyz->is_moving_prev = xyz->is_moving;
     }
     else
     {
@@ -1566,47 +1760,85 @@ domenu_exec(
 
         cmd = domenu_redo(xo, cmd);
 
+        /* Menu moving hotkeys */
+        switch ((xyz->is_moving) ? cmd : KEY_NONE)
+        {
+        case KEY_PGUP:
+        case KEY_PGDN:
+        case KEY_UP:
+        case KEY_DOWN:
+        case KEY_HOME:
+        case KEY_END:
+        case KEY_LEFT:
+        case KEY_RIGHT:
+            if (domenu_move(xo, cmd))
+                goto key_handle_end;
+            xyz->is_moving = false; // exit the moving mode when the menu failed to move
+            break;
+        default:
+            ;
+        }
+
         /* Invoke hotkey functions for keyboard input only */
         switch ((xyz->keyboard_cmd) ? cmd : KEY_NONE)
         {
+        case KEY_KONAMI:
+            for (int i = xo_ncur; i < XO_NCUR; ++i)
+                xo->pos[i] = xo->pos[xo_ncur - 1];
+            xo_ncur = xo_ncur % XO_NCUR + 1;
+            xo->cur_idx %= xo_ncur;
+            cmd = XO_BODY; // Cursor count changed; redraw
+            continue;
+
+        case KEY_TAB:
+            if (xo_ncur == 1) // Plain mode
+                break;
+            xyz->is_moving = !xyz->is_moving;
+            break;
+
+        case ' ':
+            xyz->is_moving = false;
+            xo->cur_idx = (xo->cur_idx + 1) % xo_ncur;
+            break;
+
         case KEY_PGUP:
-            if (xyz->height > 0 && xo->pos - xyz->height >= 0)
-                xo->pos -= xyz->height;
+            if (xyz->height > 0 && xo->pos[xo->cur_idx] - xyz->height >= 0)
+                xo->pos[xo->cur_idx] -= xyz->height;
             else
-                xo->pos = (xo->pos == 0) ? xo->max - 1 : 0;
+                xo->pos[xo->cur_idx] = (xo->pos[xo->cur_idx] == 0) ? xo->max - 1 : 0;
         break;
 
         case KEY_PGDN:
-            if (xyz->height > 0 && xo->pos + xyz->height < xo->max)
-                xo->pos += xyz->height;
+            if (xyz->height > 0 && xo->pos[xo->cur_idx] + xyz->height < xo->max)
+                xo->pos[xo->cur_idx] += xyz->height;
             else
-                xo->pos = (xo->pos == xo->max - 1) ? 0 : xo->max - 1;
+                xo->pos[xo->cur_idx] = (xo->pos[xo->cur_idx] == xo->max - 1) ? 0 : xo->max - 1;
         break;
 
         case KEY_DOWN:
-            if (++xo->pos < xo->max)
+            if (++xo->pos[xo->cur_idx] < xo->max)
                 break;
             // Else falls through
             //    to wrap around cursor
 
         case KEY_HOME:
-            xo->pos = 0;
+            xo->pos[xo->cur_idx] = 0;
             break;
 
         case KEY_UP:
-            if (--xo->pos >= 0)
+            if (--xo->pos[xo->cur_idx] >= 0)
                 break;
             // Else falls through
             //    to wrap around cursor
 
         case KEY_END:
-            xo->pos = xo->max - 1;
+            xo->pos[xo->cur_idx] = xo->max - 1;
             break;
 
         case KEY_RIGHT:
-            if (xyz->height > 0 && xo->pos + xyz->height < xo->max)
+            if (xyz->height > 0 && xo->pos[xo->cur_idx] + xyz->height < xo->max)
             {
-                xo->pos += xyz->height;
+                xo->pos[xo->cur_idx] += xyz->height;
                 break;
             }
             // Else falls through
@@ -1614,7 +1846,7 @@ domenu_exec(
 
         case '\n':
             {
-                MENU *const mptr = xyz->table[xo->pos];
+                MENU *const mptr = xyz->table[xo->pos[xo->cur_idx]];
                 unsigned int mmode = mptr->umode;
                 int res;
                 /* IID.2021-12-02: Helper union for proper handling of `M_ARG` */
@@ -1633,7 +1865,8 @@ domenu_exec(
                     if (mmode & M_ARG)
                     {
                         m.funcarg.func = (int (*)(const void *)) DL_GET(m.dlfuncarg.func);
-                        if (!m.funcarg.func) break;
+                        if (!m.funcarg.func)
+                            break;
   #ifndef DL_HOTSWAP
                         /* Update the `FuncArg` object */
                         mptr->item.funcarg->func = m.funcarg.func;
@@ -1642,7 +1875,8 @@ domenu_exec(
                     else
                     {
                         m.item.func = (int (*)(void)) DL_GET(m.item.dl.func);
-                        if (!m.item.func) break;
+                        if (!m.item.func)
+                            break;
   #ifndef DL_HOTSWAP
                         mptr->item.func = m.item.func;
   #endif
@@ -1699,6 +1933,7 @@ domenu_exec(
 
                 switch (res)
                 {
+                default:
                 case XEASY:
                     break;
 
@@ -1707,14 +1942,13 @@ domenu_exec(
 
 #ifdef  HAVE_CHANGE_SKIN
                 case XZ_SKIN + XO_NONE:
-                    vmsg("DEBUG:SKIN");
-                    vmsg("123");
+                    vmsg_xo(xo, "DEBUG:SKIN");
+                    vmsg_xo(xo, "123");
                     //(*s_menu)();
                     return XO_QUIT;
-                    vmsg("1234");
+                    vmsg_xo(xo, "1234");
                     break;
 #endif
-                default:;
                 }
 
                 if (cmd == KEY_NONE)
@@ -1746,9 +1980,9 @@ domenu_exec(
             cmd = XO_HEAD;
             continue;
         case KEY_LEFT:
-            if (xyz->height > 0 && xo->pos - xyz->height >= 0)
+            if (xyz->height > 0 && xo->pos[xo->cur_idx] - xyz->height >= 0)
             {
-                xo->pos -= xyz->height;
+                xo->pos[xo->cur_idx] -= xyz->height;
                 break;
             }
             // Else falls through
@@ -1759,7 +1993,7 @@ domenu_exec(
         case 'e':
             if (xyz->menu != menu_main || xo_stack_level > 0)
             {
-                xyz->mtail->level = PERM_MENU + xyz->table[xo->pos]->desc[0];
+                xyz->mtail->level = PERM_MENU + xyz->table[xo->pos[xo->cur_idx]]->desc[0];
                 xyz->menu = xyz->mtail->item.menu;
                 cmd = XO_INIT;
                 continue;
@@ -1804,7 +2038,15 @@ domenu_exec(
                         if (xyz->cmdlen[i] > maxlen)
                         {
                             maxlen = xyz->cmdlen[i];
-                            xo->pos = i;
+                            if (xyz->default_cmd)
+                            {
+                                for (int j = 0; j < COUNTOF(xo->pos); ++j)
+                                    xo->pos[j] = i;
+                            }
+                            else
+                            {
+                                xo->pos[xo->cur_idx] = i;
+                            }
                         }
                     }
                 }
@@ -1820,6 +2062,7 @@ domenu_exec(
                 ; /* Do nothing */
             }
         }
+key_handle_end:
 
         cmd = XO_NONE;
         domenu_cursor_show(xo);

@@ -464,7 +464,7 @@ VALUE brb_ansi_color RBF_P((int argc, VALUE *argv, VALUE self))
     mrb_get_args(mrb, "*", &argv, &argc);
 #endif
 
-    char buf[50] = "\033[";
+    char buf[50] = "\x1b[";
     char *p = buf + strlen(buf);
 
     for (int i=0; i<argc; i++)
@@ -481,12 +481,12 @@ VALUE brb_ansi_color RBF_P((int argc, VALUE *argv, VALUE self))
 
 VALUE brb_ansi_reset RBF_P((VALUE self))
 {
-    return RB_C(rb_str_new_cstr)("\033[m");
+    return RB_C(rb_str_new_cstr)("\x1b[m");
 }
 
 VALUE brb_esc RBF_P((VALUE self))
 {
-    return RB_C(rb_str_new_cstr)("\033");
+    return RB_C(rb_str_new_cstr)("\x1b");
 }
 
 VALUE brb_color RBF_P((int argc, VALUE *argv, VALUE self))
@@ -655,7 +655,8 @@ ruby_script_attach(const char *fpath, size_t *plen)
 
     *plen = 0;
 
-    if (fd < 0) return buf;
+    if (fd < 0)
+        return buf;
     if (fstat(fd, &st) || ((*plen = st.st_size) < 1) || S_ISDIR(st.st_mode))
     {
         close(fd);
@@ -696,7 +697,8 @@ static int ruby_script_range_detect(char **pStart, char **pEnd, int *lineshift)
             break;
 
         // Skip to next line
-        while (cStart + lenSignature < cEnd && *cStart++ != '\n');
+        while (cStart + lenSignature < cEnd && *cStart++ != '\n')
+            ;
         line++;
     }
     *lineshift = line;
@@ -714,7 +716,8 @@ static int ruby_script_range_detect(char **pStart, char **pEnd, int *lineshift)
             break;
 
         // Skip to next line
-        while (cEnd + lenSignature < *pEnd && *cEnd++ != '\n');
+        while (cEnd + lenSignature < *pEnd && *cEnd++ != '\n')
+            ;
     }
 
     if (cEnd + lenSignature >= *pEnd)
@@ -755,10 +758,12 @@ static void bbsruby_load_TOC RB_P((const char *cStart, const char *cEnd))
             if (tStart[0] == '#')
                 tStart++;
 
-            while (*tStart == ' ') tStart++;
+            while (*tStart == ' ')
+                tStart++;
 
             tEnd = tStart;
-            while (*tEnd != '\n') tEnd++;
+            while (*tEnd != '\n')
+                tEnd++;
 
             // Possible TOC item, check patterns
             for (int i=0; i<BBSRUBY_TOC_HEADERS; i++)
@@ -767,11 +772,14 @@ static void bbsruby_load_TOC RB_P((const char *cStart, const char *cEnd))
                 if (strncasecmp(tStart, TOCs_HEADER[i], lenBuf) == 0)
                 {
                     tStart+=lenBuf;
-                    while (*tStart == ' ') tStart++;
-                    if (*tStart != ':') break;
+                    while (*tStart == ' ')
+                        tStart++;
+                    if (*tStart != ':')
+                        break;
                     tStart++;
 
-                    while (*tStart == ' ') tStart++;
+                    while (*tStart == ' ')
+                        tStart++;
                     CMRB_C(rb_hash_aset, mrb_hash_set)(hashTOC, RB_C(rb_str_new_cstr)(TOCs_HEADER[i]), RB_C(rb_str_new)(tStart, tEnd - tStart));
                     CMRB_C(rb_hash_aset, mrb_hash_set)(hashTOC, CMRB_C(rb_funcallv, mrb_funcall_argv)(RB_C(rb_str_new_cstr)(TOCs_HEADER[i]), CMRB_C(rb_intern, mrb_intern_cstr)("capitalize!"), 0, NULL), RB_C(rb_str_new)(tStart, tEnd - tStart));
                     TOCfound = 1;
@@ -797,10 +805,11 @@ static void print_exception RB_PV((void))
     VALUE exception = rb_errinfo();
     rb_set_errinfo(Qnil);
 #endif
-    if (!RTEST(exception)) return;
+    if (!RTEST(exception))
+        return;
 
     char* buffer = RSTRING_PTR(RB_C(rb_obj_as_string)(exception));
-    outs("\033[m");
+    outs("\x1b[m");
     clear();
     move(0, 0);
     outs("程式發生錯誤，無法繼續執行。請通知原作者。\n錯誤資訊：\n");
@@ -1192,25 +1201,25 @@ void run_ruby(
     move(b_lines - 1 - badxy_compat, 0);
     char msgBuf[200]="";
     if (apiver == 0 && brbver == 0)
-        sprintf(msgBuf, "\033[1;41m ● 程式未載明相容的Interface版本，可能發生不相容問題");
+        sprintf(msgBuf, "\x1b[1;41m ● 程式未載明相容的Interface版本，可能發生不相容問題");
     else if (apiver < BBSRUBY_INTERFACE_VER || (brbver && brbver < BBSRUBY_VERSION_VALUE))
-        sprintf(msgBuf, "\033[1;41m ● 程式版本過舊，可能發生不相容問題");
+        sprintf(msgBuf, "\x1b[1;41m ● 程式版本過舊，可能發生不相容問題");
     if (*msgBuf)
     {
         outs(msgBuf);
         for (int i=0; i<b_cols - (int)(unsigned)strlen(msgBuf) + 7; i++)
             outs(" ");
-        outs("\033[m");
+        outs("\x1b[m");
     }
 
     if (badxy_compat)
     {
         move(b_lines - 1, 0);
-        sprintf(msgBuf, "\033[1;41m %s 此程式%s是為舊版 BBS-Ruby (<= v3.0) 撰寫的。以座標相容模式執行？[Y/n]", (*msgBuf) ? "  " : "●", (!brbver && (!apiver || apiver == 0.111)) ? "可能" : "");
+        sprintf(msgBuf, "\x1b[1;41m %s 此程式%s是為舊版 BBS-Ruby (<= v3.0) 撰寫的。以座標相容模式執行？[Y/n]", (*msgBuf) ? "  " : "●", (!brbver && (!apiver || apiver == 0.111)) ? "可能" : "");
         outs(msgBuf);
         for (int i=0; i<b_cols - (int)(unsigned)strlen(msgBuf) + 7; i++)
             outs(" ");
-        outs("\033[m");
+        outs("\x1b[m");
     }
 
     //Before execution, prepare keyboard buffer

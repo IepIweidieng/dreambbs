@@ -815,6 +815,7 @@ XoPostSimple(
     xz[XZ_POST - XO_ZONE].xo = xo = xo_get(fpath);
     xo->cb = post_cb;
     xo->recsiz = sizeof(HDR);
+    xo->xz_idx = XZ_INDEX_POST;
     xo->key = XZ_POST;
     xo->xyz = (void *) (brd->bvote > 0 ? (char *) "本看板進行投票中" : brd->title + 3);
     str = brd->BM;
@@ -864,18 +865,28 @@ mantime_cmp(
     const void *a,
     const void *b)
 {
+    const int chn_a = *(const short *)a;
+    const int chn_b = *(const short *)b;
+    /* Ascending `-chn` order for categories */
+    if (chn_a < 0 && chn_b < 0)
+        return -chn_a - -chn_b;
+    /* Categories before boards */
+    const int mantime_a = (chn_a >= 0) ? bshm->mantime[chn_a] : INT_MAX;
+    const int mantime_b = (chn_b >= 0) ? bshm->mantime[chn_b] : INT_MAX;
     /* 由多排到少 */
-    return bshm->mantime[* (const short *)b] - bshm->mantime[* (const short *)a];
+    return mantime_b - mantime_a;
 }
 
-static int class_flag2 = 0;  /* 1:列出好友/秘密板，且自己又有閱讀權限的 */
 static int class_flag;
 
 #define BFO_YANK        0x01
+#define BFO_FRIEND      0x02 /* 1:列出好友/秘密板，且自己又有閱讀權限的 */
+#define BFO_BRDNEW      0x04
 
 static int
 class_check(
-    int chn)
+    int chn,
+    void **ppool)
 {
     short *cbase, *chead, *ctail;
     int pos, max, val, zap;
@@ -890,6 +901,7 @@ class_check(
     chn = CH_END - chn;
     switch (boardmode)
     {
+        default:
         case 0:
             cbase = (short *) class_img;
             break;
@@ -898,8 +910,6 @@ class_check(
             cbase = (short *) profess_img;
             break;
 #endif
-        default:
-            cbase = (short *) class_img;
     }
 
     // "HOT/" 名稱可自定，若改名也要順便改後面的長度 4
@@ -916,6 +926,10 @@ class_check(
 
     chead = (short *) ((char *) cbase + pos);
     ctail = (short *) ((char *) cbase + max);
+
+    short *ccur = NULL;
+    if (ppool)
+        *ppool = ccur = (short *) realloc(*ppool, max - pos);
 
     max = 0;
     brd = bshm->bcache;
@@ -935,7 +949,7 @@ class_check(
 
             if (brd[chn].readlevel != PERM_CHATROOM)
             {
-                if (class_flag2 &&
+                if ((class_flag & BFO_FRIEND) &&
                     (!(val & BRD_R_BIT) || !(brd[chn].brdname[0]) ||
                     !(brd[chn].readlevel) || (brd[chn].readlevel & ~(PERM_SYSOP | PERM_BOARD)) ))
 
@@ -955,16 +969,17 @@ class_check(
             {
                 if (bshm->mantime[chn] < CLASS_HOT) /* 只列出人氣超過 CLASS_HOT 的看板 */
                     continue;
-                bnum++;
             }
         }
-        else if (!class_check(chn))
+        else if (!class_check(chn, NULL))
             continue;
         max++;
+        if (ppool)
+            *ccur++ = chn;
     } while (chead < ctail);
 
-    if (class_hot && bnum > 0)
-        qsort(cbase - bnum, bnum, sizeof(short), mantime_cmp);
+    if (ppool && class_hot && max > 0)
+        qsort(*ppool, max, sizeof(short), mantime_cmp);
 
     return max;
 }
@@ -973,103 +988,12 @@ static int
 class_load(
     XO *xo)
 {
-    short *cbase, *chead, *ctail;
-    int chn;                    /* ClassHeader number */
-    int pos, max, val, zap;
-    int bnum = 0;
-    int class_hot = 0;
-    BRD *brd;
-    char *bits;
-
-    chn = CH_END - xo->key;
-
-    switch (boardmode)
+    const int max = xo->max = class_check(xo->key, &xo->xyz);
+    for (int i = 0; i < COUNTOF(xo->pos); ++i)
     {
-        case 0:
-            cbase = (short *) class_img;
-            break;
-#ifdef  HAVE_PROFESS
-        case 1:
-            cbase = (short *) profess_img;
-            break;
-#endif
-        default:
-            cbase = (short *) class_img;
+        if (xo->pos[i] >= max)
+            xo->pos[i] = xo->top = 0;
     }
-
-    // "HOT/" 名稱可自定，若改名也要順便改後面的長度 4
-    if (!strncmp((char *)cbase + cbase[chn], "HOT/", 4))
-    {
-        class_hot = 1;
-        chn = 0;
-    }
-
-    chead = cbase + chn;
-
-    pos = chead[0] + CH_TTSIZE;
-    max = chead[1];
-
-    chead = (short *) ((char *) cbase + pos);
-    ctail = (short *) ((char *) cbase + max);
-
-    max -= pos;
-
-    cbase = (short *) realloc(xo->xyz, max);
-    xo->xyz = cbase;
-
-    max = 0;
-    brd = bshm->bcache;
-    bits = brd_bits;
-    zap = (class_flag & BFO_YANK) ? 0 : BRD_Z_BIT;
-
-    do
-    {
-        chn = *chead++;
-        if (chn >= 0)
-        {
-            val = bits[chn];
-/* cache.081207: 處理哪些 board 要 print */
-/* thanks to gaod */
-/* cache.090503: 即時熱門看板 */
-/* cache.091225: 列出所有有閱讀權限的看板 */
-            if (brd[chn].readlevel != PERM_CHATROOM)
-            {
-                if (class_flag2 &&
-                    (!(val & BRD_R_BIT) || !(brd[chn].brdname[0]) ||
-                    !(brd[chn].readlevel) || (brd[chn].readlevel & ~(PERM_SYSOP | PERM_BOARD)) ))
-                        continue;
-
-                if ((val & BRD_F_BIT) && !(val & zap))
-                    ;
-                else
-                {
-                    if ( !(val & BRD_R_BIT) || (val & zap) || !(brd[chn].brdname[0]) )
-                        continue;
-                }
-            }
-            // 即時熱門看板臨界值自定
-            if (class_hot)
-            {
-                if (bshm->mantime[chn] < CLASS_HOT) /* 只列出人氣超過 CLASS_HOT 的看板 */
-                    continue;
-                bnum++;
-            }
-        }
-        else if (!class_check(chn))
-        {
-            continue;
-        }
-
-        max++;
-        *cbase++ = chn;
-    } while (chead < ctail);
-
-    if (class_hot && bnum > 0)
-        qsort(cbase - bnum, bnum, sizeof(short), mantime_cmp);
-
-    xo->max = max;
-    if (xo->pos >= max)
-        xo->pos = xo->top = 0;
 
     return max;
 }
@@ -1086,7 +1010,7 @@ board_outs(
 
     brd = bshm->bcache + chn;
 
-    brdnew = class_flag & UFO2_BRDNEW;
+    brdnew = class_flag & BFO_BRDNEW;
     bits = brd_bits;
 
     {
@@ -1241,6 +1165,7 @@ class_item(
 
         switch (boardmode)
         {
+            default:
             case 0:
                 img = class_img;
                 break;
@@ -1249,8 +1174,6 @@ class_item(
                 img = profess_img;
                 break;
 #endif
-            default:
-                img = class_img;
         }
 
         chx = (short *) img + (CH_END - chn);
@@ -1283,9 +1206,9 @@ class_body(
     if (max <= 0)
     {
         int ret = class_load(xo);
-        if (!ret && (class_flag2 & 0x01))
+        if (!ret && (class_flag & BFO_FRIEND))
         {
-            class_flag2 ^= 0x01;
+            class_flag ^= BFO_FRIEND;
             ret = class_load(xo);
         }
         if (!ret && !(class_flag & BFO_YANK))
@@ -1320,7 +1243,7 @@ class_neck(
     XO *xo)
 {
     move(1, 0);
-    prints(NECKBOARD, class_flag & UFO2_BRDNEW ? "總數" : "編號", d_cols + 33, "中   文   敘   述");
+    prints(NECKBOARD, class_flag & BFO_BRDNEW ? "總數" : "編號", d_cols + 33, "中   文   敘   述");
 
     return class_body(xo);
 }
@@ -1333,12 +1256,12 @@ class_head(
     return class_neck(xo);
 }
 
-static int
+int
 class_newmode(
     XO *xo)
 {
     cuser.ufo2 ^= UFO2_BRDNEW;  /* Thor.980805: 特別注意 utmp.ufo的同步問題 */
-    class_flag ^= UFO2_BRDNEW;
+    class_flag = (class_flag & ~BFO_BRDNEW) | ((cuser.ufo2 & UFO2_BRDNEW) ? BFO_BRDNEW : 0);
     return XO_NECK;
 }
 
@@ -1361,7 +1284,7 @@ class_search(
     char buf[IDLEN + 1];
 
     ptr = buf;
-    num = vget(B_LINES_REF, 0, MSG_BID, ptr, IDLEN + 1, DOECHO);
+    num = vget_xo(xo, B_LINES_REF, 0, MSG_BID, ptr, IDLEN + 1, DOECHO);
     move(b_lines, 0);
     clrtoeol();
 
@@ -1398,18 +1321,17 @@ static int
 class_yank2(
     XO *xo)
 {
-    int pos = xo->pos;
+    int pos = xo->pos[xo->cur_idx];
     if (xo->key >= 0)
         return XO_NONE;
 
-    class_flag2 ^= 0x01;
-    if (!class_load(xo) && (class_flag2 & 0x01))
+    class_flag ^= BFO_FRIEND;
+    if (!class_load(xo) && (class_flag & BFO_FRIEND))
     {
         zmsg("找不到可讀的秘密/好友看板");
-        class_flag2 ^= 0x01;
+        class_flag ^= BFO_FRIEND;
         class_load(xo);
-        xo->pos = pos;
-        return XO_FOOT;
+        return XR_FOOT + XO_MOVE + pos;
     }
     return XO_HEAD;
 }
@@ -1418,7 +1340,7 @@ static int
 class_yank(
     XO *xo)
 {
-    int pos = xo->pos;
+    int pos = xo->pos[xo->cur_idx];
     if (xo->key >= 0)
         return XO_NONE;
 
@@ -1428,8 +1350,7 @@ class_yank(
         zmsg("找不到未被 zap 掉的看板");
         class_flag |= BFO_YANK;
         class_load(xo);
-        xo->pos = pos;
-        return XO_FOOT;
+        return XR_FOOT + XO_MOVE + pos;
     }
     return XO_HEAD;
 }
@@ -1536,7 +1457,7 @@ XoAuthor(
     if (!HAS_PERM(PERM_VALID))
         return XO_NONE;
 
-    if (!vget(B_LINES_REF, 0, "請輸入作者：", author, IDLEN + 1, DOECHO))
+    if (!vget_xo(xo, B_LINES_REF, 0, "請輸入作者：", author, IDLEN + 1, DOECHO))
         return XO_FOOT;
 
     str_lower(author, author);
@@ -1585,9 +1506,10 @@ XoAuthor(
                 if (!str_ncasecmp(tail->owner, author, len))
                 {
                     XO *xt = xo_get(folder);
-                    xt->pos = tail - head;
+                    xt->pos[xt->cur_idx] = tail - head;
                     xt->cb = post_cb;
                     xt->recsiz = sizeof(HDR);
+                    xt->xz_idx = XZ_INDEX_POST;
                     chp[tag++] = chn;
                     break;
                 }
@@ -1600,13 +1522,17 @@ XoAuthor(
     if (!tag)
     {
         free(chp);
-        vmsg("空無一物");
+        vmsg_xo(xo, "空無一物");
         return XO_FOOT;
     }
 
     xo_a.cb = class_cb;
     xo_a.recsiz = sizeof(short);
-    xo_a.pos = xo_a.top = 0;
+    xo_a.xz_idx = XZ_INDEX_CLASS;
+    for (int i = 0; i < COUNTOF(xo_a.pos); ++i)
+        xo_a.pos[i] = 0;
+    xo_a.top = 0;
+    xo_a.cur_idx = 0;
     xo_a.max = tag;
     xo_a.key = 1;                       /* all boards */
     xo_a.xyz = chp;
@@ -1705,7 +1631,7 @@ static KeyFuncList class_cb =
     //{'A', {XoAuthor}},
 #endif
 
-    {'h', {class_help}}
+    {'h', {class_help}},
 };
 
 
@@ -1719,16 +1645,20 @@ XoClass(
                     class_load內部會 initial xo.max, 其他不確定 */
     xo.cb = class_cb;
     xo.recsiz = sizeof(short);
-    xo.pos = xo.top = 0;
+    xo.xz_idx = XZ_INDEX_CLASS;
+    for (int i = 0; i < COUNTOF(xo.pos); ++i)
+        xo.pos[i] = 0;
+    xo.cur_idx = 0;
+    xo.top = 0;
 
     xo.key = chn;
     xo.xyz = NULL;
     if (!class_load(&xo))
     {
         int ret = 0;
-        if (!ret && (class_flag2 & 0x01))
+        if (!ret && (class_flag & BFO_FRIEND))
         {
-            class_flag2 ^= 0x01;
+            class_flag ^= BFO_FRIEND;
             ret = class_load(&xo);
         }
         if (!ret && !(class_flag & BFO_YANK))
@@ -1921,14 +1851,14 @@ board_main(void)
         class_flag = 0;         /* to speed up */
 #endif
 
-        class_flag = cuser.ufo2 & UFO2_BRDNEW;
+        class_flag = (cuser.ufo2 & UFO2_BRDNEW) ? BFO_BRDNEW : 0;
     }
 
     board_xo.cb = class_cb;
     board_xo.recsiz = sizeof(short);
+    board_xo.xz_idx = XZ_INDEX_CLASS;
     board_xo.key = CH_END;
-    if (class_img)
-        class_load(&board_xo);
+    class_load(&board_xo);
 
     xz[XZ_CLASS - XO_ZONE].xo = &board_xo;      /* Thor: default class_xo */
 }
