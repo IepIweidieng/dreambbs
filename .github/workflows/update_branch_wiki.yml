@@ -1,4 +1,4 @@
-name: Synchronizing branch "wiki" with GitHub Wiki
+name: Push GitHub Wiki changes to branch "wiki"
 
 on:
   [gollum, workflow_dispatch]

@@ -1,4 +1,4 @@
-name: Synchronizing GitHub Wiki with branch "wiki"
+name: Push branch "wiki" commits to GitHub Wiki
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
           ref: 'wiki'
           persist-credentials: false
           fetch-depth: 0
-      - name: sync
+      - name: push commits
         run: |
           git remote add wiki "${GITHUB_SERVER_URL%%://*}://${PAT_USERNAME}:${PAT_TOKEN}@${GITHUB_SERVER_URL#*://}/$GITHUB_REPOSITORY.wiki.git"
           git push wiki @:master
