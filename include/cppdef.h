@@ -212,7 +212,7 @@ template <class T>
 
 #if NO_SO
 
-#define DL_NAME(module_str, obj)   ((void)0, &(obj))
+#define DL_NAME(module_str, obj)   (&(obj))
 #define DL_GET(dl_name)   ((void)0, &(dl_name))
 #define DL_CALL(dl_name)  ((void)0, dl_name)
 
