@@ -1277,8 +1277,9 @@ enum pipmenumode mode)
     outs_centered(" ");
 
     /* TODO: apply all stat changes before displaying any of the value to avoid inconsistency */
-    for (int st = STAT_M_MSG_BEGIN; st < STAT_M_MSG_END; ++st)
+    for (int ist = STAT_M_MSG_BEGIN; ist < STAT_M_MSG_END; ++ist)
     {
+        enum pip_stat st = (enum pip_stat)ist;
         const char *msg = NULL;
         switch (pip_judge_stat(&msg, &d, st, m))
         {
@@ -6219,8 +6220,9 @@ const char *userid)
             pip_show_age_pic(age, ck.body[BODY_WEIGHT]);
 
             move(b_lines - 5, 0);
-            for (int st = STAT_R_BEGIN; st < STAT_R_END; ++st)
+            for (int ist = STAT_R_BEGIN; ist < STAT_R_END; ++ist)
             {
+                enum pip_stat st = (enum pip_stat)ist;
                 if (pip_judge_stat(&msg, &ck, st, age) == SD_DEATH)
                     return -1;
                 outs(msg);

@@ -418,7 +418,7 @@ vitem_t vlist[])
         {
             buf[0] = radix32[item];
             /* filter out on-state texts */
-            char *const delim = memchr(vlist[item], '\n', sizeof(vitem_t));
+            char *const delim = (char *)memchr(vlist[item], '\n', sizeof(vitem_t));
             if (delim) {
                 *delim = '\0';
             }

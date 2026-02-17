@@ -121,9 +121,9 @@ GCC_NONNULL(1)
 GCC_PURE char *str_chr_next_or(const char *str, char delim, const char *dflt)
 {
     if (delim == '\0')
-        return dflt;
+        return (char *)dflt;
     const char *const pdelim = strchr(str, delim);
-    return !pdelim ? dflt : (char *)pdelim + 1;
+    return !pdelim ? (char *)dflt : (char *)pdelim + 1;
 }
 
 /* Split string `src` with spaces and copy the first line of the second splitted item to `dst` (formerly `str_cut`) */

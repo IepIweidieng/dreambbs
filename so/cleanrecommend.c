@@ -284,43 +284,45 @@ clean(
             if (!pushstart)
                 goto non_recommend;
 
-            const char *c2;
-            const char *const cr = buf + strcspn(buf, "\n"); // First of '\n' or '\0'
-            memset(&rmsg, 0, sizeof(RMSG));
+            {
+                const char *c2;
+                const char *const cr = buf + strcspn(buf, "\n"); // First of '\n' or '\0'
+                memset(&rmsg, 0, sizeof(RMSG));
 
-            c2 = cr - (sizeof(rmsg.rtime) - 1);
-            if (c2 < buf || c2[2] != '/')
-                goto non_recommend;
-            str_scpy(rmsg.rtime, c2, sizeof(rmsg.rtime));
+                c2 = cr - (sizeof(rmsg.rtime) - 1);
+                if (c2 < buf || c2[2] != '/')
+                    goto non_recommend;
+                str_scpy(rmsg.rtime, c2, sizeof(rmsg.rtime));
 
-            c2 -= (sizeof(rmsg.msg) - 1) + 4; // Including trailing " \x1b[m"
-            if (c2 < buf)
-                goto non_recommend;
-            str_scpy(rmsg.msg, c2, sizeof(rmsg.msg));
-            str_rtrim(rmsg.msg);
+                c2 -= (sizeof(rmsg.msg) - 1) + 4; // Including trailing " \x1b[m"
+                if (c2 < buf)
+                    goto non_recommend;
+                str_scpy(rmsg.msg, c2, sizeof(rmsg.msg));
+                str_rtrim(rmsg.msg);
 
-            c2 -= IDLEN + 7; // Including trailing "¡G\x1b[36m"
-            if (c2 < buf || strncmp(c2 + IDLEN, "¡G", 2) != 0)
-                goto non_recommend;
-            const size_t idx_uid = strspn(c2, " "); // Skip leading spaces
-            str_scpy(rmsg.userid, c2 + idx_uid, sizeof(rmsg.userid) - idx_uid);
+                c2 -= IDLEN + 7; // Including trailing "¡G\x1b[36m"
+                if (c2 < buf || strncmp(c2 + IDLEN, "¡G", 2) != 0)
+                    goto non_recommend;
+                const size_t idx_uid = strspn(c2, " "); // Skip leading spaces
+                str_scpy(rmsg.userid, c2 + idx_uid, sizeof(rmsg.userid) - idx_uid);
 
-            c2 = strchr(buf, 'm');
-            if (!c2)
-                goto non_recommend;
-            ++c2;
-            if (c2[0] != '\x1b') // Non-empty verb
-                str_scpy(rmsg.verb, c2, sizeof(rmsg.verb));
+                c2 = strchr(buf, 'm');
+                if (!c2)
+                    goto non_recommend;
+                ++c2;
+                if (c2[0] != '\x1b') // Non-empty verb
+                    str_scpy(rmsg.verb, c2, sizeof(rmsg.verb));
 
-            if (strncmp(buf, "\x1b[1;31m", 7) == 0) // Negative color
-                rmsg.pn = NEGATIVE;
-            else if (c2[0] == '\x1b' || c2[2] == '\x1b') // Special ANSI escape patterns for COMMENT
-                rmsg.pn = COMMENT;
-            else
-                rmsg.pn = POSITIVE;
+                if (strncmp(buf, "\x1b[1;31m", 7) == 0) // Negative color
+                    rmsg.pn = NEGATIVE;
+                else if (c2[0] == '\x1b' || c2[2] == '\x1b') // Special ANSI escape patterns for COMMENT
+                    rmsg.pn = COMMENT;
+                else
+                    rmsg.pn = POSITIVE;
 
-            rec_add(recommenddb, &rmsg, sizeof(RMSG));
-            continue;
+                rec_add(recommenddb, &rmsg, sizeof(RMSG));
+                continue;
+            }
 non_recommend:
             f_cat(tmp, buf);
         }
