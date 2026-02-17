@@ -14,9 +14,6 @@ project(DreamBBS LANGUAGES C CXX VERSION 3.0)
 # For debugging `CMakeLists.txt`
 # set(CMAKE_VERBOSE_MAKEFILE ON)
 
-# Mark `CMakeCache.txt` as up-to-date if necessary
-set(MARK_CACHE_UPDATED OFF)
-
 # Required cmake modules
 include(CheckCCompilerFlag)
 include(CheckSymbolExists)
@@ -121,7 +118,6 @@ function(LOADVALUE conf default hdr output)
         GETVALUE("${conf}" "${default}" "${hdr}" res)
     endif()
     ESCAPE_QUOTES("${res}" res)
-    unset("${output}" CACHE)
     set("${output}" "${res}" PARENT_SCOPE)
 endfunction(LOADVALUE)
 
@@ -149,15 +145,6 @@ function(GETGID name output)
     endif()
     set("${output}" "${res}" PARENT_SCOPE)
 endfunction(GETGID)
-
-function(DEF_TEST conf hdr output)
-    if("${hdr}" IS_NEWER_THAN ${CMAKE_CACHEFILE_DIR}/CMakeCache.txt)
-        set(MARK_CACHE_UPDATED ON)
-        unset("${output}" CACHE)
-        check_symbol_exists("${conf}" "${hdr}" res)
-    endif()
-    set("${output}" "${res}" PARENT_SCOPE)
-endfunction(DEF_TEST)
 
 ## Read variables from the configuration C files
 
@@ -219,12 +206,12 @@ LOADVALUE(MRB_CONFIG "${MRB_CONFIG_PATH}" ${BBSCONF_ORIGIN} MRB_CONFIG)
 LOADVALUE(BBS_SSHD_ROOT "${BBSHOME}/bbs-sshd" ${BBSCONF_ORIGIN} BBS_SSHD_ROOT)
 
 # Flags for enabling modules
-DEF_TEST(M3_USE_PMORE ${BBSCONF} USE_PMORE)
-DEF_TEST(M3_USE_PFTERM ${BBSCONF} USE_PFTERM)
-DEF_TEST(M3_USE_BBSLUA ${BBSCONF} USE_BBSLUA)
-DEF_TEST(M3_USE_BBSRUBY ${BBSCONF} USE_BBSRUBY)
-DEF_TEST(BBSLUA_USE_LUAJIT ${BBSCONF} USE_LUAJIT)
-DEF_TEST(BBSRUBY_USE_MRUBY ${BBSCONF} USE_MRUBY)
+check_symbol_exists(M3_USE_PMORE ${BBSCONF} USE_PMORE)
+check_symbol_exists(M3_USE_PFTERM ${BBSCONF} USE_PFTERM)
+check_symbol_exists(M3_USE_BBSLUA ${BBSCONF} USE_BBSLUA)
+check_symbol_exists(M3_USE_BBSRUBY ${BBSCONF} USE_BBSRUBY)
+check_symbol_exists(BBSLUA_USE_LUAJIT ${BBSCONF} USE_LUAJIT)
+check_symbol_exists(BBSRUBY_USE_MRUBY ${BBSCONF} USE_MRUBY)
 
 # Flags for disabling shared objects
 if(DEFINED ENV{NO_SO})
@@ -364,8 +351,3 @@ add_subdirectory(sample)
 
 enable_testing()
 add_subdirectory(test)
-
-# Mark the cache file as up-to-date
-if(MARK_CACHE_UPDATED AND CMAKE_CACHEFILE_DIR)
-    execute_process(COMMAND touch ${CMAKE_CACHEFILE_DIR}/CMakeCache.txt)
-endif()
